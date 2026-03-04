@@ -1,30 +1,52 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
-import { Heart, LogOut, Pill, ShoppingCart, UserRound } from 'lucide-react'
+import { FormEvent, useState } from 'react'
+import { Heart, LogOut, Pill, Search, ShoppingCart, UserRound } from 'lucide-react'
 import { useQuery } from 'convex/react'
+import { useRouter } from 'next/navigation'
 import { authClient } from '@/lib/auth-client'
 import { api } from '@/convex/_generated/api'
 import { CartDrawer } from './cart-drawer'
 
 export function SiteHeader() {
   const [isCartOpen, setIsCartOpen] = useState(false)
+  const [searchInput, setSearchInput] = useState('')
   const { data: session } = authClient.useSession()
   const cartItemCount = useQuery(api.cart.getItemCount) ?? 0
+  const router = useRouter()
+
+  const handleSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const q = searchInput.trim()
+    router.push(q ? `/products?q=${encodeURIComponent(q)}` : '/products')
+  }
 
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 lg:px-6">
-          <Link href="/" className="inline-flex items-center gap-2">
+          <Link href="/" className="inline-flex shrink-0 items-center gap-2">
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-600 to-teal-500 text-white">
               <Pill className="h-5 w-5" />
             </span>
             <span className="text-lg font-semibold tracking-tight text-slate-900">PharmaCare</span>
           </Link>
 
-          <nav className="hidden items-center gap-5 md:flex">
+          <form onSubmit={handleSearch} className="hidden flex-1 max-w-sm md:flex">
+            <div className="relative w-full">
+              <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+              <input
+                type="search"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Search medicines..."
+                className="w-full rounded-full border border-slate-200 bg-white py-2 pl-9 pr-4 text-sm text-slate-800 outline-none ring-sky-200 focus:border-sky-300 focus:ring-2"
+              />
+            </div>
+          </form>
+
+          <nav className="hidden items-center gap-5 lg:flex">
             <Link href="/" className="text-sm font-medium text-slate-700 hover:text-slate-900">
               Home
             </Link>
