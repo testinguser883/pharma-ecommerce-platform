@@ -314,9 +314,9 @@ function ProductRow({ product, onEdit, onDelete, onToggleStock, onToggleBestsell
       </td>
 
       <td className="px-4 py-3 text-slate-700">
-        <span className="font-semibold">${discountedPrice.toFixed(2)}</span>
+        <span className="font-semibold">₹{discountedPrice.toFixed(2)}</span>
         {product.discount > 0 && (
-          <span className="ml-1 text-xs text-slate-400 line-through">${product.price.toFixed(2)}</span>
+          <span className="ml-1 text-xs text-slate-400 line-through">₹{product.price.toFixed(2)}</span>
         )}
       </td>
 

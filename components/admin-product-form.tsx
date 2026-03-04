@@ -243,7 +243,7 @@ export function AdminProductForm({ initial, onSubmit, onClose }: Props) {
 
             {/* Price */}
             <div>
-              <label className={labelClass}>Price (USD) *</label>
+              <label className={labelClass}>Price (INR) *</label>
               <div className="relative">
                 <span className="pointer-events-none absolute left-3 top-2 text-sm text-slate-400">$</span>
                 <input
