@@ -26,6 +26,8 @@ const buildOrderItemsFromCart = async (ctx: MutationCtx, userId: string) => {
     productId: (typeof cart.items)[number]['productId']
     name: string
     genericName: string
+    dosage?: string
+    pillCount?: number
     quantity: number
     unitPrice: number
     unit: string
@@ -38,14 +40,17 @@ const buildOrderItemsFromCart = async (ctx: MutationCtx, userId: string) => {
     if (!product || !product.inStock) {
       continue
     }
-    const lineTotal = Number((product.price * cartItem.quantity).toFixed(2))
+    const unitPrice = cartItem.unitPrice ?? product.price
+    const lineTotal = Number((unitPrice * cartItem.quantity).toFixed(2))
     orderItems.push({
       productId: product._id,
       name: product.name,
       genericName: product.genericName,
+      dosage: cartItem.dosage,
+      pillCount: cartItem.pillCount,
       quantity: cartItem.quantity,
-      unitPrice: product.price,
-      unit: product.unit,
+      unitPrice,
+      unit: cartItem.pillCount ? `package (${cartItem.pillCount} ${product.unit}s)` : product.unit,
       lineTotal,
       image: product.image,
     })

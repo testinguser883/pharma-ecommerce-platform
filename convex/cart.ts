@@ -17,11 +17,13 @@ const getAuthenticatedUserId = async (ctx: ConvexCtx) => {
 const calculateCartTotal = async (ctx: MutationCtx, items: Array<CartItem>) => {
   let total = 0
   for (const item of items) {
-    const product = await ctx.db.get(item.productId)
-    if (!product) {
-      continue
+    if (item.unitPrice !== undefined) {
+      total += item.unitPrice * item.quantity
+    } else {
+      const product = await ctx.db.get(item.productId)
+      if (!product) continue
+      total += product.price * item.quantity
     }
-    total += product.price * item.quantity
   }
   return Number(total.toFixed(2))
 }
@@ -33,8 +35,18 @@ const getCartForUser = async (ctx: ConvexCtx, userId: string) => {
     .unique()
 }
 
-const findCartItemIndex = (items: Array<CartItem>, productId: Id<'products'>) => {
-  return items.findIndex((item) => item.productId === productId)
+const findCartItemIndex = (
+  items: Array<CartItem>,
+  productId: Id<'products'>,
+  dosage?: string,
+  pillCount?: number,
+) => {
+  return items.findIndex(
+    (item) =>
+      item.productId === productId &&
+      item.dosage === dosage &&
+      item.pillCount === pillCount,
+  )
 }
 
 export const getMyCart = query({
@@ -54,6 +66,8 @@ export const getMyCart = query({
       productId: Id<'products'>
       name: string
       genericName: string
+      dosage?: string
+      pillCount?: number
       quantity: number
       image: string
       price: number
@@ -67,15 +81,21 @@ export const getMyCart = query({
       if (!product) {
         continue
       }
+      const price = item.unitPrice ?? product.price
+      const unit = item.pillCount
+        ? `package (${item.pillCount} ${product.unit}s)`
+        : product.unit
       hydratedItems.push({
         productId: product._id,
         name: product.name,
         genericName: product.genericName,
+        dosage: item.dosage,
+        pillCount: item.pillCount,
         quantity: item.quantity,
         image: product.image,
-        price: product.price,
-        unit: product.unit,
-        lineTotal: Number((product.price * item.quantity).toFixed(2)),
+        price,
+        unit,
+        lineTotal: Number((price * item.quantity).toFixed(2)),
         inStock: product.inStock,
       })
     }
@@ -108,6 +128,9 @@ export const addItem = mutation({
   args: {
     productId: v.id('products'),
     quantity: v.optional(v.number()),
+    dosage: v.optional(v.string()),
+    pillCount: v.optional(v.number()),
+    unitPrice: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthenticatedUserId(ctx)
@@ -121,7 +144,7 @@ export const addItem = mutation({
     const cart = await getCartForUser(ctx, userId)
     const items = [...(cart?.items ?? [])]
 
-    const existingItemIdx = findCartItemIndex(items, args.productId)
+    const existingItemIdx = findCartItemIndex(items, args.productId, args.dosage, args.pillCount)
     if (existingItemIdx >= 0) {
       const existingItem = items[existingItemIdx]
       items[existingItemIdx] = {
@@ -132,6 +155,9 @@ export const addItem = mutation({
       items.push({
         productId: args.productId,
         quantity,
+        dosage: args.dosage,
+        pillCount: args.pillCount,
+        unitPrice: args.unitPrice,
       })
     }
 
@@ -157,6 +183,8 @@ export const updateItemQuantity = mutation({
   args: {
     productId: v.id('products'),
     quantity: v.number(),
+    dosage: v.optional(v.string()),
+    pillCount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthenticatedUserId(ctx)
@@ -166,7 +194,7 @@ export const updateItemQuantity = mutation({
     }
 
     const items = [...cart.items]
-    const itemIndex = findCartItemIndex(items, args.productId)
+    const itemIndex = findCartItemIndex(items, args.productId, args.dosage, args.pillCount)
     if (itemIndex < 0) {
       throw new Error('Cart item not found')
     }
@@ -189,6 +217,8 @@ export const updateItemQuantity = mutation({
 export const removeItem = mutation({
   args: {
     productId: v.id('products'),
+    dosage: v.optional(v.string()),
+    pillCount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthenticatedUserId(ctx)
@@ -197,7 +227,14 @@ export const removeItem = mutation({
       throw new Error('Cart not found')
     }
 
-    const items = cart.items.filter((item) => item.productId !== args.productId)
+    const items = cart.items.filter(
+      (item) =>
+        !(
+          item.productId === args.productId &&
+          item.dosage === args.dosage &&
+          item.pillCount === args.pillCount
+        ),
+    )
     const total = await calculateCartTotal(ctx, items)
     await ctx.db.patch(cart._id, { items, total, updatedAt: Date.now() })
     return { success: true }

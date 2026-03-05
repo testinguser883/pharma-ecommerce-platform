@@ -40,15 +40,27 @@ export const listAllProducts = query({
   },
 })
 
+const pricingMatrixArg = v.optional(v.array(v.object({
+  dosage: v.string(),
+  packages: v.array(v.object({
+    pillCount: v.number(),
+    originalPrice: v.number(),
+    price: v.number(),
+    benefits: v.optional(v.array(v.string())),
+  })),
+})))
+
 export const createProduct = mutation({
   args: {
     name: v.string(),
     genericName: v.string(),
     category: v.string(),
     description: v.string(),
+    fullDescription: v.optional(v.string()),
     price: v.number(),
     unit: v.string(),
     dosageOptions: v.array(v.string()),
+    pricingMatrix: pricingMatrixArg,
     image: v.string(),
     imageAlt: v.optional(v.string()),
     discount: v.number(),
@@ -72,9 +84,11 @@ export const updateProduct = mutation({
     genericName: v.string(),
     category: v.string(),
     description: v.string(),
+    fullDescription: v.optional(v.string()),
     price: v.number(),
     unit: v.string(),
     dosageOptions: v.array(v.string()),
+    pricingMatrix: pricingMatrixArg,
     image: v.string(),
     imageAlt: v.optional(v.string()),
     discount: v.number(),

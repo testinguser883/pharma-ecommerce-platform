@@ -56,63 +56,75 @@ export function CartPageContent() {
         ) : (
           <>
             <ul className="space-y-3">
-              {cart.items.map((item) => (
-                <li key={item.productId} className="pharma-card p-4">
-                  <div className="flex gap-3">
-                    <img src={item.image} alt={item.name} className="h-20 w-20 rounded-2xl bg-slate-50 p-2" />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-slate-900">{item.name}</p>
-                      <p className="text-xs text-slate-500">{item.genericName}</p>
-                      <p className="mt-1 text-xs font-medium text-slate-600">
-                        {formatPrice(item.price)} per {item.unit}
-                      </p>
-                      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                        <div className="inline-flex items-center rounded-full border border-slate-200">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              void updateQuantity({
-                                productId: item.productId,
-                                quantity: item.quantity - 1,
-                              })
-                            }
-                            className="p-2 text-slate-600 hover:text-slate-900"
-                            aria-label="Decrease quantity"
-                          >
-                            <Minus className="h-4 w-4" />
-                          </button>
-                          <span className="px-3 text-sm font-semibold">{item.quantity}</span>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              void updateQuantity({
-                                productId: item.productId,
-                                quantity: item.quantity + 1,
-                              })
-                            }
-                            className="p-2 text-slate-600 hover:text-slate-900"
-                            aria-label="Increase quantity"
-                          >
-                            <Plus className="h-4 w-4" />
-                          </button>
-                        </div>
+              {cart.items.map((item) => {
+                const itemKey = `${item.productId}-${item.dosage ?? ''}-${item.pillCount ?? ''}`
+                return (
+                  <li key={itemKey} className="pharma-card p-4">
+                    <div className="flex gap-3">
+                      <img src={item.image} alt={item.name} className="h-20 w-20 rounded-2xl bg-slate-50 p-2" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-slate-900">{item.name}</p>
+                        <p className="text-xs text-slate-500">{item.genericName}</p>
+                        {item.dosage && (
+                          <p className="mt-0.5 text-xs font-medium text-teal-700">
+                            {item.dosage}{item.pillCount ? ` · ${item.pillCount} ${item.unit.split(' ')[0]}s` : ''}
+                          </p>
+                        )}
+                        <p className="mt-1 text-xs font-medium text-slate-600">
+                          {formatPrice(item.price)} per {item.unit}
+                        </p>
+                        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                          <div className="inline-flex items-center rounded-full border border-slate-200">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                void updateQuantity({
+                                  productId: item.productId,
+                                  quantity: item.quantity - 1,
+                                  dosage: item.dosage,
+                                  pillCount: item.pillCount,
+                                })
+                              }
+                              className="p-2 text-slate-600 hover:text-slate-900"
+                              aria-label="Decrease quantity"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </button>
+                            <span className="px-3 text-sm font-semibold">{item.quantity}</span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                void updateQuantity({
+                                  productId: item.productId,
+                                  quantity: item.quantity + 1,
+                                  dosage: item.dosage,
+                                  pillCount: item.pillCount,
+                                })
+                              }
+                              className="p-2 text-slate-600 hover:text-slate-900"
+                              aria-label="Increase quantity"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          </div>
 
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm font-semibold text-slate-900">{formatPrice(item.lineTotal)}</span>
-                          <button
-                            type="button"
-                            onClick={() => void removeItem({ productId: item.productId })}
-                            className="text-slate-400 hover:text-red-500"
-                            aria-label="Remove item"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-semibold text-slate-900">{formatPrice(item.lineTotal)}</span>
+                            <button
+                              type="button"
+                              onClick={() => void removeItem({ productId: item.productId, dosage: item.dosage, pillCount: item.pillCount })}
+                              className="text-slate-400 hover:text-red-500"
+                              aria-label="Remove item"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </li>
-              ))}
+                  </li>
+                )
+              })}
             </ul>
 
             <button

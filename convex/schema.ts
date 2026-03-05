@@ -4,6 +4,8 @@ import { v } from 'convex/values'
 const cartItemValidator = v.object({
   productId: v.id('products'),
   dosage: v.optional(v.string()),
+  pillCount: v.optional(v.number()),
+  unitPrice: v.optional(v.number()),
   quantity: v.number(),
 })
 
@@ -12,6 +14,7 @@ const orderItemValidator = v.object({
   name: v.string(),
   genericName: v.string(),
   dosage: v.optional(v.string()),
+  pillCount: v.optional(v.number()),
   quantity: v.number(),
   unitPrice: v.number(),
   unit: v.string(),
@@ -43,6 +46,18 @@ const billingAddressValidator = v.object({
   zipCode: v.string(),
 })
 
+const packageValidator = v.object({
+  pillCount: v.number(),
+  originalPrice: v.number(),
+  price: v.number(),
+  benefits: v.optional(v.array(v.string())),
+})
+
+const dosagePricingValidator = v.object({
+  dosage: v.string(),
+  packages: v.array(packageValidator),
+})
+
 export default defineSchema({
   categories: defineTable({
     name: v.string(),
@@ -55,17 +70,18 @@ export default defineSchema({
     genericName: v.string(),
     category: v.string(),
     description: v.string(),
+    fullDescription: v.optional(v.string()),
     price: v.number(),
     unit: v.string(),
     dosageOptions: v.array(v.string()),
+    pricingMatrix: v.optional(v.array(dosagePricingValidator)),
     image: v.string(),
     imageAlt: v.optional(v.string()),
     discount: v.number(),
     inStock: v.boolean(),
     isBestseller: v.optional(v.boolean()),
-    isVisible: v.optional(v.boolean()), // undefined / true = visible, false = hidden from shop
+    isVisible: v.optional(v.boolean()),
     searchText: v.string(),
-    // SEO metadata
     seoTitle: v.optional(v.string()),
     seoDescription: v.optional(v.string()),
     seoKeywords: v.optional(v.string()),

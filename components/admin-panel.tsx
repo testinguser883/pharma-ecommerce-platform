@@ -157,14 +157,38 @@ function ProductsTab() {
   const inStockCount = products?.filter((p) => p.inStock).length ?? 0
   const hiddenCount = products?.filter((p) => p.isVisible === false).length ?? 0
 
+  const normalizeFormData = (data: ProductFormData) => {
+    const pricingMatrix = data.pricingMatrix
+      .filter((d) => d.dosage.trim() && d.packages.length > 0)
+      .map((d) => ({
+        dosage: d.dosage,
+        packages: d.packages
+          .filter((p) => p.pillCount && p.price)
+          .map((p) => ({
+            pillCount: parseFloat(p.pillCount) || 0,
+            originalPrice: parseFloat(p.originalPrice) || 0,
+            price: parseFloat(p.price) || 0,
+            benefits: p.benefits
+              ? p.benefits.split(',').map((b) => b.trim()).filter(Boolean)
+              : [],
+          })),
+      }))
+      .filter((d) => d.packages.length > 0)
+    return {
+      ...data,
+      pricingMatrix: pricingMatrix.length > 0 ? pricingMatrix : undefined,
+      fullDescription: data.fullDescription || undefined,
+    }
+  }
+
   const handleCreate = async (data: ProductFormData) => {
-    await createProduct(data)
+    await createProduct(normalizeFormData(data))
     setFormOpen(false)
   }
 
   const handleUpdate = async (data: ProductFormData) => {
     if (!editProduct) return
-    await updateProduct({ id: editProduct._id, ...data })
+    await updateProduct({ id: editProduct._id, ...normalizeFormData(data) })
     setEditProduct(null)
   }
 
