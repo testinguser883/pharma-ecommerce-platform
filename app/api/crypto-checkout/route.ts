@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
 
   const body = {
     price_amount: total,
-    price_currency: 'inr',
+    price_currency: 'INR',
     order_id: orderId,
     order_description: `Pharma order ${orderId}`,
     success_url: `${baseUrl}/orders`,

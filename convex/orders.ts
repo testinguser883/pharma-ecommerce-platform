@@ -213,7 +213,7 @@ export const createNowPaymentsInvoice = action({
       },
       body: JSON.stringify({
         price_amount: args.total,
-        price_currency: 'inr',
+        price_currency: 'INR',
         order_id: args.orderId,
         order_description: `Pharma order ${args.orderId}`,
         success_url: `${siteUrl}/orders`,
