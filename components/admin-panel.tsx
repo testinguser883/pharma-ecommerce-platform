@@ -193,7 +193,7 @@ function ProductsTab() {
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-6 w-6 animate-spin text-teal-500" />
           </div>
-        ) : products.length === 0 ? (
+        ) : !products || products.length === 0 ? (
           <div className="py-20 text-center text-slate-400">
             {debouncedSearch ? `No medicines found for "${debouncedSearch}"` : 'No medicines yet. Add your first one!'}
           </div>
