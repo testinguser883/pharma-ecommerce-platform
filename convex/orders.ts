@@ -1,6 +1,7 @@
-import { action, internalMutation, mutation, query } from './_generated/server'
+import { action, internalMutation, internalQuery, mutation, query } from './_generated/server'
 import { v } from 'convex/values'
 import type { MutationCtx, QueryCtx } from './_generated/server'
+import { internal } from './_generated/api'
 
 type ConvexCtx = QueryCtx | MutationCtx
 
@@ -119,6 +120,13 @@ export const getById = query({
   },
 })
 
+export const getOrderById = internalQuery({
+  args: { orderId: v.id('orders') },
+  handler: async (ctx, args) => {
+    return ctx.db.get(args.orderId)
+  },
+})
+
 export const createFromCart = mutation({
   args: {
     billingAddress: billingAddressArg,
@@ -145,6 +153,8 @@ export const createFromCart = mutation({
       total: 0,
       updatedAt: Date.now(),
     })
+
+    await ctx.scheduler.runAfter(0, internal.emails.sendOrderConfirmationEmails, { orderId })
 
     return { orderId }
   },
@@ -234,6 +244,9 @@ export const confirmCryptoPayment = internalMutation({
     await ctx.db.patch(args.orderId, {
       status: 'paid',
       nowPaymentsId: args.nowPaymentsId,
+    })
+    await ctx.scheduler.runAfter(0, internal.emails.sendOrderConfirmationEmails, {
+      orderId: args.orderId,
     })
   },
 })
