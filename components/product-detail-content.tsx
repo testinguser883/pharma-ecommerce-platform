@@ -232,7 +232,7 @@ export function ProductDetailContent({ productId }: { productId: string }) {
                 </p>
                 <button
                   type="button"
-                  onClick={() => void handleAddToCart()}
+                  onClick={() => void handleAddToCart(undefined, undefined, product.price * (1 - product.discount / 100))}
                   disabled={addingKey !== null || !product.inStock}
                   className="mt-5 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3 text-sm font-semibold text-white hover:from-emerald-600 hover:to-teal-600 disabled:cursor-not-allowed disabled:opacity-60"
                 >
@@ -303,7 +303,7 @@ export function ProductDetailContent({ productId }: { productId: string }) {
                 </div>
                 <button
                   type="button"
-                  onClick={() => void handleAddToCart(selectedDosage ?? undefined)}
+                  onClick={() => void handleAddToCart(selectedDosage ?? undefined, undefined, product.price * (1 - product.discount / 100))}
                   disabled={addingKey !== null || !product.inStock}
                   className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3 text-sm font-semibold text-white hover:from-emerald-600 hover:to-teal-600 disabled:cursor-not-allowed disabled:opacity-60"
                 >

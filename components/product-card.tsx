@@ -44,7 +44,7 @@ export function ProductCard({ product }: { product: Doc<'products'> }) {
     }
     try {
       setIsSubmitting(true)
-      await addItem({ productId: product._id, quantity: 1 })
+      await addItem({ productId: product._id, quantity: 1, unitPrice: fromPrice.price })
     } finally {
       setIsSubmitting(false)
     }

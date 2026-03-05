@@ -107,7 +107,7 @@ export function AdminProductForm({ initial, onSubmit, onClose }: Props) {
   const [uploadError, setUploadError] = useState('')
   const [previewSrc, setPreviewSrc] = useState(initial?.image ?? '')
   const [dragOver, setDragOver] = useState(false)
-  const [matrixOpen, setMatrixOpen] = useState(false)
+  const [matrixOpen, setMatrixOpen] = useState(!!(initial?.pricingMatrix && initial.pricingMatrix.length > 0))
   const [newDosageForMatrix, setNewDosageForMatrix] = useState('')
 
   const nameRef = useRef<HTMLInputElement>(null)
@@ -392,6 +392,28 @@ export function AdminProductForm({ initial, onSubmit, onClose }: Props) {
                   <p className="text-xs text-slate-500">
                     Add per-dosage, per-package pricing shown on the product detail page. Each dosage gets its own list of packages (10 pills, 30 pills, etc.) with original and discounted prices.
                   </p>
+
+                  {/* Sync from dosage options */}
+                  {form.dosageOptions.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-2 rounded-lg bg-sky-50 px-3 py-2">
+                      <span className="text-xs text-sky-700">Dosage options: {form.dosageOptions.join(', ')}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const existing = new Set(form.pricingMatrix.map((m) => m.dosage))
+                          const newEntries = form.dosageOptions
+                            .filter((d) => !existing.has(d))
+                            .map((d) => ({ dosage: d, packages: [] }))
+                          if (newEntries.length > 0) {
+                            set('pricingMatrix', [...form.pricingMatrix, ...newEntries])
+                          }
+                        }}
+                        className="ml-auto inline-flex items-center gap-1 rounded-full bg-sky-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-sky-700"
+                      >
+                        <Plus className="h-3 w-3" />Sync dosages
+                      </button>
+                    </div>
+                  )}
 
                   {/* Add new dosage to matrix */}
                   <div className="flex gap-2">
