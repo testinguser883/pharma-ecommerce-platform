@@ -1,6 +1,6 @@
 'use client'
 
-import { FormEvent, useState } from 'react'
+import { FormEvent, useEffect, useState } from 'react'
 import { useAction, useMutation, useQuery } from 'convex/react'
 import { api } from '@/convex/_generated/api'
 import { formatPrice } from '@/lib/utils'
@@ -230,6 +230,14 @@ export function CheckoutPageContent() {
   const [shippingSameAsBilling, setShippingSameAsBilling] = useState(false)
   const [isCryptoSubmitting, setIsCryptoSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [usdRate, setUsdRate] = useState<number | null>(null)
+
+  useEffect(() => {
+    fetch('https://api.frankfurter.app/latest?from=INR&to=USD')
+      .then((r) => r.json())
+      .then((d: { rates: { USD: number } }) => setUsdRate(d.rates.USD))
+      .catch(() => setUsdRate(1 / 83))
+  }, [])
 
   const setBillingField = <K extends keyof BillingForm>(key: K, value: BillingForm[K]) =>
     setBilling((prev) => {
@@ -688,7 +696,14 @@ export function CheckoutPageContent() {
         <div className="mt-3 border-t border-slate-200 pt-3 text-sm">
           <div className="flex items-center justify-between">
             <span className="font-semibold text-slate-900">Total</span>
-            <span className="text-lg font-bold text-slate-900">{formatPrice(cart?.total ?? 0)}</span>
+            <div className="text-right">
+              <span className="text-lg font-bold text-slate-900">{formatPrice(cart?.total ?? 0)}</span>
+              {usdRate !== null && (
+                <p className="text-xs text-slate-500 mt-0.5">
+                  ≈ ${((cart?.total ?? 0) * usdRate).toFixed(2)} USD
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </aside>
