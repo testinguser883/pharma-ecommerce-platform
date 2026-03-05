@@ -1,4 +1,5 @@
 import { convexBetterAuthNextJs } from '@convex-dev/better-auth/nextjs'
+import { cookies, headers } from 'next/headers'
 
 type AuthBridge = ReturnType<typeof convexBetterAuthNextJs>
 type AuthMethod = 'preloadAuthQuery' | 'fetchAuthQuery' | 'fetchAuthMutation' | 'fetchAuthAction'
@@ -74,7 +75,47 @@ export const getToken: AuthBridge['getToken'] = async () => {
 
 export const isAuthenticated: AuthBridge['isAuthenticated'] = async () => {
   const token = await getToken()
-  return !!token
+  if (token) {
+    return true
+  }
+  return await hasSessionFallback()
+}
+
+async function hasSessionFallback() {
+  try {
+    const headerStore = await headers()
+    const proto = headerStore.get('x-forwarded-proto') ?? 'https'
+    const host = headerStore.get('x-forwarded-host') ?? headerStore.get('host')
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? (host ? `${proto}://${host}` : null)
+    if (!appUrl) {
+      return false
+    }
+
+    const cookieStore = await cookies()
+    const cookieHeader = cookieStore
+      .getAll()
+      .map(({ name, value }) => `${name}=${encodeURIComponent(value)}`)
+      .join('; ')
+
+    const response = await fetch(`${appUrl}/api/auth/get-session`, {
+      headers: cookieHeader ? { cookie: cookieHeader } : undefined,
+      cache: 'no-store',
+    })
+
+    if (!response.ok) {
+      return false
+    }
+
+    const session = (await response.json()) as {
+      session?: { token?: string | null } | null
+      user?: { id?: string | null } | null
+    }
+
+    return Boolean(session?.session?.token && session?.user?.id)
+  } catch (error) {
+    logAuthServerWarning('Session fallback check failed.', error)
+    return false
+  }
 }
 
 async function callAuthMethod(method: AuthMethod, args: unknown[]) {
