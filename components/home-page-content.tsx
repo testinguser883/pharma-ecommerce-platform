@@ -5,16 +5,15 @@ import { useQuery } from 'convex/react'
 import { api } from '@/convex/_generated/api'
 import { CATEGORY_LIST } from '@/lib/category-list'
 import { CategorySidebar } from './category-sidebar'
-import { HeroSection } from './hero-section'
+import { ImageSlider } from './image-slider'
 import { ProductGrid } from './product-grid'
 
 export function HomePageContent() {
-  const [selectedCategory, setSelectedCategory] = useState<string>('Bestsellers')
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined)
   const fetchedCategories = useQuery(api.categories.list)
   const products = useQuery(api.products.list, {
-    category: selectedCategory === 'Bestsellers' ? undefined : selectedCategory,
-    bestsellerOnly: selectedCategory === 'Bestsellers',
-    limit: 12,
+    category: selectedCategory,
+    limit: 24,
   })
 
   const categories =
@@ -27,14 +26,14 @@ export function HomePageContent() {
         <CategorySidebar
           categories={categories}
           selectedCategory={selectedCategory}
-          onSelectCategory={setSelectedCategory}
+          onSelectCategory={(cat) => setSelectedCategory(cat === selectedCategory ? undefined : cat)}
         />
       </div>
       <div className="order-1 space-y-4 lg:order-2">
-        <HeroSection />
+        <ImageSlider />
         <section className="space-y-3">
           <h2 className="text-3xl font-bold text-slate-900 md:text-2xl">
-            {selectedCategory === 'Bestsellers' ? 'Bestsellers' : selectedCategory}
+            {selectedCategory ?? 'All Products'}
           </h2>
           <ProductGrid products={products} />
         </section>

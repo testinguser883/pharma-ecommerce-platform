@@ -14,7 +14,7 @@ export function CategorySidebar({
   onSelectCategory,
 }: {
   categories: Array<CategoryLike>
-  selectedCategory: string
+  selectedCategory: string | undefined
   onSelectCategory: (category: string) => void
 }) {
   return (

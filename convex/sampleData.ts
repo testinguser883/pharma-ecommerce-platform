@@ -1,5 +1,4 @@
 export const CATEGORY_NAMES = [
-  'Bestsellers',
   'COVID-19',
   'Alcoholism',
   'Allergy',
@@ -36,7 +35,6 @@ export type SeedProduct = {
   image: string
   discount: number
   inStock: boolean
-  isBestseller: boolean
 }
 
 export const SEED_PRODUCTS: Array<SeedProduct> = [
@@ -52,7 +50,6 @@ export const SEED_PRODUCTS: Array<SeedProduct> = [
     image: '/products/viagra.svg',
     discount: 33,
     inStock: true,
-    isBestseller: true,
   },
   {
     name: 'Cialis',
@@ -65,7 +62,6 @@ export const SEED_PRODUCTS: Array<SeedProduct> = [
     image: '/products/cialis.svg',
     discount: 33,
     inStock: true,
-    isBestseller: true,
   },
   {
     name: 'Kamagra Oral Jelly',
@@ -78,7 +74,6 @@ export const SEED_PRODUCTS: Array<SeedProduct> = [
     image: '/products/kamagra-jelly.svg',
     discount: 33,
     inStock: true,
-    isBestseller: true,
   },
   {
     name: 'Kamagra',
@@ -91,7 +86,6 @@ export const SEED_PRODUCTS: Array<SeedProduct> = [
     image: '/products/kamagra.svg',
     discount: 33,
     inStock: true,
-    isBestseller: true,
   },
   {
     name: 'Cetirizine',
@@ -104,7 +98,6 @@ export const SEED_PRODUCTS: Array<SeedProduct> = [
     image: '/products/cetirizine.svg',
     discount: 20,
     inStock: true,
-    isBestseller: false,
   },
   {
     name: 'Amlodipine',
@@ -117,7 +110,6 @@ export const SEED_PRODUCTS: Array<SeedProduct> = [
     image: '/products/amlodipine.svg',
     discount: 20,
     inStock: true,
-    isBestseller: false,
   },
   {
     name: 'Metformin',
@@ -130,7 +122,6 @@ export const SEED_PRODUCTS: Array<SeedProduct> = [
     image: '/products/metformin.svg',
     discount: 25,
     inStock: true,
-    isBestseller: false,
   },
   {
     name: 'Omeprazole',
@@ -143,7 +134,6 @@ export const SEED_PRODUCTS: Array<SeedProduct> = [
     image: '/products/omeprazole.svg',
     discount: 20,
     inStock: true,
-    isBestseller: false,
   },
   {
     name: 'Moxifloxacin Eye Drop',
@@ -156,6 +146,5 @@ export const SEED_PRODUCTS: Array<SeedProduct> = [
     image: '/products/eye-drop.svg',
     discount: 15,
     inStock: true,
-    isBestseller: false,
   },
 ]

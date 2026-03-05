@@ -6,14 +6,12 @@ export const list = query({
   args: {
     category: v.optional(v.string()),
     search: v.optional(v.string()),
-    bestsellerOnly: v.optional(v.boolean()),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const limit = Math.max(1, Math.min(args.limit ?? 24, 100))
     const search = args.search?.trim()
     const category = args.category?.trim()
-    const onlyBestsellers = args.bestsellerOnly ?? false
 
     let products: Array<Doc<'products'>> = []
 
@@ -22,11 +20,8 @@ export const list = query({
         .query('products')
         .withSearchIndex('search_products', (q) => {
           let searchQuery = q.search('searchText', search)
-          if (category && category !== 'Bestsellers') {
+          if (category) {
             searchQuery = searchQuery.eq('category', category)
-          }
-          if (onlyBestsellers || category === 'Bestsellers') {
-            searchQuery = searchQuery.eq('isBestseller', true)
           }
           return searchQuery
         })
@@ -34,26 +29,10 @@ export const list = query({
       return products.filter((p) => p.isVisible !== false)
     }
 
-    if (category && category !== 'Bestsellers' && onlyBestsellers) {
-      products = await ctx.db
-        .query('products')
-        .withIndex('by_category_and_is_bestseller_and_name', (q) => q.eq('category', category).eq('isBestseller', true))
-        .take(limit)
-      return products.filter((p) => p.isVisible !== false)
-    }
-
-    if (category && category !== 'Bestsellers') {
+    if (category) {
       products = await ctx.db
         .query('products')
         .withIndex('by_category_and_name', (q) => q.eq('category', category))
-        .take(limit)
-      return products.filter((p) => p.isVisible !== false)
-    }
-
-    if (onlyBestsellers || category === 'Bestsellers') {
-      products = await ctx.db
-        .query('products')
-        .withIndex('by_is_bestseller_and_name', (q) => q.eq('isBestseller', true))
         .take(limit)
       return products.filter((p) => p.isVisible !== false)
     }

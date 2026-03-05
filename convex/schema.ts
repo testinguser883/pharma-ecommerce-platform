@@ -19,6 +19,30 @@ const orderItemValidator = v.object({
   image: v.string(),
 })
 
+const addressValidator = v.object({
+  firstName: v.string(),
+  lastName: v.string(),
+  streetAddress: v.string(),
+  city: v.string(),
+  country: v.string(),
+  state: v.string(),
+  zipCode: v.string(),
+})
+
+const billingAddressValidator = v.object({
+  isNewCustomer: v.boolean(),
+  mobilePhone: v.string(),
+  email: v.string(),
+  dateOfBirth: v.optional(v.string()),
+  firstName: v.string(),
+  lastName: v.string(),
+  streetAddress: v.string(),
+  city: v.string(),
+  country: v.string(),
+  state: v.string(),
+  zipCode: v.string(),
+})
+
 export default defineSchema({
   categories: defineTable({
     name: v.string(),
@@ -35,18 +59,21 @@ export default defineSchema({
     unit: v.string(),
     dosageOptions: v.array(v.string()),
     image: v.string(),
+    imageAlt: v.optional(v.string()),
     discount: v.number(),
     inStock: v.boolean(),
-    isBestseller: v.boolean(),
+    isBestseller: v.optional(v.boolean()),
     isVisible: v.optional(v.boolean()), // undefined / true = visible, false = hidden from shop
     searchText: v.string(),
+    // SEO metadata
+    seoTitle: v.optional(v.string()),
+    seoDescription: v.optional(v.string()),
+    seoKeywords: v.optional(v.string()),
   })
     .index('by_category_and_name', ['category', 'name'])
-    .index('by_category_and_is_bestseller_and_name', ['category', 'isBestseller', 'name'])
-    .index('by_is_bestseller_and_name', ['isBestseller', 'name'])
     .searchIndex('search_products', {
       searchField: 'searchText',
-      filterFields: ['category', 'isBestseller', 'inStock'],
+      filterFields: ['category', 'inStock'],
     }),
 
   carts: defineTable({
@@ -72,5 +99,19 @@ export default defineSchema({
     createdAt: v.number(),
     paymentMethod: v.optional(v.union(v.literal('standard'), v.literal('crypto'))),
     nowPaymentsId: v.optional(v.string()),
+    billingAddress: v.optional(billingAddressValidator),
+    shippingAddress: v.optional(
+      v.union(
+        v.object({ sameAsBilling: v.literal(true) }),
+        v.object({ sameAsBilling: v.literal(false), ...addressValidator.fields }),
+      ),
+    ),
   }).index('by_user_id_and_created_at', ['userId', 'createdAt']),
+
+  sliderImages: defineTable({
+    url: v.string(),
+    altText: v.optional(v.string()),
+    sortOrder: v.number(),
+    isActive: v.boolean(),
+  }),
 })

@@ -15,7 +15,7 @@ export function ProductsPageContent() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  const selectedCategory = searchParams.get('category') ?? 'Bestsellers'
+  const selectedCategory = searchParams.get('category') ?? ''
   const searchTerm = searchParams.get('q') ?? ''
   const [searchInput, setSearchInput] = useState(searchTerm)
 
@@ -25,9 +25,8 @@ export function ProductsPageContent() {
 
   const fetchedCategories = useQuery(api.categories.list)
   const products = useQuery(api.products.list, {
-    category: selectedCategory === 'Bestsellers' ? undefined : selectedCategory,
+    category: selectedCategory || undefined,
     search: searchTerm || undefined,
-    bestsellerOnly: selectedCategory === 'Bestsellers',
     limit: 40,
   })
 
@@ -52,10 +51,7 @@ export function ProductsPageContent() {
   }
 
   const headingText = useMemo(() => {
-    if (selectedCategory === 'Bestsellers') {
-      return 'Bestsellers'
-    }
-    return selectedCategory
+    return selectedCategory || 'All Products'
   }, [selectedCategory])
 
   const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {

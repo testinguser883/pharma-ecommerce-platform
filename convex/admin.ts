@@ -50,9 +50,12 @@ export const createProduct = mutation({
     unit: v.string(),
     dosageOptions: v.array(v.string()),
     image: v.string(),
+    imageAlt: v.optional(v.string()),
     discount: v.number(),
     inStock: v.boolean(),
-    isBestseller: v.boolean(),
+    seoTitle: v.optional(v.string()),
+    seoDescription: v.optional(v.string()),
+    seoKeywords: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const admin = await getAdminUser(ctx)
@@ -73,9 +76,12 @@ export const updateProduct = mutation({
     unit: v.string(),
     dosageOptions: v.array(v.string()),
     image: v.string(),
+    imageAlt: v.optional(v.string()),
     discount: v.number(),
     inStock: v.boolean(),
-    isBestseller: v.boolean(),
+    seoTitle: v.optional(v.string()),
+    seoDescription: v.optional(v.string()),
+    seoKeywords: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const admin = await getAdminUser(ctx)
@@ -101,15 +107,6 @@ export const toggleStock = mutation({
     const admin = await getAdminUser(ctx)
     if (!admin) throw new Error('Not authorized')
     await ctx.db.patch(args.id, { inStock: args.inStock })
-  },
-})
-
-export const toggleBestseller = mutation({
-  args: { id: v.id('products'), isBestseller: v.boolean() },
-  handler: async (ctx, args) => {
-    const admin = await getAdminUser(ctx)
-    if (!admin) throw new Error('Not authorized')
-    await ctx.db.patch(args.id, { isBestseller: args.isBestseller })
   },
 })
 
@@ -158,6 +155,108 @@ export const deleteCategory = mutation({
     const admin = await getAdminUser(ctx)
     if (!admin) throw new Error('Not authorized')
     await ctx.db.delete(args.id)
+  },
+})
+
+// ── Orders (admin) ────────────────────────────────────────────────────────────
+
+export const listAllOrders = query({
+  args: {},
+  handler: async (ctx) => {
+    const admin = await getAdminUser(ctx)
+    if (!admin) return null
+    return ctx.db.query('orders').order('desc').collect()
+  },
+})
+
+export const updateOrderStatus = mutation({
+  args: {
+    id: v.id('orders'),
+    status: v.union(
+      v.literal('pending_payment'),
+      v.literal('pending'),
+      v.literal('paid'),
+      v.literal('processing'),
+      v.literal('shipped'),
+      v.literal('delivered'),
+      v.literal('cancelled'),
+    ),
+  },
+  handler: async (ctx, args) => {
+    const admin = await getAdminUser(ctx)
+    if (!admin) throw new Error('Not authorized')
+    await ctx.db.patch(args.id, { status: args.status })
+  },
+})
+
+// ── Slider images ─────────────────────────────────────────────────────────────
+
+export const listSliderImages = query({
+  args: {},
+  handler: async (ctx) => {
+    return ctx.db.query('sliderImages').order('asc').collect()
+  },
+})
+
+export const listActiveSliderImages = query({
+  args: {},
+  handler: async (ctx) => {
+    const images = await ctx.db.query('sliderImages').collect()
+    return images.filter((img) => img.isActive).sort((a, b) => a.sortOrder - b.sortOrder)
+  },
+})
+
+export const addSliderImage = mutation({
+  args: {
+    url: v.string(),
+    altText: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const admin = await getAdminUser(ctx)
+    if (!admin) throw new Error('Not authorized')
+    const existing = await ctx.db.query('sliderImages').collect()
+    if (existing.length >= 5) throw new Error('Maximum 5 slider images allowed')
+    const maxOrder = existing.reduce((m, img) => Math.max(m, img.sortOrder), 0)
+    return ctx.db.insert('sliderImages', {
+      url: args.url,
+      altText: args.altText,
+      sortOrder: maxOrder + 1,
+      isActive: true,
+    })
+  },
+})
+
+export const updateSliderImage = mutation({
+  args: {
+    id: v.id('sliderImages'),
+    altText: v.optional(v.string()),
+    isActive: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const admin = await getAdminUser(ctx)
+    if (!admin) throw new Error('Not authorized')
+    const { id, ...fields } = args
+    await ctx.db.patch(id, fields)
+  },
+})
+
+export const deleteSliderImage = mutation({
+  args: { id: v.id('sliderImages') },
+  handler: async (ctx, args) => {
+    const admin = await getAdminUser(ctx)
+    if (!admin) throw new Error('Not authorized')
+    await ctx.db.delete(args.id)
+  },
+})
+
+export const reorderSliderImages = mutation({
+  args: { orderedIds: v.array(v.id('sliderImages')) },
+  handler: async (ctx, args) => {
+    const admin = await getAdminUser(ctx)
+    if (!admin) throw new Error('Not authorized')
+    for (let i = 0; i < args.orderedIds.length; i++) {
+      await ctx.db.patch(args.orderedIds[i], { sortOrder: i + 1 })
+    }
   },
 })
 

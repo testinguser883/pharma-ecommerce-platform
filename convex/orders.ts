@@ -58,6 +58,36 @@ const buildOrderItemsFromCart = async (ctx: MutationCtx, userId: string) => {
   return { cart, orderItems }
 }
 
+const billingAddressArg = v.optional(v.object({
+  isNewCustomer: v.boolean(),
+  mobilePhone: v.string(),
+  email: v.string(),
+  dateOfBirth: v.optional(v.string()),
+  firstName: v.string(),
+  lastName: v.string(),
+  streetAddress: v.string(),
+  city: v.string(),
+  country: v.string(),
+  state: v.string(),
+  zipCode: v.string(),
+}))
+
+const shippingAddressArg = v.optional(
+  v.union(
+    v.object({ sameAsBilling: v.literal(true) }),
+    v.object({
+      sameAsBilling: v.literal(false),
+      firstName: v.string(),
+      lastName: v.string(),
+      streetAddress: v.string(),
+      city: v.string(),
+      country: v.string(),
+      state: v.string(),
+      zipCode: v.string(),
+    }),
+  ),
+)
+
 export const listMyOrders = query({
   args: {},
   handler: async (ctx) => {
@@ -85,8 +115,11 @@ export const getById = query({
 })
 
 export const createFromCart = mutation({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    billingAddress: billingAddressArg,
+    shippingAddress: shippingAddressArg,
+  },
+  handler: async (ctx, args) => {
     const userId = await getAuthenticatedUserId(ctx)
     const { cart, orderItems } = await buildOrderItemsFromCart(ctx, userId)
     const total = Number(orderItems.reduce((sum, item) => sum + item.lineTotal, 0).toFixed(2))
@@ -98,6 +131,8 @@ export const createFromCart = mutation({
       paymentMethod: 'standard',
       total,
       createdAt: Date.now(),
+      billingAddress: args.billingAddress,
+      shippingAddress: args.shippingAddress,
     })
 
     await ctx.db.patch(cart._id, {
@@ -111,8 +146,11 @@ export const createFromCart = mutation({
 })
 
 export const createPendingCryptoOrder = mutation({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    billingAddress: billingAddressArg,
+    shippingAddress: shippingAddressArg,
+  },
+  handler: async (ctx, args) => {
     const userId = await getAuthenticatedUserId(ctx)
     const { cart, orderItems } = await buildOrderItemsFromCart(ctx, userId)
     const total = Number(orderItems.reduce((sum, item) => sum + item.lineTotal, 0).toFixed(2))
@@ -124,6 +162,8 @@ export const createPendingCryptoOrder = mutation({
       paymentMethod: 'crypto',
       total,
       createdAt: Date.now(),
+      billingAddress: args.billingAddress,
+      shippingAddress: args.shippingAddress,
     })
 
     await ctx.db.patch(cart._id, {

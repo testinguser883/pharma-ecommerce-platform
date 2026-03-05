@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
 import { ChevronLeft, ShoppingCart } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -20,6 +20,30 @@ export function ProductDetailContent({ productId }: { productId: string }) {
   const relatedProducts = useQuery(api.products.related, productId ? { productId: productId as Id<'products'>, limit: 4 } : 'skip')
 
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Inject SEO metadata into the document head
+  useEffect(() => {
+    if (!product) return
+    const title = product.seoTitle || `${product.name} (${product.genericName})`
+    document.title = title
+
+    const setMeta = (name: string, content: string) => {
+      let el = document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`)
+      if (!el) {
+        el = document.createElement('meta')
+        el.setAttribute('name', name)
+        document.head.appendChild(el)
+      }
+      el.setAttribute('content', content)
+    }
+
+    if (product.seoDescription) setMeta('description', product.seoDescription)
+    if (product.seoKeywords) setMeta('keywords', product.seoKeywords)
+
+    return () => {
+      document.title = 'PharmaCare'
+    }
+  }, [product])
 
   const handleAddToCart = async () => {
     if (!product) {
@@ -75,7 +99,7 @@ export function ProductDetailContent({ productId }: { productId: string }) {
       <section className="pharma-card p-5 md:p-6">
         <div className="grid gap-6 md:grid-cols-[320px_1fr]">
           <div className="rounded-3xl bg-slate-50 p-6">
-            <img src={product.image} alt={product.name} className="mx-auto h-56 w-56 object-contain" />
+            <img src={product.image} alt={product.imageAlt ?? product.name} className="mx-auto h-56 w-56 object-contain" />
           </div>
           <div>
             <div className="flex flex-wrap items-center gap-2">

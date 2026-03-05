@@ -1,5 +1,4 @@
 export const CATEGORY_LIST = [
-  'Bestsellers',
   'COVID-19',
   'Alcoholism',
   'Allergy',

@@ -6,8 +6,6 @@ import { useQuery, useMutation } from 'convex/react'
 import {
   ArrowLeft,
   Package,
-  PackageCheck,
-  Star,
   Plus,
   Pencil,
   Trash2,
@@ -19,12 +17,32 @@ import {
   Tag,
   Check,
   X,
+  ClipboardList,
+  Image as ImageIcon,
+  Upload,
+  ChevronDown,
+  PackageCheck,
 } from 'lucide-react'
 import { api } from '@/convex/_generated/api'
 import type { Doc } from '@/convex/_generated/dataModel'
 import { AdminProductForm, type ProductFormData } from './admin-product-form'
+import { formatPrice } from '@/lib/utils'
 
-type Tab = 'products' | 'categories'
+type Tab = 'products' | 'orders' | 'slider' | 'categories'
+
+const ORDER_STATUSES = [
+  { value: 'pending_payment', label: 'Pending Payment', color: 'bg-yellow-100 text-yellow-800' },
+  { value: 'pending', label: 'Pending', color: 'bg-slate-100 text-slate-700' },
+  { value: 'paid', label: 'Paid', color: 'bg-blue-100 text-blue-800' },
+  { value: 'processing', label: 'Processing', color: 'bg-orange-100 text-orange-800' },
+  { value: 'shipped', label: 'Shipped', color: 'bg-purple-100 text-purple-700' },
+  { value: 'delivered', label: 'Delivered', color: 'bg-green-100 text-green-800' },
+  { value: 'cancelled', label: 'Cancelled', color: 'bg-red-100 text-red-700' },
+] as const
+
+function getStatusDisplay(status: string) {
+  return ORDER_STATUSES.find((s) => s.value === status) ?? { label: status, color: 'bg-slate-100 text-slate-700' }
+}
 
 export function AdminPanel() {
   const isAdmin = useQuery(api.admin.isAdmin)
@@ -57,9 +75,8 @@ export function AdminPanel() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Top bar */}
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 lg:px-6">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 lg:px-6">
           <div className="flex items-center gap-3">
             <Link
               href="/"
@@ -71,30 +88,34 @@ export function AdminPanel() {
             <h1 className="text-xl font-bold text-slate-900">Admin Panel</h1>
           </div>
 
-          {/* Tab switcher */}
-          <div className="flex gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
-            <button
-              type="button"
-              onClick={() => setTab('products')}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold transition-colors ${tab === 'products' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              <Package className="h-4 w-4" />
-              Medicines
-            </button>
-            <button
-              type="button"
-              onClick={() => setTab('categories')}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold transition-colors ${tab === 'categories' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              <Tag className="h-4 w-4" />
-              Categories
-            </button>
+          <div className="flex flex-wrap gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
+            {(
+              [
+                { id: 'products', icon: Package, label: 'Medicines' },
+                { id: 'orders', icon: ClipboardList, label: 'Orders' },
+                { id: 'slider', icon: ImageIcon, label: 'Slider' },
+                { id: 'categories', icon: Tag, label: 'Categories' },
+              ] as const
+            ).map(({ id, icon: Icon, label }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setTab(id)}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold transition-colors ${tab === id ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </button>
+            ))}
           </div>
         </div>
       </header>
 
       <div className="mx-auto max-w-7xl px-4 py-6 lg:px-6">
-        {tab === 'products' ? <ProductsTab /> : <CategoriesTab />}
+        {tab === 'products' && <ProductsTab />}
+        {tab === 'orders' && <OrdersTab />}
+        {tab === 'slider' && <SliderTab />}
+        {tab === 'categories' && <CategoriesTab />}
       </div>
     </div>
   )
@@ -115,7 +136,6 @@ function ProductsTab() {
   const updateProduct = useMutation(api.admin.updateProduct)
   const deleteProduct = useMutation(api.admin.deleteProduct)
   const toggleStock = useMutation(api.admin.toggleStock)
-  const toggleBestseller = useMutation(api.admin.toggleBestseller)
   const toggleVisibility = useMutation(api.admin.toggleVisibility)
 
   const handleSearchChange = (value: string) => {
@@ -129,7 +149,6 @@ function ProductsTab() {
 
   const totalProducts = products?.length ?? 0
   const inStockCount = products?.filter((p) => p.inStock).length ?? 0
-  const bestsellerCount = products?.filter((p) => p.isBestseller).length ?? 0
   const hiddenCount = products?.filter((p) => p.isVisible === false).length ?? 0
 
   const handleCreate = async (data: ProductFormData) => {
@@ -156,15 +175,12 @@ function ProductsTab() {
 
   return (
     <>
-      {/* Stats */}
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mb-6 grid grid-cols-3 gap-3">
         <StatCard icon={<Package className="h-7 w-7 text-sky-500" />} value={totalProducts} label="Total" />
         <StatCard icon={<PackageCheck className="h-7 w-7 text-teal-500" />} value={inStockCount} label="In Stock" />
-        <StatCard icon={<Star className="h-7 w-7 text-amber-400" />} value={bestsellerCount} label="Bestsellers" />
         <StatCard icon={<EyeOff className="h-7 w-7 text-slate-400" />} value={hiddenCount} label="Hidden" />
       </div>
 
-      {/* Search + Add */}
       <div className="mb-4 flex items-center gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
@@ -187,7 +203,6 @@ function ProductsTab() {
         </button>
       </div>
 
-      {/* Table */}
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         {products === undefined ? (
           <div className="flex items-center justify-center py-20">
@@ -207,7 +222,6 @@ function ProductsTab() {
                   <th className="px-4 py-3">Price</th>
                   <th className="px-4 py-3 text-center">Visible</th>
                   <th className="px-4 py-3 text-center">In Stock</th>
-                  <th className="px-4 py-3 text-center">Bestseller</th>
                   <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
               </thead>
@@ -219,7 +233,6 @@ function ProductsTab() {
                     onEdit={() => setEditProduct(p)}
                     onDelete={() => setDeleteTarget(p)}
                     onToggleStock={() => void toggleStock({ id: p._id, inStock: !p.inStock })}
-                    onToggleBestseller={() => void toggleBestseller({ id: p._id, isBestseller: !p.isBestseller })}
                     onToggleVisibility={() => void toggleVisibility({ id: p._id, isVisible: p.isVisible === false })}
                   />
                 ))}
@@ -242,26 +255,18 @@ function ProductsTab() {
             </div>
             <h3 className="mb-1 text-lg font-bold text-slate-900">Delete Medicine?</h3>
             <p className="mb-2 text-sm text-slate-500">
-              <span className="font-semibold text-slate-700">{deleteTarget.name}</span> will be permanently removed. This
-              cannot be undone.
+              <span className="font-semibold text-slate-700">{deleteTarget.name}</span> will be permanently removed.
             </p>
             <p className="mb-6 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
               Tip: use the <strong>Visible</strong> toggle to hide a medicine without deleting it.
             </p>
             <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setDeleteTarget(null)}
-                className="flex-1 rounded-full border border-slate-300 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-              >
+              <button type="button" onClick={() => setDeleteTarget(null)}
+                className="flex-1 rounded-full border border-slate-300 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
                 Cancel
               </button>
-              <button
-                type="button"
-                onClick={() => void handleDelete()}
-                disabled={deleting}
-                className="flex-1 rounded-full bg-red-600 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
-              >
+              <button type="button" onClick={() => void handleDelete()} disabled={deleting}
+                className="flex-1 rounded-full bg-red-600 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60">
                 {deleting ? 'Deleting...' : 'Yes, Delete'}
               </button>
             </div>
@@ -277,11 +282,10 @@ type RowProps = {
   onEdit: () => void
   onDelete: () => void
   onToggleStock: () => void
-  onToggleBestseller: () => void
   onToggleVisibility: () => void
 }
 
-function ProductRow({ product, onEdit, onDelete, onToggleStock, onToggleBestseller, onToggleVisibility }: RowProps) {
+function ProductRow({ product, onEdit, onDelete, onToggleStock, onToggleVisibility }: RowProps) {
   const visible = product.isVisible !== false
   const discountedPrice = product.price * (1 - product.discount / 100)
 
@@ -290,11 +294,8 @@ function ProductRow({ product, onEdit, onDelete, onToggleStock, onToggleBestsell
       <td className="max-w-[220px] px-4 py-3">
         <div className="flex items-center gap-3">
           {product.image ? (
-            <img
-              src={product.image}
-              alt={product.name}
-              className="h-10 w-10 shrink-0 rounded-lg border border-slate-100 object-cover"
-            />
+            <img src={product.image} alt={product.imageAlt ?? product.name}
+              className="h-10 w-10 shrink-0 rounded-lg border border-slate-100 object-cover" />
           ) : (
             <div className="h-10 w-10 shrink-0 rounded-lg bg-slate-100" />
           )}
@@ -306,82 +307,353 @@ function ProductRow({ product, onEdit, onDelete, onToggleStock, onToggleBestsell
           </div>
         </div>
       </td>
-
       <td className="px-4 py-3">
         <span className="inline-block rounded-full bg-sky-50 px-2.5 py-0.5 text-xs font-medium text-sky-700">
           {product.category}
         </span>
       </td>
-
       <td className="px-4 py-3 text-slate-700">
         <span className="font-semibold">₹{discountedPrice.toFixed(2)}</span>
         {product.discount > 0 && (
           <span className="ml-1 text-xs text-slate-400 line-through">₹{product.price.toFixed(2)}</span>
         )}
       </td>
-
-      {/* Visible toggle — eye icon */}
       <td className="px-4 py-3 text-center">
-        <button
-          type="button"
-          onClick={onToggleVisibility}
+        <button type="button" onClick={onToggleVisibility}
           title={visible ? 'Hide from shop' : 'Show on shop'}
-          className={`inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors ${visible ? 'text-teal-600 hover:bg-teal-50' : 'text-slate-300 hover:bg-slate-100 hover:text-slate-500'}`}
-        >
+          className={`inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors ${visible ? 'text-teal-600 hover:bg-teal-50' : 'text-slate-300 hover:bg-slate-100 hover:text-slate-500'}`}>
           {visible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
         </button>
       </td>
-
-      {/* In Stock toggle */}
       <td className="px-4 py-3 text-center">
-        <button
-          type="button"
-          onClick={onToggleStock}
+        <button type="button" onClick={onToggleStock}
           title={product.inStock ? 'Mark as out of stock' : 'Mark as in stock'}
           className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors focus:outline-none ${product.inStock ? 'bg-teal-500' : 'bg-slate-200'}`}
-          role="switch"
-          aria-checked={product.inStock}
-        >
+          role="switch" aria-checked={product.inStock}>
           <span className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${product.inStock ? 'translate-x-5' : 'translate-x-0'}`} />
         </button>
       </td>
-
-      {/* Bestseller toggle */}
-      <td className="px-4 py-3 text-center">
-        <button
-          type="button"
-          onClick={onToggleBestseller}
-          title={product.isBestseller ? 'Remove from bestsellers' : 'Mark as bestseller'}
-          className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors focus:outline-none ${product.isBestseller ? 'bg-amber-400' : 'bg-slate-200'}`}
-          role="switch"
-          aria-checked={product.isBestseller}
-        >
-          <span className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${product.isBestseller ? 'translate-x-5' : 'translate-x-0'}`} />
-        </button>
-      </td>
-
-      {/* Actions */}
       <td className="px-4 py-3 text-right">
         <div className="inline-flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-          <button
-            type="button"
-            onClick={onEdit}
-            title="Edit"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-sky-50 hover:text-sky-700"
-          >
+          <button type="button" onClick={onEdit} title="Edit"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-sky-50 hover:text-sky-700">
             <Pencil className="h-4 w-4" />
           </button>
-          <button
-            type="button"
-            onClick={onDelete}
-            title="Delete permanently"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-red-50 hover:text-red-600"
-          >
+          <button type="button" onClick={onDelete} title="Delete permanently"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-red-50 hover:text-red-600">
             <Trash2 className="h-4 w-4" />
           </button>
         </div>
       </td>
     </tr>
+  )
+}
+
+// ── Orders tab ────────────────────────────────────────────────────────────────
+
+function OrdersTab() {
+  const orders = useQuery(api.admin.listAllOrders)
+  const updateStatus = useMutation(api.admin.updateOrderStatus)
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
+
+  const handleStatusChange = async (id: Doc<'orders'>['_id'], status: Doc<'orders'>['status']) => {
+    setUpdatingId(id)
+    try {
+      await updateStatus({ id, status })
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
+  function formatDate(ts: number) {
+    return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(ts)
+  }
+
+  return (
+    <>
+      <div className="mb-4">
+        <h2 className="text-lg font-bold text-slate-900">All Orders</h2>
+        <p className="text-sm text-slate-500">View and manage customer orders. Update delivery status here.</p>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        {orders === undefined ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-6 w-6 animate-spin text-teal-500" />
+          </div>
+        ) : orders.length === 0 ? (
+          <div className="py-20 text-center text-slate-400">No orders yet.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <th className="px-4 py-3">Order</th>
+                  <th className="px-4 py-3">Customer</th>
+                  <th className="px-4 py-3">Items</th>
+                  <th className="px-4 py-3">Total</th>
+                  <th className="px-4 py-3">Payment</th>
+                  <th className="px-4 py-3">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {orders.map((order) => {
+                  const sd = getStatusDisplay(order.status)
+                  return (
+                    <tr key={order._id} className="hover:bg-slate-50">
+                      <td className="px-4 py-3">
+                        <p className="font-semibold text-slate-900">#{order._id.slice(-8).toUpperCase()}</p>
+                        <p className="text-xs text-slate-500">{formatDate(order.createdAt)}</p>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-slate-700">
+                        {order.billingAddress ? (
+                          <div>
+                            <p className="font-medium">{order.billingAddress.firstName} {order.billingAddress.lastName}</p>
+                            <p className="text-slate-500">{order.billingAddress.email}</p>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-slate-600">
+                        {order.items.slice(0, 2).map((item) => (
+                          <div key={item.productId}>{item.name} ×{item.quantity}</div>
+                        ))}
+                        {order.items.length > 2 && (
+                          <div className="text-slate-400">+{order.items.length - 2} more</div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 font-semibold text-slate-900">{formatPrice(order.total)}</td>
+                      <td className="px-4 py-3">
+                        {order.paymentMethod === 'crypto' ? (
+                          <span className="rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-semibold text-violet-700">Crypto</span>
+                        ) : (
+                          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">Standard</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${sd.color}`}>{sd.label}</span>
+                          <div className="relative">
+                            <select
+                              value={order.status}
+                              onChange={(e) => void handleStatusChange(order._id, e.target.value as Doc<'orders'>['status'])}
+                              disabled={updatingId === order._id}
+                              className="appearance-none rounded-lg border border-slate-200 bg-white py-1 pl-2 pr-6 text-xs text-slate-700 outline-none focus:border-sky-300 focus:ring-2 focus:ring-sky-200 disabled:opacity-50"
+                            >
+                              {ORDER_STATUSES.map((s) => (
+                                <option key={s.value} value={s.value}>{s.label}</option>
+                              ))}
+                            </select>
+                            <ChevronDown className="pointer-events-none absolute right-1.5 top-1.5 h-3 w-3 text-slate-400" />
+                          </div>
+                          {updatingId === order._id && <Loader2 className="h-3.5 w-3.5 animate-spin text-teal-500" />}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </>
+  )
+}
+
+// ── Slider tab ────────────────────────────────────────────────────────────────
+
+function SliderTab() {
+  const images = useQuery(api.admin.listSliderImages)
+  const addSliderImage = useMutation(api.admin.addSliderImage)
+  const updateSliderImage = useMutation(api.admin.updateSliderImage)
+  const deleteSliderImage = useMutation(api.admin.deleteSliderImage)
+  const generateUploadUrl = useMutation(api.admin.generateUploadUrl)
+  const getUploadedImageUrl = useMutation(api.admin.getUploadedImageUrl)
+
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
+  const [urlInput, setUrlInput] = useState('')
+  const [altInput, setAltInput] = useState('')
+  const [addMode, setAddMode] = useState<'upload' | 'url'>('upload')
+
+  const handleFileUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Please select an image file.')
+      return
+    }
+    setUploadError('')
+    setUploading(true)
+    try {
+      const uploadUrl = await generateUploadUrl()
+      const res = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      })
+      if (!res.ok) throw new Error('Upload failed')
+      const { storageId } = (await res.json()) as { storageId: string }
+      const cdnUrl = await getUploadedImageUrl({ storageId })
+      if (!cdnUrl) throw new Error('Could not resolve image URL')
+      await addSliderImage({ url: cdnUrl, altText: altInput.trim() || undefined })
+      setAltInput('')
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Upload failed')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleAddUrl = async () => {
+    if (!urlInput.trim()) return
+    try {
+      await addSliderImage({ url: urlInput.trim(), altText: altInput.trim() || undefined })
+      setUrlInput('')
+      setAltInput('')
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Failed to add image')
+    }
+  }
+
+  const count = images?.length ?? 0
+
+  return (
+    <>
+      <div className="mb-4">
+        <h2 className="text-lg font-bold text-slate-900">Home Page Slider</h2>
+        <p className="text-sm text-slate-500">
+          Upload up to 5 images for the home page banner slider. ({count}/5 used)
+        </p>
+      </div>
+
+      {count < 5 && (
+        <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h3 className="mb-3 text-sm font-semibold text-slate-800">Add New Slide</h3>
+          <div className="mb-3 flex gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 w-fit">
+            <button type="button" onClick={() => setAddMode('upload')}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold transition-colors ${addMode === 'upload' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+              <Upload className="h-4 w-4" />
+              Upload
+            </button>
+            <button type="button" onClick={() => setAddMode('url')}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold transition-colors ${addMode === 'url' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+              <ImageIcon className="h-4 w-4" />
+              URL
+            </button>
+          </div>
+          <div className="space-y-3">
+            {addMode === 'upload' ? (
+              <label className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-6 text-center transition-colors ${uploading ? 'border-sky-300 bg-sky-50' : 'border-slate-200 bg-slate-50 hover:border-sky-300 hover:bg-sky-50/50'}`}>
+                {uploading ? (
+                  <><Loader2 className="h-7 w-7 animate-spin text-sky-500" /><p className="text-sm text-slate-600">Uploading...</p></>
+                ) : (
+                  <><Upload className="h-7 w-7 text-slate-400" /><p className="text-sm font-semibold text-slate-700">Click to select image</p><p className="text-xs text-slate-400">JPG, PNG, WebP</p></>
+                )}
+                <input type="file" accept="image/*" className="hidden" disabled={uploading}
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleFileUpload(f) }} />
+              </label>
+            ) : (
+              <div className="flex gap-2">
+                <input type="url" placeholder="https://example.com/banner.jpg" value={urlInput}
+                  onChange={(e) => setUrlInput(e.target.value)}
+                  className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-200" />
+                <button type="button" onClick={() => void handleAddUrl()}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3 py-2 text-sm font-semibold text-white hover:bg-teal-700">
+                  <Plus className="h-4 w-4" />Add
+                </button>
+              </div>
+            )}
+            <input type="text" placeholder="Alt text (for accessibility)" value={altInput}
+              onChange={(e) => setAltInput(e.target.value)}
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-200" />
+          </div>
+          {uploadError && <p className="mt-2 text-xs text-red-600">{uploadError}</p>}
+        </div>
+      )}
+
+      <div className="space-y-3">
+        {images === undefined ? (
+          <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-teal-500" /></div>
+        ) : images.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-16 text-center text-slate-400">
+            No slider images yet. Add your first one above.
+          </div>
+        ) : (
+          images.map((img, i) => (
+            <SliderImageRow
+              key={img._id}
+              img={img}
+              index={i + 1}
+              onToggleActive={() => void updateSliderImage({ id: img._id, isActive: !img.isActive, altText: img.altText })}
+              onUpdateAlt={(alt) => void updateSliderImage({ id: img._id, isActive: img.isActive, altText: alt || undefined })}
+              onDelete={() => void deleteSliderImage({ id: img._id })}
+            />
+          ))
+        )}
+      </div>
+    </>
+  )
+}
+
+function SliderImageRow({
+  img, index, onToggleActive, onUpdateAlt, onDelete,
+}: {
+  img: Doc<'sliderImages'>
+  index: number
+  onToggleActive: () => void
+  onUpdateAlt: (alt: string) => void
+  onDelete: () => void
+}) {
+  const [editAlt, setEditAlt] = useState(img.altText ?? '')
+  const [editing, setEditing] = useState(false)
+
+  return (
+    <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">{index}</span>
+      <img src={img.url} alt={img.altText ?? `Slide ${index}`}
+        className="h-14 w-24 shrink-0 rounded-lg object-cover border border-slate-100" />
+      <div className="flex-1 min-w-0">
+        {editing ? (
+          <div className="flex gap-2">
+            <input autoFocus type="text" value={editAlt} onChange={(e) => setEditAlt(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') { onUpdateAlt(editAlt); setEditing(false) }
+                if (e.key === 'Escape') { setEditAlt(img.altText ?? ''); setEditing(false) }
+              }}
+              className="flex-1 rounded-lg border border-sky-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-sky-200" />
+            <button type="button" onClick={() => { onUpdateAlt(editAlt); setEditing(false) }}
+              className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-sky-600 text-white hover:bg-sky-700">
+              <Check className="h-3.5 w-3.5" />
+            </button>
+            <button type="button" onClick={() => { setEditAlt(img.altText ?? ''); setEditing(false) }}
+              className="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100">
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <p className="truncate text-sm text-slate-700">
+              {img.altText ? img.altText : <span className="italic text-slate-400">No alt text</span>}
+            </p>
+            <button type="button" onClick={() => setEditing(true)}
+              className="inline-flex h-6 w-6 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+              <Pencil className="h-3 w-3" />
+            </button>
+          </div>
+        )}
+        <p className="mt-0.5 truncate text-xs text-slate-400">{img.url}</p>
+      </div>
+      <button type="button" onClick={onToggleActive}
+        className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors ${img.isActive ? 'bg-teal-500' : 'bg-slate-200'}`}
+        role="switch" aria-checked={img.isActive} title={img.isActive ? 'Deactivate' : 'Activate'}>
+        <span className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${img.isActive ? 'translate-x-5' : 'translate-x-0'}`} />
+      </button>
+      <button type="button" onClick={onDelete}
+        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-red-50 hover:text-red-600">
+        <Trash2 className="h-4 w-4" />
+      </button>
+    </div>
   )
 }
 
@@ -447,11 +719,8 @@ function CategoriesTab() {
           <h2 className="text-lg font-bold text-slate-900">Categories</h2>
           <p className="text-sm text-slate-500">Manage the categories shown in the shop sidebar.</p>
         </div>
-        <button
-          type="button"
-          onClick={() => { setAdding(true); setNewName('') }}
-          className="inline-flex items-center gap-2 rounded-full bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-700 active:scale-95"
-        >
+        <button type="button" onClick={() => { setAdding(true); setNewName('') }}
+          className="inline-flex items-center gap-2 rounded-full bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-700 active:scale-95">
           <Plus className="h-4 w-4" />
           Add Category
         </button>
@@ -459,9 +728,7 @@ function CategoriesTab() {
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         {categories === undefined ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-6 w-6 animate-spin text-teal-500" />
-          </div>
+          <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-teal-500" /></div>
         ) : (
           <table className="w-full text-sm">
             <thead>
@@ -471,70 +738,38 @@ function CategoriesTab() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {/* Add new row */}
               {adding && (
                 <tr className="bg-teal-50/50">
                   <td className="px-4 py-3">
-                    <input
-                      autoFocus
-                      type="text"
-                      value={newName}
-                      onChange={(e) => setNewName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') void handleAdd()
-                        if (e.key === 'Escape') setAdding(false)
-                      }}
+                    <input autoFocus type="text" value={newName} onChange={(e) => setNewName(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') void handleAdd(); if (e.key === 'Escape') setAdding(false) }}
                       placeholder="e.g. Pain Relief"
-                      className="w-full rounded-lg border border-teal-300 px-3 py-1.5 text-sm outline-none ring-teal-200 focus:ring-2"
-                    />
+                      className="w-full rounded-lg border border-teal-300 px-3 py-1.5 text-sm outline-none ring-teal-200 focus:ring-2" />
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="inline-flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => void handleAdd()}
-                        disabled={saving || !newName.trim()}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-50"
-                        title="Save"
-                      >
+                      <button type="button" onClick={() => void handleAdd()} disabled={saving || !newName.trim()}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-50" title="Save">
                         {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => setAdding(false)}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100"
-                        title="Cancel"
-                      >
+                      <button type="button" onClick={() => setAdding(false)}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100" title="Cancel">
                         <X className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </td>
                 </tr>
               )}
-
               {(categories ?? []).length === 0 && !adding && (
-                <tr>
-                  <td colSpan={2} className="py-16 text-center text-slate-400">
-                    No categories yet. Add your first one!
-                  </td>
-                </tr>
+                <tr><td colSpan={2} className="py-16 text-center text-slate-400">No categories yet. Add your first one!</td></tr>
               )}
-
               {(categories ?? []).map((cat) => (
                 <tr key={cat._id} className="group hover:bg-slate-50">
                   <td className="px-4 py-3">
                     {editingId === cat._id ? (
-                      <input
-                        autoFocus
-                        type="text"
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') void handleSaveEdit()
-                          if (e.key === 'Escape') setEditingId(null)
-                        }}
-                        className="w-full rounded-lg border border-sky-300 px-3 py-1.5 text-sm outline-none ring-sky-200 focus:ring-2"
-                      />
+                      <input autoFocus type="text" value={editName} onChange={(e) => setEditName(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') void handleSaveEdit(); if (e.key === 'Escape') setEditingId(null) }}
+                        className="w-full rounded-lg border border-sky-300 px-3 py-1.5 text-sm outline-none ring-sky-200 focus:ring-2" />
                     ) : (
                       <span className="font-medium text-slate-800">{cat.name}</span>
                     )}
@@ -542,40 +777,23 @@ function CategoriesTab() {
                   <td className="px-4 py-3 text-right">
                     {editingId === cat._id ? (
                       <div className="inline-flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => void handleSaveEdit()}
-                          disabled={saving}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-sky-600 text-white hover:bg-sky-700 disabled:opacity-50"
-                          title="Save"
-                        >
+                        <button type="button" onClick={() => void handleSaveEdit()} disabled={saving}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-sky-600 text-white hover:bg-sky-700 disabled:opacity-50" title="Save">
                           {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditingId(null)}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100"
-                          title="Cancel"
-                        >
+                        <button type="button" onClick={() => setEditingId(null)}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100" title="Cancel">
                           <X className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     ) : (
                       <div className="inline-flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                        <button
-                          type="button"
-                          onClick={() => startEdit(cat)}
-                          title="Edit"
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-sky-50 hover:text-sky-700"
-                        >
+                        <button type="button" onClick={() => startEdit(cat)} title="Edit"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-sky-50 hover:text-sky-700">
                           <Pencil className="h-4 w-4" />
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeleteTarget(cat)}
-                          title="Delete"
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-red-50 hover:text-red-600"
-                        >
+                        <button type="button" onClick={() => setDeleteTarget(cat)} title="Delete"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-red-50 hover:text-red-600">
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
@@ -588,7 +806,6 @@ function CategoriesTab() {
         )}
       </div>
 
-      {/* Delete confirmation */}
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
@@ -601,19 +818,12 @@ function CategoriesTab() {
               Existing medicines in this category are not affected.
             </p>
             <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setDeleteTarget(null)}
-                className="flex-1 rounded-full border border-slate-300 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-              >
+              <button type="button" onClick={() => setDeleteTarget(null)}
+                className="flex-1 rounded-full border border-slate-300 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
                 Cancel
               </button>
-              <button
-                type="button"
-                onClick={() => void handleDelete()}
-                disabled={deleting}
-                className="flex-1 rounded-full bg-red-600 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
-              >
+              <button type="button" onClick={() => void handleDelete()} disabled={deleting}
+                className="flex-1 rounded-full bg-red-600 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60">
                 {deleting ? 'Deleting...' : 'Yes, Delete'}
               </button>
             </div>
