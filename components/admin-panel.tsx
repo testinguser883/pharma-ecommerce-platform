@@ -22,6 +22,12 @@ import {
   Upload,
   ChevronDown,
   PackageCheck,
+  ExternalLink,
+  MapPin,
+  Phone,
+  Mail,
+  Calendar,
+  User,
 } from 'lucide-react'
 import { api } from '@/convex/_generated/api'
 import type { Doc } from '@/convex/_generated/dataModel'
@@ -355,11 +361,16 @@ function OrdersTab() {
   const orders = useQuery(api.admin.listAllOrders)
   const updateStatus = useMutation(api.admin.updateOrderStatus)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [viewingOrder, setViewingOrder] = useState<Doc<'orders'> | null>(null)
 
   const handleStatusChange = async (id: Doc<'orders'>['_id'], status: Doc<'orders'>['status']) => {
     setUpdatingId(id)
     try {
       await updateStatus({ id, status })
+      // keep modal in sync if it's open for this order
+      if (viewingOrder?._id === id) {
+        setViewingOrder((prev) => prev ? { ...prev, status } : null)
+      }
     } finally {
       setUpdatingId(null)
     }
@@ -373,7 +384,7 @@ function OrdersTab() {
     <>
       <div className="mb-4">
         <h2 className="text-lg font-bold text-slate-900">All Orders</h2>
-        <p className="text-sm text-slate-500">View and manage customer orders. Update delivery status here.</p>
+        <p className="text-sm text-slate-500">View and manage customer orders. Click an order to see full details.</p>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -394,6 +405,7 @@ function OrdersTab() {
                   <th className="px-4 py-3">Total</th>
                   <th className="px-4 py-3">Payment</th>
                   <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3 text-right">Details</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -450,6 +462,16 @@ function OrdersTab() {
                           {updatingId === order._id && <Loader2 className="h-3.5 w-3.5 animate-spin text-teal-500" />}
                         </div>
                       </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          type="button"
+                          onClick={() => setViewingOrder(order)}
+                          className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600 hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          View
+                        </button>
+                      </td>
                     </tr>
                   )
                 })}
@@ -458,7 +480,254 @@ function OrdersTab() {
           </div>
         )}
       </div>
+
+      {viewingOrder && (
+        <OrderDetailModal
+          order={viewingOrder}
+          onClose={() => setViewingOrder(null)}
+          onStatusChange={(status) => void handleStatusChange(viewingOrder._id, status)}
+          updating={updatingId === viewingOrder._id}
+        />
+      )}
     </>
+  )
+}
+
+// ── Order Detail Modal ────────────────────────────────────────────────────────
+
+function OrderDetailModal({
+  order,
+  onClose,
+  onStatusChange,
+  updating,
+}: {
+  order: Doc<'orders'>
+  onClose: () => void
+  onStatusChange: (status: Doc<'orders'>['status']) => void
+  updating: boolean
+}) {
+  const sd = getStatusDisplay(order.status)
+  const billing = order.billingAddress
+
+  const shippingAddr = (() => {
+    if (!order.shippingAddress) return null
+    if ('sameAsBilling' in order.shippingAddress && order.shippingAddress.sameAsBilling) return null
+    return order.shippingAddress as {
+      sameAsBilling: false
+      firstName: string; lastName: string
+      streetAddress: string; city: string
+      country: string; state: string; zipCode: string
+    }
+  })()
+
+  function formatDate(ts: number) {
+    return new Intl.DateTimeFormat('en-US', { dateStyle: 'long', timeStyle: 'short' }).format(ts)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+      <div className="relative flex max-h-[90vh] w-full max-w-2xl flex-col rounded-2xl bg-white shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">
+              Order #{order._id.slice(-8).toUpperCase()}
+            </h2>
+            <p className="text-xs text-slate-500">{formatDate(order.createdAt)}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+
+          {/* Status + payment */}
+          <div className="flex flex-wrap items-center gap-3">
+            <span className={`rounded-full px-3 py-1 text-sm font-semibold ${sd.color}`}>{sd.label}</span>
+            {order.paymentMethod === 'crypto' ? (
+              <span className="rounded-full bg-violet-100 px-3 py-1 text-sm font-semibold text-violet-700">Crypto Payment</span>
+            ) : (
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-600">Standard Payment</span>
+            )}
+            {order.nowPaymentsId && (
+              <span className="text-xs text-slate-400">NOWPayments ID: {order.nowPaymentsId}</span>
+            )}
+          </div>
+
+          {/* Update status */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Update Status</p>
+            <div className="flex flex-wrap items-center gap-2">
+              {ORDER_STATUSES.map((s) => (
+                <button
+                  key={s.value}
+                  type="button"
+                  disabled={updating}
+                  onClick={() => onStatusChange(s.value as Doc<'orders'>['status'])}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition-all disabled:opacity-50 ${
+                    order.status === s.value
+                      ? `${s.color} ring-2 ring-offset-1 ring-current`
+                      : 'border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-100'
+                  }`}
+                >
+                  {s.label}
+                </button>
+              ))}
+              {updating && <Loader2 className="h-4 w-4 animate-spin text-teal-500" />}
+            </div>
+          </div>
+
+          {/* Billing address */}
+          {billing && (
+            <div>
+              <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <User className="h-3.5 w-3.5" />
+                Billing Information
+              </p>
+              <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm space-y-2">
+                <div className="flex flex-wrap gap-x-8 gap-y-2">
+                  <div>
+                    <span className="text-xs text-slate-400">Name</span>
+                    <p className="font-medium text-slate-800">{billing.firstName} {billing.lastName}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-400">New Customer</span>
+                    <p className="font-medium text-slate-800">{billing.isNewCustomer ? 'Yes' : 'No'}</p>
+                  </div>
+                  {billing.dateOfBirth && (
+                    <div>
+                      <span className="text-xs text-slate-400">Date of Birth</span>
+                      <p className="font-medium text-slate-800">{billing.dateOfBirth}</p>
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-x-8 gap-y-2 border-t border-slate-100 pt-2">
+                  <div className="flex items-center gap-1.5">
+                    <Mail className="h-3.5 w-3.5 text-slate-400" />
+                    <span className="text-slate-700">{billing.email}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Phone className="h-3.5 w-3.5 text-slate-400" />
+                    <span className="text-slate-700">{billing.mobilePhone}</span>
+                  </div>
+                </div>
+                <div className="flex items-start gap-1.5 border-t border-slate-100 pt-2">
+                  <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
+                  <p className="text-slate-700">
+                    {billing.streetAddress}, {billing.city}, {billing.state} {billing.zipCode}, {billing.country}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Shipping address */}
+          <div>
+            <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <MapPin className="h-3.5 w-3.5" />
+              Shipping Address
+            </p>
+            {shippingAddr ? (
+              <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm">
+                <p className="font-medium text-slate-800">{shippingAddr.firstName} {shippingAddr.lastName}</p>
+                <p className="mt-1 text-slate-700">
+                  {shippingAddr.streetAddress}, {shippingAddr.city}, {shippingAddr.state} {shippingAddr.zipCode}, {shippingAddr.country}
+                </p>
+              </div>
+            ) : billing ? (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                Same as billing address —{' '}
+                <span className="text-slate-700">
+                  {billing.streetAddress}, {billing.city}, {billing.state} {billing.zipCode}, {billing.country}
+                </span>
+              </div>
+            ) : (
+              <p className="text-sm text-slate-400">No shipping address provided.</p>
+            )}
+          </div>
+
+          {/* Order items */}
+          <div>
+            <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <Package className="h-3.5 w-3.5" />
+              Items ({order.items.length})
+            </p>
+            <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <th className="px-4 py-2">Product</th>
+                    <th className="px-4 py-2 text-right">Unit Price</th>
+                    <th className="px-4 py-2 text-right">Qty</th>
+                    <th className="px-4 py-2 text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {order.items.map((item) => (
+                    <tr key={item.productId}>
+                      <td className="px-4 py-2.5">
+                        <div className="flex items-center gap-2">
+                          {item.image && (
+                            <img src={item.image} alt={item.name}
+                              className="h-8 w-8 shrink-0 rounded-md border border-slate-100 object-cover" />
+                          )}
+                          <div>
+                            <p className="font-medium text-slate-800">{item.name}</p>
+                            <p className="text-xs text-slate-500">{item.genericName}{item.dosage ? ` · ${item.dosage}` : ''}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-2.5 text-right text-slate-600">{formatPrice(item.unitPrice)}</td>
+                      <td className="px-4 py-2.5 text-right text-slate-600">{item.quantity}</td>
+                      <td className="px-4 py-2.5 text-right font-semibold text-slate-900">{formatPrice(item.lineTotal)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-slate-200 bg-slate-50">
+                    <td colSpan={3} className="px-4 py-3 text-right text-sm font-bold text-slate-700">Order Total</td>
+                    <td className="px-4 py-3 text-right text-base font-bold text-slate-900">{formatPrice(order.total)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+          {/* Order metadata */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 flex items-center gap-1.5">
+              <Calendar className="h-3.5 w-3.5" />
+              Order Metadata
+            </p>
+            <dl className="grid grid-cols-2 gap-x-8 gap-y-1 text-xs">
+              <div><dt className="text-slate-400">Order ID</dt><dd className="font-mono text-slate-700">{order._id}</dd></div>
+              <div><dt className="text-slate-400">Placed at</dt><dd className="text-slate-700">{formatDate(order.createdAt)}</dd></div>
+              <div><dt className="text-slate-400">Payment method</dt><dd className="capitalize text-slate-700">{order.paymentMethod ?? '—'}</dd></div>
+              {order.nowPaymentsId && (
+                <div><dt className="text-slate-400">NOWPayments ID</dt><dd className="font-mono text-slate-700">{order.nowPaymentsId}</dd></div>
+              )}
+            </dl>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex justify-end border-t border-slate-100 px-6 py-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white hover:bg-slate-700"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
 
