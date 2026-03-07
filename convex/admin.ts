@@ -94,7 +94,7 @@ export const createProduct = mutation({
     const admin = await getAdminUser(ctx)
     if (!admin) throw new Error('Not authorized')
     await ensureCategoryExists(ctx, args.category)
-    const slug = await resolveSlug(ctx, args.slug || args.name)
+    const slug = await resolveSlug(ctx, args.slug || `${args.name} ${args.genericName}`)
     const searchText = `${args.name} ${args.genericName} ${args.category} ${args.description}`.toLowerCase()
     return ctx.db.insert('products', { ...args, slug, searchText })
   },
@@ -126,7 +126,7 @@ export const updateProduct = mutation({
     if (!admin) throw new Error('Not authorized')
     await ensureCategoryExists(ctx, args.category)
     const { id, ...fields } = args
-    const slug = await resolveSlug(ctx, fields.slug || fields.name, id)
+    const slug = await resolveSlug(ctx, fields.slug || `${fields.name} ${fields.genericName}`, id)
     const searchText = `${fields.name} ${fields.genericName} ${fields.category} ${fields.description}`.toLowerCase()
     await ctx.db.patch(id, { ...fields, slug, searchText })
   },

@@ -306,7 +306,7 @@ export function AdminProductForm({ initial, onSubmit, onClose }: Props) {
               <input ref={nameRef} type="text" className={inputClass} placeholder="e.g. Glucophage"
                 value={form.name} onChange={(e) => {
                   set('name', e.target.value)
-                  if (!slugManuallyEdited) set('slug', slugify(e.target.value))
+                  if (!slugManuallyEdited) set('slug', slugify(`${e.target.value} ${form.genericName}`))
                 }} />
             </div>
 
@@ -314,7 +314,10 @@ export function AdminProductForm({ initial, onSubmit, onClose }: Props) {
             <div>
               <label className={labelClass}>Generic Name *</label>
               <input type="text" className={inputClass} placeholder="e.g. Metformin"
-                value={form.genericName} onChange={(e) => set('genericName', e.target.value)} />
+                value={form.genericName} onChange={(e) => {
+                  set('genericName', e.target.value)
+                  if (!slugManuallyEdited) set('slug', slugify(`${form.name} ${e.target.value}`))
+                }} />
             </div>
 
             {/* Category */}
