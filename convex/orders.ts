@@ -205,19 +205,6 @@ export const createNowPaymentsInvoice = action({
     const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
     const convexSiteUrl = process.env.CONVEX_SITE_URL
 
-    // Convert INR to USD for NowPayments
-    let usdTotal = args.total / 83 // fallback rate
-    try {
-      const fxRes = await fetch('https://api.frankfurter.app/latest?from=INR&to=USD')
-      if (fxRes.ok) {
-        const fxData = (await fxRes.json()) as { rates: { USD: number } }
-        usdTotal = args.total * fxData.rates.USD
-      }
-    } catch {
-      // use fallback rate
-    }
-    usdTotal = Number(usdTotal.toFixed(2))
-
     const response = await fetch('https://api.nowpayments.io/v1/invoice', {
       method: 'POST',
       headers: {
@@ -225,7 +212,7 @@ export const createNowPaymentsInvoice = action({
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        price_amount: usdTotal,
+        price_amount: args.total,
         price_currency: 'USD',
         order_id: args.orderId,
         order_description: `Pharma order ${args.orderId}`,
@@ -242,7 +229,7 @@ export const createNowPaymentsInvoice = action({
     }
 
     const data = (await response.json()) as { invoice_url: string }
-    return { invoiceUrl: data.invoice_url, usdTotal }
+    return { invoiceUrl: data.invoice_url }
   },
 })
 
