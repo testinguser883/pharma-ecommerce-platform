@@ -95,7 +95,7 @@ export function AdminProductForm({ initial, onSubmit, onClose }: Props) {
           imageAlt: initial.imageAlt ?? '',
           discount: initial.discount,
           inStock: initial.inStock,
-          slug: initial.slug ?? '',
+          slug: initial.slug ?? slugify(`${initial.name} ${initial.genericName}`),
           seoTitle: initial.seoTitle ?? '',
           seoDescription: initial.seoDescription ?? '',
           seoKeywords: initial.seoKeywords ?? '',

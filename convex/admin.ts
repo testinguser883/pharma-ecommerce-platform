@@ -159,6 +159,24 @@ export const toggleVisibility = mutation({
   },
 })
 
+export const backfillSlugs = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const admin = await getAdminUser(ctx)
+    if (!admin) throw new Error('Not authorized')
+    const products = await ctx.db.query('products').collect()
+    let updated = 0
+    for (const product of products) {
+      if (!product.slug) {
+        const slug = await resolveSlug(ctx, `${product.name} ${product.genericName}`, product._id)
+        await ctx.db.patch(product._id, { slug })
+        updated++
+      }
+    }
+    return { updated }
+  },
+})
+
 export const toggleRecommended = mutation({
   args: { id: v.id('products'), isRecommended: v.boolean() },
   handler: async (ctx, args) => {

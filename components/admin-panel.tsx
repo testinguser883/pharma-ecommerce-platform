@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useQuery, useMutation } from 'convex/react'
 import {
@@ -138,12 +138,16 @@ function ProductsTab() {
   const [deleting, setDeleting] = useState(false)
 
   const products = useQuery(api.admin.listAllProducts, { search: debouncedSearch || undefined })
+  const backfillSlugs = useMutation(api.admin.backfillSlugs)
   const createProduct = useMutation(api.admin.createProduct)
   const updateProduct = useMutation(api.admin.updateProduct)
   const deleteProduct = useMutation(api.admin.deleteProduct)
   const toggleStock = useMutation(api.admin.toggleStock)
   const toggleVisibility = useMutation(api.admin.toggleVisibility)
   const toggleRecommended = useMutation(api.admin.toggleRecommended)
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { void backfillSlugs() }, [])
 
   const handleSearchChange = (value: string) => {
     setSearch(value)
