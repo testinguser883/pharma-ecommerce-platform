@@ -4,7 +4,7 @@ import { internal } from './_generated/api'
 import type { Id } from './_generated/dataModel'
 
 function formatPrice(amount: number) {
-  return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount)
+  return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'USD' }).format(amount)
 }
 
 function itemsTableHtml(items: Array<{

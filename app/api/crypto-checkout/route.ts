@@ -11,21 +11,8 @@ export async function POST(request: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? request.nextUrl.origin
   const convexSiteUrl = process.env.NEXT_PUBLIC_CONVEX_URL?.replace('.convex.cloud', '.convex.site')
 
-  // Convert INR to USD for NowPayments
-  let usdTotal = total / 83 // fallback rate
-  try {
-    const fxRes = await fetch('https://api.frankfurter.app/latest?from=INR&to=USD')
-    if (fxRes.ok) {
-      const fxData = (await fxRes.json()) as { rates: { USD: number } }
-      usdTotal = total * fxData.rates.USD
-    }
-  } catch {
-    // use fallback rate
-  }
-  usdTotal = Number(usdTotal.toFixed(2))
-
   const body = {
-    price_amount: usdTotal,
+    price_amount: Number(total.toFixed(2)),
     price_currency: 'USD',
     order_id: orderId,
     order_description: `Pharma order ${orderId}`,
