@@ -1051,7 +1051,11 @@ function CategoriesTab() {
       await deleteCategory({ id: deleteTarget._id })
       setDeleteTarget(null)
     } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : 'Failed to delete category.')
+      const raw = err instanceof Error ? err.message : ''
+      // Convex wraps the thrown message — extract after "Uncaught Error:" if present
+      const extracted = raw.match(/Uncaught Error:\s*(.+?)(?:\n|$)/)?.[1]
+        ?? raw.match(/Cannot delete:[^\n]+/)?.[0]
+      setDeleteError(extracted ?? 'Failed to delete category.')
     } finally {
       setDeleting(false)
     }
