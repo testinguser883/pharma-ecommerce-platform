@@ -42,6 +42,21 @@ export function ProductCard({ product }: { product: Doc<'products'> }) {
             {formatPrice(fromPrice.price)} per {fromPrice.perUnit}
           </p>
         </Link>
+
+        {/* Dosage chips derived from pricing matrix */}
+        {product.pricingMatrix && product.pricingMatrix.length > 0 && (
+          <div className="mt-3 flex flex-wrap justify-center gap-1.5">
+            {product.pricingMatrix.map((entry) => (
+              <Link
+                key={entry.dosage}
+                href={`/products/${product._id}?dosage=${encodeURIComponent(entry.dosage)}`}
+                className="rounded-full bg-sky-50 px-2.5 py-0.5 text-xs font-semibold text-sky-700 transition hover:bg-sky-100"
+              >
+                {entry.dosage}
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
       <Link
         href={`/products/${product._id}`}
