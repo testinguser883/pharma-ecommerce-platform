@@ -14,7 +14,7 @@
     "dev": "npm-run-all --parallel dev:frontend dev:backend",
     "dev:frontend": "next dev",
     "dev:backend": "convex dev",
-    "build": "convex codegen && next build",
+    "build": "convex deploy --cmd 'next build'",
     "start": "next start",
     "format": "prettier --write \"{app,components,convex,lib,types}/**/*.{ts,tsx,js,mjs,css,md}\" \"*.{json,ts,mjs,md}\"",
     "lint": "convex codegen && tsc --noEmit",
