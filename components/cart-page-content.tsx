@@ -67,7 +67,8 @@ export function CartPageContent() {
                         <p className="text-xs text-slate-500">{item.genericName}</p>
                         {item.dosage && (
                           <p className="mt-0.5 text-xs font-medium text-teal-700">
-                            {item.dosage}{item.pillCount ? ` · ${item.pillCount} ${item.unit.split(' ')[0]}s` : ''}
+                            {item.dosage}
+                            {item.pillCount ? ` · ${item.pillCount} ${item.unit.split(' ')[0]}s` : ''}
                           </p>
                         )}
                         <p className="mt-1 text-xs font-medium text-slate-600">
@@ -113,7 +114,13 @@ export function CartPageContent() {
                             <span className="text-sm font-semibold text-slate-900">{formatPrice(item.lineTotal)}</span>
                             <button
                               type="button"
-                              onClick={() => void removeItem({ productId: item.productId, dosage: item.dosage, pillCount: item.pillCount })}
+                              onClick={() =>
+                                void removeItem({
+                                  productId: item.productId,
+                                  dosage: item.dosage,
+                                  pillCount: item.pillCount,
+                                })
+                              }
                               className="text-slate-400 hover:text-red-500"
                               aria-label="Remove item"
                             >

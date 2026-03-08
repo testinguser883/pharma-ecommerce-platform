@@ -2,6 +2,16 @@ import { query } from './_generated/server'
 import { v } from 'convex/values'
 import type { Doc, Id } from './_generated/dataModel'
 
+function normalizeSearchValue(value: string) {
+  return value.trim().toLowerCase()
+}
+
+function matchesStorefrontSearch(product: Doc<'products'>, search: string) {
+  const searchableFields = [product.name, product.genericName]
+
+  return searchableFields.some((field) => normalizeSearchValue(field).includes(search))
+}
+
 export const list = query({
   args: {
     category: v.optional(v.string()),
@@ -16,17 +26,18 @@ export const list = query({
     let products: Array<Doc<'products'>> = []
 
     if (search && search.length > 0) {
-      products = await ctx.db
-        .query('products')
-        .withSearchIndex('search_products', (q) => {
-          let searchQuery = q.search('searchText', search)
-          if (category) {
-            searchQuery = searchQuery.eq('category', category)
-          }
-          return searchQuery
-        })
-        .take(limit)
-      return products.filter((p) => p.isVisible !== false)
+      const normalizedSearch = normalizeSearchValue(search)
+      products = category
+        ? await ctx.db
+            .query('products')
+            .withIndex('by_category_and_name', (q) => q.eq('category', category))
+            .collect()
+        : await ctx.db.query('products').order('desc').collect()
+
+      return products
+        .filter((p) => p.isVisible !== false)
+        .filter((p) => matchesStorefrontSearch(p, normalizedSearch))
+        .slice(0, limit)
     }
 
     if (category) {
@@ -92,8 +103,6 @@ export const related = query({
       .withIndex('by_category_and_name', (q) => q.eq('category', product.category))
       .take(relatedLimit + 1)
 
-    return relatedProducts
-      .filter((item) => item._id !== product._id && item.isVisible !== false)
-      .slice(0, relatedLimit)
+    return relatedProducts.filter((item) => item._id !== product._id && item.isVisible !== false).slice(0, relatedLimit)
   },
 })

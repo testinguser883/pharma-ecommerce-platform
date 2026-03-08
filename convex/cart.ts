@@ -22,7 +22,7 @@ const calculateCartTotal = async (ctx: MutationCtx, items: Array<CartItem>) => {
     } else {
       const product = await ctx.db.get(item.productId)
       if (!product) continue
-      total += (product.price * (1 - (product.discount ?? 0) / 100)) * item.quantity
+      total += product.price * (1 - (product.discount ?? 0) / 100) * item.quantity
     }
   }
   return Number(total.toFixed(2))
@@ -35,17 +35,9 @@ const getCartForUser = async (ctx: ConvexCtx, userId: string) => {
     .unique()
 }
 
-const findCartItemIndex = (
-  items: Array<CartItem>,
-  productId: Id<'products'>,
-  dosage?: string,
-  pillCount?: number,
-) => {
+const findCartItemIndex = (items: Array<CartItem>, productId: Id<'products'>, dosage?: string, pillCount?: number) => {
   return items.findIndex(
-    (item) =>
-      item.productId === productId &&
-      item.dosage === dosage &&
-      item.pillCount === pillCount,
+    (item) => item.productId === productId && item.dosage === dosage && item.pillCount === pillCount,
   )
 }
 
@@ -82,9 +74,7 @@ export const getMyCart = query({
         continue
       }
       const price = item.unitPrice ?? product.price
-      const unit = item.pillCount
-        ? `package (${item.pillCount} ${product.unit}s)`
-        : product.unit
+      const unit = item.pillCount ? `package (${item.pillCount} ${product.unit}s)` : product.unit
       hydratedItems.push({
         productId: product._id,
         name: product.name,
@@ -229,11 +219,7 @@ export const removeItem = mutation({
 
     const items = cart.items.filter(
       (item) =>
-        !(
-          item.productId === args.productId &&
-          item.dosage === args.dosage &&
-          item.pillCount === args.pillCount
-        ),
+        !(item.productId === args.productId && item.dosage === args.dosage && item.pillCount === args.pillCount),
     )
     const total = await calculateCartTotal(ctx, items)
     await ctx.db.patch(cart._id, { items, total, updatedAt: Date.now() })

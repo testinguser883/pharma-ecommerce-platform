@@ -35,7 +35,14 @@ export function ProductCard({ product }: { product: Doc<'products'> }) {
           </span>
         )}
         <Link href={`/${product.slug ?? product._id}`} className="block">
-          <img src={product.image} alt={product.imageAlt ?? product.name} className="mx-auto h-24 w-24 object-contain" onError={(e) => { (e.currentTarget as HTMLImageElement).src = 'https://placehold.co/200x200/f1f5f9/94a3b8?text=No+Image' }} />
+          <img
+            src={product.image}
+            alt={product.imageAlt ?? product.name}
+            className="mx-auto h-24 w-24 object-contain"
+            onError={(e) => {
+              ;(e.currentTarget as HTMLImageElement).src = 'https://placehold.co/200x200/f1f5f9/94a3b8?text=No+Image'
+            }}
+          />
           <h3 className="mt-4 text-center text-xl font-bold text-slate-900">{product.name}</h3>
           <p className="mt-1 text-center text-sm text-slate-500">{product.genericName}</p>
           <p className="mt-2 text-center text-lg font-bold text-slate-900">

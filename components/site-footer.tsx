@@ -7,22 +7,38 @@ export function SiteFooter() {
         <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
           {/* Column 1 */}
           <div className="flex flex-col gap-2">
-            <Link href="/" className="hover:underline">Home</Link>
-            <Link href="/orders" className="hover:underline">Order Status</Link>
-            <Link href="/faq" className="hover:underline">FAQ</Link>
+            <Link href="/" className="hover:underline">
+              Home
+            </Link>
+            <Link href="/orders" className="hover:underline">
+              Order Status
+            </Link>
+            <Link href="/faq" className="hover:underline">
+              FAQ
+            </Link>
           </div>
 
           {/* Column 2 */}
           <div className="flex flex-col gap-2">
-            <Link href="/contact-us" className="hover:underline">Contact Us</Link>
-            <Link href="/testimonials" className="hover:underline">Testimonials</Link>
-            <Link href="/about-us" className="hover:underline">About Us</Link>
+            <Link href="/contact-us" className="hover:underline">
+              Contact Us
+            </Link>
+            <Link href="/testimonials" className="hover:underline">
+              Testimonials
+            </Link>
+            <Link href="/about-us" className="hover:underline">
+              About Us
+            </Link>
           </div>
 
           {/* Column 3 */}
           <div className="flex flex-col gap-2">
-            <Link href="/our-policy" className="hover:underline">Our Policy</Link>
-            <Link href="/terms-conditions" className="hover:underline">Terms &amp; Conditions</Link>
+            <Link href="/our-policy" className="hover:underline">
+              Our Policy
+            </Link>
+            <Link href="/terms-conditions" className="hover:underline">
+              Terms &amp; Conditions
+            </Link>
           </div>
 
           {/* Payment Methods */}

@@ -10,8 +10,7 @@ export async function GET() {
   const allCookies = cookieStore.getAll().map((c) => c.name)
 
   const hasSessionCookie =
-    allCookies.some((n) => n.includes('session')) ||
-    allCookies.some((n) => n.includes('better-auth'))
+    allCookies.some((n) => n.includes('session')) || allCookies.some((n) => n.includes('better-auth'))
 
   // Read relevant headers
   const headerStore = await headers()

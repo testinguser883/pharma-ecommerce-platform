@@ -18,8 +18,12 @@ export function SiteHeader() {
   const isAdmin = useQuery(api.admin.isAdmin)
   const router = useRouter()
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hasSearchInteraction = useRef(false)
 
   useEffect(() => {
+    if (!hasSearchInteraction.current) {
+      return
+    }
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
       const q = searchInput.trim()
@@ -64,7 +68,10 @@ export function SiteHeader() {
               <input
                 type="search"
                 value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
+                onChange={(e) => {
+                  hasSearchInteraction.current = true
+                  setSearchInput(e.target.value)
+                }}
                 placeholder="Search medicines..."
                 className="w-full rounded-full border border-slate-200 bg-white py-2 pl-9 pr-4 text-sm text-slate-800 outline-none ring-sky-200 focus:border-sky-300 focus:ring-2"
               />
@@ -159,7 +166,10 @@ export function SiteHeader() {
                 <input
                   type="search"
                   value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
+                  onChange={(e) => {
+                    hasSearchInteraction.current = true
+                    setSearchInput(e.target.value)
+                  }}
                   placeholder="Search medicines..."
                   className="w-full rounded-full border border-slate-200 bg-white py-2 pl-9 pr-4 text-sm text-slate-800 outline-none ring-sky-200 focus:border-sky-300 focus:ring-2"
                 />
@@ -203,7 +213,10 @@ export function SiteHeader() {
                   </Link>
                   <button
                     type="button"
-                    onClick={() => { void authClient.signOut(); setIsMobileMenuOpen(false) }}
+                    onClick={() => {
+                      void authClient.signOut()
+                      setIsMobileMenuOpen(false)
+                    }}
                     className="flex items-center gap-1 text-sm font-medium text-red-600 hover:text-red-700"
                   >
                     <LogOut className="h-4 w-4" />

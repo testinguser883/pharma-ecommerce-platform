@@ -5,8 +5,8 @@ export default function TermsConditionsPage() {
 
       <div className="space-y-6 text-slate-600">
         <p>
-          By accessing or using pharma-ecommerce-platform-5an9.vercel.app, you agree to be bound by these Terms &amp; Conditions. If you do
-          not agree with any part of these terms, please do not use our website.
+          By accessing or using pharma-ecommerce-platform-5an9.vercel.app, you agree to be bound by these Terms &amp;
+          Conditions. If you do not agree with any part of these terms, please do not use our website.
         </p>
 
         <div>
@@ -38,8 +38,8 @@ export default function TermsConditionsPage() {
           <h2 className="mb-2 font-semibold text-slate-700">4. Intellectual Property</h2>
           <p>
             All content on this website, including text, images, logos, and graphics, is the property of
-            pharma-ecommerce-platform-5an9.vercel.app and is protected by applicable intellectual property laws. Unauthorized reproduction
-            or use is strictly prohibited.
+            pharma-ecommerce-platform-5an9.vercel.app and is protected by applicable intellectual property laws.
+            Unauthorized reproduction or use is strictly prohibited.
           </p>
         </div>
 

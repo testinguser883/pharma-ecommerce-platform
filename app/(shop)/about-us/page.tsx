@@ -5,14 +5,14 @@ export default function AboutUsPage() {
 
       <div className="space-y-5 text-slate-600">
         <p>
-          Welcome to pharma-ecommerce-platform-5an9.vercel.app — your trusted source for pharmaceutical products delivered with discretion,
-          speed, and care.
+          Welcome to pharma-ecommerce-platform-5an9.vercel.app — your trusted source for pharmaceutical products
+          delivered with discretion, speed, and care.
         </p>
 
         <p>
           We are committed to providing our customers with access to high-quality medications at competitive prices. Our
-          team of pharmacy professionals ensures that every product listed on our platform meets the highest standards of
-          safety and efficacy.
+          team of pharmacy professionals ensures that every product listed on our platform meets the highest standards
+          of safety and efficacy.
         </p>
 
         <p>
@@ -23,8 +23,8 @@ export default function AboutUsPage() {
 
         <h2 className="mt-6 text-lg font-semibold text-slate-700">Our Mission</h2>
         <p>
-          Our mission is to provide safe, reliable, and affordable pharmaceutical products to customers worldwide through
-          a secure and easy-to-use online platform.
+          Our mission is to provide safe, reliable, and affordable pharmaceutical products to customers worldwide
+          through a secure and easy-to-use online platform.
         </p>
 
         <h2 className="mt-6 text-lg font-semibold text-slate-700">Why Choose Us?</h2>

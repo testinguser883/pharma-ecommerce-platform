@@ -16,7 +16,12 @@ export function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClose: () =
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/30" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
+    <div
+      className="fixed inset-0 z-50 flex justify-end bg-slate-950/30"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+    >
       <div className="h-full w-full max-w-md overflow-y-auto bg-white shadow-xl">
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
           <div className="flex items-center gap-2">
@@ -72,12 +77,17 @@ export function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClose: () =
                   return (
                     <li key={itemKey} className="rounded-2xl border border-slate-200 p-3">
                       <div className="flex gap-3">
-                        <img src={item.image} alt={item.name} className="h-14 w-14 rounded-xl border border-slate-100 bg-slate-50 object-contain p-1" />
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="h-14 w-14 rounded-xl border border-slate-100 bg-slate-50 object-contain p-1"
+                        />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-semibold text-slate-900">{item.name}</p>
                           {item.dosage && (
                             <p className="text-xs font-medium text-teal-700">
-                              {item.dosage}{item.pillCount ? ` · ${item.pillCount} ${item.unit.split(' ')[0]}s` : ''}
+                              {item.dosage}
+                              {item.pillCount ? ` · ${item.pillCount} ${item.unit.split(' ')[0]}s` : ''}
                             </p>
                           )}
                           <p className="text-xs text-slate-500">
@@ -119,10 +129,18 @@ export function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClose: () =
                               </button>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-slate-900">{formatPrice(item.lineTotal)}</span>
+                              <span className="text-sm font-semibold text-slate-900">
+                                {formatPrice(item.lineTotal)}
+                              </span>
                               <button
                                 type="button"
-                                onClick={() => void removeItem({ productId: item.productId, dosage: item.dosage, pillCount: item.pillCount })}
+                                onClick={() =>
+                                  void removeItem({
+                                    productId: item.productId,
+                                    dosage: item.dosage,
+                                    pillCount: item.pillCount,
+                                  })
+                                }
                                 className="text-slate-400 hover:text-red-500"
                                 aria-label="Remove item"
                               >

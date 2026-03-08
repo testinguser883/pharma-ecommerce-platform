@@ -45,11 +45,7 @@ export function ProductsPageContent() {
 
   return (
     <div className="mx-auto grid max-w-7xl gap-4 px-4 py-5 lg:grid-cols-[260px_1fr] lg:px-6">
-      <CategorySidebar
-        categories={categories}
-        selectedCategory={selectedCategory}
-        onSelectCategory={updateCategory}
-      />
+      <CategorySidebar categories={categories} selectedCategory={selectedCategory} onSelectCategory={updateCategory} />
       <main className="space-y-4">
         <section className="space-y-3">
           <h1 className="text-3xl font-bold text-slate-900 md:text-2xl">{headingText}</h1>

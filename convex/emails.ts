@@ -7,21 +7,24 @@ function formatPrice(amount: number) {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'USD' }).format(amount)
 }
 
-function itemsTableHtml(items: Array<{
-  name: string
-  genericName: string
-  dosage?: string
-  pillCount?: number
-  quantity: number
-  unitPrice: number
-  unit: string
-  lineTotal: number
-}>) {
-  const rows = items.map((item) => {
-    const variant = item.dosage
-      ? `${item.dosage}${item.pillCount ? ` · ${item.pillCount} ${item.unit.split(' ')[0]}s` : ''}`
-      : ''
-    return `
+function itemsTableHtml(
+  items: Array<{
+    name: string
+    genericName: string
+    dosage?: string
+    pillCount?: number
+    quantity: number
+    unitPrice: number
+    unit: string
+    lineTotal: number
+  }>,
+) {
+  const rows = items
+    .map((item) => {
+      const variant = item.dosage
+        ? `${item.dosage}${item.pillCount ? ` · ${item.pillCount} ${item.unit.split(' ')[0]}s` : ''}`
+        : ''
+      return `
       <tr>
         <td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;">
           <strong style="color:#0f172a;">${item.name}</strong>
@@ -38,7 +41,8 @@ function itemsTableHtml(items: Array<{
           ${formatPrice(item.lineTotal)}
         </td>
       </tr>`
-  }).join('')
+    })
+    .join('')
 
   return `
     <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin:16px 0;">
@@ -90,9 +94,11 @@ function userEmailHtml(opts: {
             </div>
             <h2 style="margin:0 0 8px;color:#0f172a;font-size:20px;">Hi ${opts.firstName},</h2>
             <p style="margin:0 0 24px;color:#475569;line-height:1.6;">
-              ${isConfirmed
-                ? 'Great news! Your crypto payment has been confirmed and your order is now being processed.'
-                : 'Thank you for your order! We\'ve received it and will begin processing it shortly.'}
+              ${
+                isConfirmed
+                  ? 'Great news! Your crypto payment has been confirmed and your order is now being processed.'
+                  : "Thank you for your order! We've received it and will begin processing it shortly."
+              }
             </p>
 
             <!-- Order ID -->
@@ -223,17 +229,11 @@ function adminEmailHtml(opts: {
 </html>`
 }
 
-async function sendEmail(opts: {
-  apiKey: string
-  from: string
-  to: string
-  subject: string
-  html: string
-}) {
+async function sendEmail(opts: { apiKey: string; from: string; to: string; subject: string; html: string }) {
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${opts.apiKey}`,
+      'Authorization': `Bearer ${opts.apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({

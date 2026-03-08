@@ -50,19 +50,23 @@ function OrderStatusTracker({ status }: { status: string }) {
         return (
           <div key={step} className="flex flex-1 flex-col items-center">
             <div className="relative flex w-full items-center">
-              {i > 0 && (
-                <div className={`h-0.5 flex-1 ${done ? 'bg-emerald-500' : 'bg-slate-200'}`} />
-              )}
-              <div className={`h-4 w-4 shrink-0 rounded-full border-2 ${
-                active ? 'border-emerald-500 bg-emerald-500 ring-2 ring-emerald-200' :
-                done ? 'border-emerald-500 bg-emerald-500' :
-                'border-slate-300 bg-white'
-              }`} />
+              {i > 0 && <div className={`h-0.5 flex-1 ${done ? 'bg-emerald-500' : 'bg-slate-200'}`} />}
+              <div
+                className={`h-4 w-4 shrink-0 rounded-full border-2 ${
+                  active
+                    ? 'border-emerald-500 bg-emerald-500 ring-2 ring-emerald-200'
+                    : done
+                      ? 'border-emerald-500 bg-emerald-500'
+                      : 'border-slate-300 bg-white'
+                }`}
+              />
               {i < STATUS_STEPS.length - 1 && (
                 <div className={`h-0.5 flex-1 ${done && currentIdx > i ? 'bg-emerald-500' : 'bg-slate-200'}`} />
               )}
             </div>
-            <span className={`mt-1 text-center text-xs ${active ? 'font-bold text-emerald-700' : done ? 'text-emerald-600' : 'text-slate-400'}`}>
+            <span
+              className={`mt-1 text-center text-xs ${active ? 'font-bold text-emerald-700' : done ? 'text-emerald-600' : 'text-slate-400'}`}
+            >
               {labels[step]}
             </span>
           </div>
@@ -94,7 +98,10 @@ export function OrdersPageContent() {
       ) : (
         <ul className="space-y-4">
           {orders.map((order) => {
-            const statusCfg = STATUS_CONFIG[order.status] ?? { label: order.status, color: 'bg-slate-100 text-slate-700' }
+            const statusCfg = STATUS_CONFIG[order.status] ?? {
+              label: order.status,
+              color: 'bg-slate-100 text-slate-700',
+            }
             return (
               <li key={order._id} className="pharma-card p-5">
                 <div className="flex flex-wrap items-start justify-between gap-2">
@@ -133,10 +140,12 @@ export function OrdersPageContent() {
                 {order.billingAddress && (
                   <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
                     <span className="font-semibold">Delivered to: </span>
-                    {order.shippingAddress && !('sameAsBilling' in order.shippingAddress ? order.shippingAddress.sameAsBilling : false) && 'sameAsBilling' in order.shippingAddress && !order.shippingAddress.sameAsBilling
+                    {order.shippingAddress &&
+                    !('sameAsBilling' in order.shippingAddress ? order.shippingAddress.sameAsBilling : false) &&
+                    'sameAsBilling' in order.shippingAddress &&
+                    !order.shippingAddress.sameAsBilling
                       ? `${(order.shippingAddress as { firstName: string }).firstName} ${(order.shippingAddress as { lastName: string }).lastName}, ${(order.shippingAddress as { city: string }).city}, ${(order.shippingAddress as { country: string }).country}`
-                      : `${order.billingAddress.firstName} ${order.billingAddress.lastName}, ${order.billingAddress.city}, ${order.billingAddress.country}`
-                    }
+                      : `${order.billingAddress.firstName} ${order.billingAddress.lastName}, ${order.billingAddress.city}, ${order.billingAddress.country}`}
                   </div>
                 )}
 
