@@ -3,125 +3,8 @@
 import { FormEvent, useState } from 'react'
 import { useAction, useMutation, useQuery } from 'convex/react'
 import { api } from '@/convex/_generated/api'
+import { COUNTRIES } from '@/lib/countries'
 import { formatPrice } from '@/lib/utils'
-
-// Countries list (abbreviated for practicality)
-const COUNTRIES = [{ code: 'IN', name: 'India (भारत)' }]
-
-const INDIA_STATES = [
-  'Andhra Pradesh',
-  'Arunachal Pradesh',
-  'Assam',
-  'Bihar',
-  'Chhattisgarh',
-  'Goa',
-  'Gujarat',
-  'Haryana',
-  'Himachal Pradesh',
-  'Jharkhand',
-  'Karnataka',
-  'Kerala',
-  'Madhya Pradesh',
-  'Maharashtra',
-  'Manipur',
-  'Meghalaya',
-  'Mizoram',
-  'Nagaland',
-  'Odisha',
-  'Punjab',
-  'Rajasthan',
-  'Sikkim',
-  'Tamil Nadu',
-  'Telangana',
-  'Tripura',
-  'Uttar Pradesh',
-  'Uttarakhand',
-  'West Bengal',
-  'Andaman and Nicobar Islands',
-  'Chandigarh',
-  'Dadra and Nagar Haveli and Daman and Diu',
-  'Delhi',
-  'Jammu and Kashmir',
-  'Ladakh',
-  'Lakshadweep',
-  'Puducherry',
-]
-
-const US_STATES = [
-  'Alabama',
-  'Alaska',
-  'Arizona',
-  'Arkansas',
-  'California',
-  'Colorado',
-  'Connecticut',
-  'Delaware',
-  'Florida',
-  'Georgia',
-  'Hawaii',
-  'Idaho',
-  'Illinois',
-  'Indiana',
-  'Iowa',
-  'Kansas',
-  'Kentucky',
-  'Louisiana',
-  'Maine',
-  'Maryland',
-  'Massachusetts',
-  'Michigan',
-  'Minnesota',
-  'Mississippi',
-  'Missouri',
-  'Montana',
-  'Nebraska',
-  'Nevada',
-  'New Hampshire',
-  'New Jersey',
-  'New Mexico',
-  'New York',
-  'North Carolina',
-  'North Dakota',
-  'Ohio',
-  'Oklahoma',
-  'Oregon',
-  'Pennsylvania',
-  'Rhode Island',
-  'South Carolina',
-  'South Dakota',
-  'Tennessee',
-  'Texas',
-  'Utah',
-  'Vermont',
-  'Virginia',
-  'Washington',
-  'West Virginia',
-  'Wisconsin',
-  'Wyoming',
-]
-
-const CA_PROVINCES = [
-  'Alberta',
-  'British Columbia',
-  'Manitoba',
-  'New Brunswick',
-  'Newfoundland and Labrador',
-  'Northwest Territories',
-  'Nova Scotia',
-  'Nunavut',
-  'Ontario',
-  'Prince Edward Island',
-  'Quebec',
-  'Saskatchewan',
-  'Yukon',
-]
-
-function getStatesForCountry(countryCode: string): string[] {
-  if (countryCode === 'IN') return INDIA_STATES
-  if (countryCode === 'US') return US_STATES
-  if (countryCode === 'CA') return CA_PROVINCES
-  return []
-}
 
 type BillingForm = {
   isNewCustomer: boolean
@@ -336,8 +219,6 @@ export function CheckoutPageContent() {
   }
 
   const cartEmpty = !cart || cart.items.length === 0
-  const billingStates = getStatesForCountry(billing.country)
-  const shippingStates = getStatesForCountry(shipping.country)
 
   return (
     <div className="mx-auto grid max-w-7xl gap-5 px-4 py-6 lg:grid-cols-[1fr_320px] lg:px-6">
@@ -497,33 +378,13 @@ export function CheckoutPageContent() {
 
             {/* State / Province */}
             <Field label="State / Province:">
-              <div className="relative">
-                {billingStates.length > 0 ? (
-                  <select
-                    className={selectClass}
-                    value={billing.state}
-                    onChange={(e) => setBillingField('state', e.target.value)}
-                  >
-                    <option value="">Please select state.</option>
-                    {billingStates.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    type="text"
-                    className={inputClass}
-                    placeholder="State / Province"
-                    value={billing.state}
-                    onChange={(e) => setBillingField('state', e.target.value)}
-                  />
-                )}
-                {billingStates.length > 0 && (
-                  <span className="pointer-events-none absolute right-3 top-2.5 text-slate-400">▾</span>
-                )}
-              </div>
+              <input
+                type="text"
+                className={inputClass}
+                placeholder="State / Province"
+                value={billing.state}
+                onChange={(e) => setBillingField('state', e.target.value)}
+              />
             </Field>
 
             {/* ZIP */}
@@ -607,33 +468,13 @@ export function CheckoutPageContent() {
                   </div>
                 </Field>
                 <Field label="State / Province:">
-                  <div className="relative">
-                    {shippingStates.length > 0 ? (
-                      <select
-                        className={selectClass}
-                        value={shipping.state}
-                        onChange={(e) => setShippingField('state', e.target.value)}
-                      >
-                        <option value="">Please select state.</option>
-                        {shippingStates.map((s) => (
-                          <option key={s} value={s}>
-                            {s}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        type="text"
-                        className={inputClass}
-                        placeholder="State / Province"
-                        value={shipping.state}
-                        onChange={(e) => setShippingField('state', e.target.value)}
-                      />
-                    )}
-                    {shippingStates.length > 0 && (
-                      <span className="pointer-events-none absolute right-3 top-2.5 text-slate-400">▾</span>
-                    )}
-                  </div>
+                  <input
+                    type="text"
+                    className={inputClass}
+                    placeholder="State / Province"
+                    value={shipping.state}
+                    onChange={(e) => setShippingField('state', e.target.value)}
+                  />
                 </Field>
                 <Field label="ZIP/Postal Code:">
                   <input
