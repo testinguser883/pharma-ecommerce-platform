@@ -1,6 +1,6 @@
 import type { PropsWithChildren } from 'react'
 import { ShopShell } from '@/components/shop-shell'
 
-export default function ShopLayout({ children }: PropsWithChildren) {
+export default function HomeLayout({ children }: PropsWithChildren) {
   return <ShopShell>{children}</ShopShell>
 }

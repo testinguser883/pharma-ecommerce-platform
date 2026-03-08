@@ -1,9 +1,11 @@
 import type { Metadata } from 'next'
 import { HomePageContent } from '@/components/home-page-content'
+import { siteInputs } from '@/lib/site-inputs'
 
 export const metadata: Metadata = {
-  title: 'Pharma eCommerce Platform',
-  description: 'Trusted online pharmaceutical platform with secure authentication and real-time cart sync.',
+  title: siteInputs.home.seoTitle,
+  description: siteInputs.home.seoDescription,
+  keywords: siteInputs.home.seoKeywords,
 }
 
 export default function HomePage() {
