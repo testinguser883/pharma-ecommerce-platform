@@ -27,37 +27,49 @@ export function ProductCard({ product }: { product: Doc<'products'> }) {
   const fromPrice = getFromPrice(product)
 
   return (
-    <article className="pharma-card overflow-hidden">
-      <div className="relative p-5">
+    <article className="group rx-card flex flex-col overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
+      {/* Discount badge */}
+      <div className="relative">
         {product.discount > 0 && (
-          <span className="absolute right-0 top-0 rounded-bl-2xl rounded-tr-2xl bg-red-500 px-3 py-1 text-lg font-bold text-white">
+          <span className="absolute right-3 top-3 z-10 rounded-full bg-red-500 px-2.5 py-0.5 text-xs font-bold text-white shadow-sm">
             -{product.discount}%
           </span>
         )}
-        <Link href={`/${product.slug ?? product._id}`} className="block">
-          <img
-            src={product.image}
-            alt={product.imageAlt ?? product.name}
-            className="mx-auto h-24 w-24 object-contain"
-            onError={(e) => {
-              ;(e.currentTarget as HTMLImageElement).src = 'https://placehold.co/200x200/f1f5f9/94a3b8?text=No+Image'
-            }}
-          />
-          <h3 className="mt-4 text-center text-xl font-bold text-slate-900">{product.name}</h3>
-          <p className="mt-1 text-center text-sm text-slate-500">{product.genericName}</p>
-          <p className="mt-2 text-center text-lg font-bold text-slate-900">
-            {formatPrice(fromPrice.price)} per {fromPrice.perUnit}
-          </p>
-        </Link>
 
-        {/* Dosage chips derived from pricing matrix */}
+        <Link href={`/${product.slug ?? product._id}`} className="block">
+          {/* Image area — fixed height so all cards align */}
+          <div className="flex h-36 items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+            <img
+              src={product.image}
+              alt={product.imageAlt ?? product.name}
+              className="h-28 w-28 object-contain transition-transform duration-300 group-hover:scale-105"
+              onError={(e) => {
+                ;(e.currentTarget as HTMLImageElement).src = 'https://placehold.co/200x200/f1f5f9/94a3b8?text=No+Image'
+              }}
+            />
+          </div>
+
+          {/* Info — fixed height so name/price area is uniform */}
+          <div className="px-4 pt-3 pb-2">
+            <h3 className="text-sm font-bold text-slate-900 leading-tight line-clamp-2 min-h-[2.5rem]">{product.name}</h3>
+            <p className="mt-0.5 text-xs text-slate-400 truncate">{product.genericName ?? '\u00A0'}</p>
+            <p className="mt-2 text-base font-extrabold text-slate-900">
+              {formatPrice(fromPrice.price)}
+              <span className="ml-1 text-xs font-normal text-slate-400">/ {fromPrice.perUnit}</span>
+            </p>
+          </div>
+        </Link>
+      </div>
+
+      {/* Dosage chips — flex-1 pushes "View Item" to bottom */}
+      <div className="flex-1 px-4 pb-3">
         {product.pricingMatrix && product.pricingMatrix.length > 0 && (
-          <div className="mt-3 flex flex-wrap justify-center gap-1.5">
+          <div className="flex flex-wrap gap-1">
             {product.pricingMatrix.map((entry) => (
               <Link
                 key={entry.dosage}
                 href={`/${product.slug ?? product._id}?dosage=${encodeURIComponent(entry.dosage)}`}
-                className="rounded-full bg-sky-50 px-2.5 py-0.5 text-xs font-semibold text-sky-700 transition hover:bg-sky-100"
+                className="rounded-full border border-teal-200 bg-teal-50 px-2 py-0.5 text-[11px] font-semibold text-teal-700 transition hover:bg-teal-100"
               >
                 {entry.dosage}
               </Link>
@@ -65,9 +77,11 @@ export function ProductCard({ product }: { product: Doc<'products'> }) {
           </div>
         )}
       </div>
+
+      {/* CTA — always at the bottom */}
       <Link
         href={`/${product.slug ?? product._id}`}
-        className="flex w-full items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 py-3 text-base font-semibold text-white transition hover:from-emerald-600 hover:to-teal-600"
+        className="flex w-full items-center justify-center gap-2 bg-gradient-to-r from-teal-600 to-cyan-600 py-2.5 text-sm font-semibold text-white transition-all hover:from-teal-500 hover:to-cyan-500"
       >
         View Item
       </Link>

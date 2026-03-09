@@ -1,68 +1,124 @@
 import Link from 'next/link'
+import { Pill, Bitcoin, Mail, Shield } from 'lucide-react'
 
 export function SiteFooter() {
   return (
-    <footer className="bg-[#dce8f0] text-slate-700 text-sm">
-      <div className="mx-auto max-w-7xl px-4 py-8 lg:px-6">
-        <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
-          {/* Column 1 */}
-          <div className="flex flex-col gap-2">
-            <Link href="/" className="hover:underline">
-              Home
-            </Link>
-            <Link href="/orders" className="hover:underline">
-              Order Status
-            </Link>
-            <Link href="/faq" className="hover:underline">
-              FAQ
-            </Link>
-          </div>
+    <footer className="bg-slate-950 text-slate-300">
+      {/* Top accent */}
+      <div className="h-px bg-gradient-to-r from-transparent via-teal-500/40 to-transparent" />
 
-          {/* Column 2 */}
-          <div className="flex flex-col gap-2">
-            <Link href="/contact-us" className="hover:underline">
-              Contact Us
-            </Link>
-            <Link href="/testimonials" className="hover:underline">
-              Testimonials
-            </Link>
-            <Link href="/about-us" className="hover:underline">
-              About Us
-            </Link>
-          </div>
-
-          {/* Column 3 */}
-          <div className="flex flex-col gap-2">
-            <Link href="/our-policy" className="hover:underline">
-              Our Policy
-            </Link>
-            <Link href="/terms-conditions" className="hover:underline">
-              Terms &amp; Conditions
-            </Link>
-          </div>
-
-          {/* Payment Methods */}
-          <div className="flex flex-col gap-2">
-            <p className="font-semibold text-slate-800">Payment Methods</p>
-            <div className="flex items-center gap-2">
-              <span className="flex items-center justify-center rounded bg-orange-500 px-2 py-1 text-xs font-bold text-white">
-                ₿ BTC
+      <div className="mx-auto max-w-7xl px-4 py-12 lg:px-6">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Brand column */}
+          <div className="space-y-4">
+            <Link href="/" className="inline-flex items-center gap-2.5 group">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-400 to-cyan-500 text-white shadow-lg shadow-teal-900/30">
+                <Pill className="h-4.5 w-4.5" />
               </span>
+              <span className="text-base font-bold text-white group-hover:text-teal-300 transition-colors">
+                PharmaCare
+              </span>
+            </Link>
+            <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
+              Quality pharmaceutical products delivered to your doorstep. Your health, our mission.
+            </p>
+            <div className="flex items-center gap-2">
+              <span className="rx-badge bg-orange-500/15 text-orange-400 border border-orange-500/20">
+                <Bitcoin className="h-3 w-3 mr-1" />
+                BTC Accepted
+              </span>
+            </div>
+          </div>
+
+          {/* Quick links */}
+          <div>
+            <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-slate-500">Quick Links</p>
+            <ul className="space-y-2.5">
+              {[
+                { href: '/', label: 'Home' },
+                { href: '/products', label: 'Products' },
+                { href: '/orders', label: 'Order Status' },
+                { href: '/faq', label: 'FAQ' },
+              ].map(({ href, label }) => (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    className="text-sm text-slate-400 hover:text-teal-400 transition-colors hover:translate-x-0.5 inline-block"
+                  >
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Company */}
+          <div>
+            <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-slate-500">Company</p>
+            <ul className="space-y-2.5">
+              {[
+                { href: '/about-us', label: 'About Us' },
+                { href: '/contact-us', label: 'Contact Us' },
+                { href: '/testimonials', label: 'Testimonials' },
+                { href: '/our-policy', label: 'Our Policy' },
+                { href: '/terms-conditions', label: 'Terms & Conditions' },
+              ].map(({ href, label }) => (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    className="text-sm text-slate-400 hover:text-teal-400 transition-colors hover:translate-x-0.5 inline-block"
+                  >
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Contact & Payment */}
+          <div>
+            <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-slate-500">Support</p>
+            <div className="space-y-3">
+              <div className="flex items-start gap-2 text-sm text-slate-400">
+                <Mail className="h-4 w-4 text-teal-500 mt-0.5 shrink-0" />
+                <span>Contact us via our support page for assistance.</span>
+              </div>
+              <Link
+                href="/contact-us"
+                className="inline-flex items-center gap-2 rounded-full border border-teal-500/30 bg-teal-500/10 px-4 py-2 text-sm font-medium text-teal-400 hover:bg-teal-500/20 hover:border-teal-400/50 transition-all"
+              >
+                Get in Touch
+              </Link>
+            </div>
+
+            <div className="mt-6 space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Payment Methods</p>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-lg border border-orange-500/20 bg-orange-500/10 px-3 py-1.5 text-xs font-semibold text-orange-400">
+                  <Bitcoin className="h-3.5 w-3.5" />
+                  Bitcoin (BTC)
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="mt-6 border-t border-slate-300 pt-4 text-xs text-slate-500">
-          <p className="text-center">
-            Please note, that in reply to your message you are supposed to get an automatic message notifying you that
-            your message was received. Our support team will reply to your inquiry ASAP. If you did not receive an
-            automatic reply, it means that your message did not reach us. We kindly ask you to contact us by phone.
+        {/* Divider */}
+        <div className="mt-10 border-t border-slate-800 pt-6">
+          <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:justify-between sm:text-left">
+            <p className="text-xs text-slate-500">
+              © {new Date().getFullYear()} PharmaCare. All rights reserved.
+            </p>
+            <div className="flex items-center gap-1.5 text-xs text-slate-600">
+              <Shield className="h-3 w-3 text-teal-600" />
+              Secure & encrypted transactions
+            </div>
+          </div>
+          <p className="mt-3 text-xs text-slate-600 text-center max-w-2xl mx-auto">
+            Please note: after contacting us you will receive an automatic confirmation. Our support team will reply ASAP.
+            If you did not receive a confirmation, your message may not have reached us — please try again.
           </p>
         </div>
-      </div>
-
-      <div className="bg-slate-400 py-3 text-center text-xs text-white">
-        ©Copyright pharma-ecommerce-platform-5an9.vercel.app. All rights reserved
       </div>
     </footer>
   )
