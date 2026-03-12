@@ -1,65 +1,62 @@
+import { ContentPageShell, ContentSection } from '@/components/content-page-shell'
+
+const faqs = [
+  {
+    question: 'How do I place an order?',
+    answer:
+      'Browse the catalog, add items to your cart, and continue to checkout. You will need to create an account or sign in before completing the order.',
+  },
+  {
+    question: 'What payment methods do you accept?',
+    answer: 'We currently accept Bitcoin (BTC) as the payment method.',
+  },
+  {
+    question: 'How can I check my order status?',
+    answer:
+      'Sign in to your account and open the Orders page. You can review payment status, fulfillment progress, and any tracking information there.',
+  },
+  {
+    question: 'Do I need a prescription?',
+    answer:
+      'Some products may require a valid prescription. Review the product description for any product-specific requirements.',
+  },
+  {
+    question: 'How long does delivery take?',
+    answer:
+      'Delivery timing depends on destination and shipping conditions. Standard delivery often ranges from 7 to 14 business days.',
+  },
+  {
+    question: 'What is your return policy?',
+    answer:
+      'Because these are pharmaceutical products, returns are typically limited to damaged or incorrect items. Contact support promptly if there is an issue.',
+  },
+]
+
 export default function FAQPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 lg:px-6">
-      <h1 className="mb-6 text-2xl font-bold text-slate-800">Frequently Asked Questions</h1>
-
-      <div className="space-y-6 text-slate-600">
-        <div>
-          <h2 className="mb-2 font-semibold text-slate-700">How do I place an order?</h2>
-          <p>
-            Browse our product catalog, add items to your cart, and proceed to checkout. You will need to create an
-            account or log in to complete your purchase.
-          </p>
+    <ContentPageShell
+      eyebrow="FAQ"
+      title="Operational answers without the clutter."
+      description="Find quick answers to common questions about ordering, payment, delivery, and support."
+      stats={[
+        { label: 'Checkout', value: 'Crypto' },
+        { label: 'Tracking', value: 'Account' },
+        { label: 'Support', value: 'Direct' },
+      ]}
+    >
+      <ContentSection
+        title="Frequently asked questions"
+        description="The core questions customers typically ask before or after ordering."
+      >
+        <div className="grid gap-4">
+          {faqs.map((faq) => (
+            <div key={faq.question} className="rounded-[24px] border border-slate-200/80 bg-slate-50/80 p-5">
+              <h3 className="text-lg font-semibold text-slate-950">{faq.question}</h3>
+              <p className="mt-3 text-sm leading-7 text-slate-600">{faq.answer}</p>
+            </div>
+          ))}
         </div>
-
-        <div>
-          <h2 className="mb-2 font-semibold text-slate-700">What payment methods do you accept?</h2>
-          <p>
-            We currently accept Bitcoin (BTC) as our payment method. This ensures fast and secure transactions for all
-            our customers worldwide.
-          </p>
-        </div>
-
-        <div>
-          <h2 className="mb-2 font-semibold text-slate-700">How can I check my order status?</h2>
-          <p>
-            Log in to your account and visit the Order Status page to track the progress of your orders. You will also
-            receive email notifications when your order is processed and shipped.
-          </p>
-        </div>
-
-        <div>
-          <h2 className="mb-2 font-semibold text-slate-700">Do I need a prescription?</h2>
-          <p>
-            Some of our products require a valid prescription. Please check the product description for details. We
-            strictly comply with all applicable laws and regulations regarding the sale of pharmaceutical products.
-          </p>
-        </div>
-
-        <div>
-          <h2 className="mb-2 font-semibold text-slate-700">How long does delivery take?</h2>
-          <p>
-            Delivery times vary depending on your location and the shipping option selected at checkout. Standard
-            delivery typically takes 7–14 business days. Express options may be available.
-          </p>
-        </div>
-
-        <div>
-          <h2 className="mb-2 font-semibold text-slate-700">What is your return policy?</h2>
-          <p>
-            Due to the nature of pharmaceutical products, returns are only accepted for items that are damaged or
-            incorrect. Please contact our support team within 48 hours of receiving your order.
-          </p>
-        </div>
-
-        <div>
-          <h2 className="mb-2 font-semibold text-slate-700">How do I contact customer support?</h2>
-          <p>
-            You can reach our support team via the Contact Us page. We aim to respond to all inquiries as quickly as
-            possible. Please note that an automatic confirmation email will be sent upon receiving your message.
-          </p>
-        </div>
-      </div>
-    </div>
+      </ContentSection>
+    </ContentPageShell>
   )
 }

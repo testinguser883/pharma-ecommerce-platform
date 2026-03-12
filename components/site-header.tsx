@@ -2,17 +2,27 @@
 
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
-import { LogOut, Menu, Pill, Search, ShoppingCart, UserRound, X } from 'lucide-react'
+import { HeartPulse, LogOut, Menu, Search, ShoppingBag, UserRound, X } from 'lucide-react'
 import { useQuery } from 'convex/react'
 import { useRouter } from 'next/navigation'
 import { authClient } from '@/lib/auth-client'
 import { api } from '@/convex/_generated/api'
 import { CartDrawer } from './cart-drawer'
+import { cn } from '@/lib/utils'
+import { brand } from '@/lib/brand'
+
+const primaryLinks = [
+  { href: '/', label: 'Home' },
+  { href: '/products', label: 'Products' },
+  { href: '/orders', label: 'Orders' },
+  { href: '/account', label: 'Account' },
+]
 
 export function SiteHeader() {
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [searchInput, setSearchInput] = useState('')
+  const [isScrolled, setIsScrolled] = useState(false)
   const { data: session } = authClient.useSession()
   const cartItemCount = useQuery(api.cart.getItemCount) ?? 0
   const isAdmin = useQuery(api.admin.isAdmin)
@@ -21,14 +31,18 @@ export function SiteHeader() {
   const hasSearchInteraction = useRef(false)
 
   useEffect(() => {
-    if (!hasSearchInteraction.current) {
-      return
-    }
+    const onScroll = () => setIsScrolled(window.scrollY > 18)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  useEffect(() => {
+    if (!hasSearchInteraction.current) return
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
       const q = searchInput.trim()
       router.push(q ? `/products?q=${encodeURIComponent(q)}` : '/products')
-    }, 300)
+    }, 280)
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
@@ -42,210 +56,193 @@ export function SiteHeader() {
     setIsMobileMenuOpen(false)
   }
 
-  const navLinks = [
-    { href: '/', label: 'Home' },
-    { href: '/products', label: 'Products' },
-    { href: '/orders', label: 'Orders' },
-    { href: '/account', label: 'Account' },
-  ]
-
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 lg:px-6">
-          {/* Logo */}
-          <Link href="/" className="inline-flex shrink-0 items-center gap-2">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-600 to-teal-500 text-white">
-              <Pill className="h-5 w-5" />
-            </span>
-            <span className="text-lg font-semibold tracking-tight text-slate-900">PharmaCare</span>
-          </Link>
-
-          {/* Desktop search */}
-          <form onSubmit={handleSearch} className="hidden flex-1 max-w-sm md:flex">
-            <div className="relative w-full">
-              <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-              <input
-                type="search"
-                value={searchInput}
-                onChange={(e) => {
-                  hasSearchInteraction.current = true
-                  setSearchInput(e.target.value)
-                }}
-                placeholder="Search medicines..."
-                className="w-full rounded-full border border-slate-200 bg-white py-2 pl-9 pr-4 text-sm text-slate-800 outline-none ring-sky-200 focus:border-sky-300 focus:ring-2"
-              />
-            </div>
-          </form>
-
-          {/* Desktop nav */}
-          <nav className="hidden items-center gap-5 lg:flex">
-            {navLinks.map(({ href, label }) => (
-              <Link key={href} href={href} className="text-sm font-medium text-slate-700 hover:text-slate-900">
-                {label}
-              </Link>
-            ))}
-            {isAdmin && (
-              <Link href="/admin" className="text-sm font-medium text-teal-600 hover:text-teal-800">
-                Admin
-              </Link>
-            )}
-          </nav>
-
-          {/* Right actions */}
-          <div className="flex items-center gap-2">
-            {/* Cart button */}
-            <button
-              type="button"
-              onClick={() => setIsCartOpen(true)}
-              className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-700 hover:border-teal-200 hover:text-teal-700"
-              aria-label="Open cart"
-            >
-              <ShoppingCart className="h-5 w-5" />
-              {cartItemCount > 0 && (
-                <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
-                  {cartItemCount}
-                </span>
-              )}
-            </button>
-
-            {session?.user ? (
-              <>
-                <Link
-                  href="/account"
-                  className="hidden items-center gap-1 rounded-full border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-teal-200 hover:text-teal-700 sm:inline-flex"
-                >
-                  <UserRound className="h-4 w-4" />
-                  {session.user.name ?? session.user.email}
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => void authClient.signOut()}
-                  className="hidden h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-700 hover:border-red-200 hover:text-red-600 sm:inline-flex"
-                  aria-label="Sign out"
-                >
-                  <LogOut className="h-4 w-4" />
-                </button>
-              </>
-            ) : (
-              <div className="hidden items-center gap-2 sm:flex">
-                <Link
-                  href="/auth/login"
-                  className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-                >
-                  Login
-                </Link>
-                <Link
-                  href="/auth/register"
-                  className="rounded-full bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700"
-                >
-                  Register
-                </Link>
+      <header className="sticky top-0 z-40 px-4 pt-4 lg:px-6">
+        <div
+          className={cn(
+            'mx-auto max-w-7xl rounded-[32px] border backdrop-blur-xl transition-all duration-300',
+            isScrolled
+              ? 'border-white/70 bg-white/78 shadow-[0_20px_70px_-40px_rgba(15,23,42,0.85)]'
+              : 'border-white/55 bg-white/58 shadow-[0_18px_60px_-42px_rgba(15,23,42,0.6)]',
+          )}
+        >
+          <div className="flex items-center gap-3 px-4 py-4 sm:px-5">
+            <Link href="/" className="flex shrink-0 items-center gap-3">
+              <span className="inline-flex h-12 w-12 items-center justify-center rounded-[20px] bg-slate-950 text-white shadow-lg shadow-slate-950/20">
+                <HeartPulse className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="text-base font-semibold tracking-tight text-slate-950">{brand.name}</p>
               </div>
-            )}
+            </Link>
 
-            {/* Mobile hamburger */}
-            <button
-              type="button"
-              onClick={() => setIsMobileMenuOpen((v) => !v)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-700 hover:bg-slate-50 lg:hidden"
-              aria-label="Toggle menu"
-            >
-              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile menu */}
-        {isMobileMenuOpen && (
-          <div className="border-t border-slate-200 bg-white px-4 pb-4 lg:hidden">
-            {/* Mobile search */}
-            <form onSubmit={handleSearch} className="pt-4">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <form onSubmit={handleSearch} className="hidden min-w-0 flex-1 xl:flex xl:max-w-[420px]">
+              <div className="relative w-full">
+                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   type="search"
                   value={searchInput}
-                  onChange={(e) => {
+                  onChange={(event) => {
                     hasSearchInteraction.current = true
-                    setSearchInput(e.target.value)
+                    setSearchInput(event.target.value)
                   }}
                   placeholder="Search medicines..."
-                  className="w-full rounded-full border border-slate-200 bg-white py-2 pl-9 pr-4 text-sm text-slate-800 outline-none ring-sky-200 focus:border-sky-300 focus:ring-2"
+                  className="h-10 w-full rounded-full border border-slate-200 bg-white px-4 pl-11 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-slate-300"
                 />
               </div>
             </form>
 
-            {/* Mobile nav links */}
-            <nav className="mt-3 space-y-1">
-              {navLinks.map(({ href, label }) => (
+            <nav className="hidden items-center gap-1.5 lg:flex">
+              {primaryLinks.map(({ href, label }) => (
                 <Link
                   key={href}
                   href={href}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                  className="rounded-full px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-950 hover:text-white"
                 >
                   {label}
                 </Link>
               ))}
-              {isAdmin && (
+              {isAdmin ? (
                 <Link
                   href="/admin"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="block rounded-lg px-3 py-2 text-sm font-medium text-teal-600 hover:bg-teal-50"
+                  className="rounded-full border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-700 transition hover:border-teal-300 hover:bg-teal-100"
                 >
                   Admin
                 </Link>
-              )}
+              ) : null}
             </nav>
 
-            {/* Mobile auth */}
-            <div className="mt-3 border-t border-slate-100 pt-3">
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsCartOpen(true)}
+                className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white/80 text-slate-900 transition hover:-translate-y-0.5 hover:border-teal-300 hover:bg-white"
+                aria-label="Open cart"
+              >
+                <ShoppingBag className="h-4.5 w-4.5" />
+                {cartItemCount > 0 ? (
+                  <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-slate-950 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                    {cartItemCount > 99 ? '99+' : cartItemCount}
+                  </span>
+                ) : null}
+              </button>
+
               {session?.user ? (
-                <div className="flex items-center justify-between">
+                <>
                   <Link
                     href="/account"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-2 text-sm font-medium text-slate-700"
+                    className="hidden items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 py-2.5 text-sm font-medium text-slate-900 transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white sm:inline-flex"
                   >
-                    <UserRound className="h-4 w-4" />
-                    {session.user.name ?? session.user.email}
+                    <UserRound className="h-4 w-4 text-teal-700" />
+                    <span className="max-w-[120px] truncate">{session.user.name ?? session.user.email}</span>
                   </Link>
                   <button
                     type="button"
-                    onClick={() => {
-                      void authClient.signOut()
-                      setIsMobileMenuOpen(false)
-                    }}
-                    className="flex items-center gap-1 text-sm font-medium text-red-600 hover:text-red-700"
+                    onClick={() => void authClient.signOut()}
+                    className="hidden h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white/80 text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 sm:inline-flex"
+                    aria-label="Sign out"
                   >
                     <LogOut className="h-4 w-4" />
-                    Sign out
                   </button>
-                </div>
+                </>
               ) : (
-                <div className="flex gap-2">
-                  <Link
-                    href="/auth/login"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex-1 rounded-full border border-slate-300 py-2 text-center text-sm font-medium text-slate-700 hover:bg-slate-100"
-                  >
+                <div className="hidden items-center gap-2 sm:flex">
+                  <Link href="/auth/login" className="rx-btn-secondary py-2.5">
                     Login
                   </Link>
-                  <Link
-                    href="/auth/register"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex-1 rounded-full bg-teal-600 py-2 text-center text-sm font-medium text-white hover:bg-teal-700"
-                  >
+                  <Link href="/auth/register" className="rx-btn-primary py-2.5">
                     Register
                   </Link>
                 </div>
               )}
+
+              <button
+                type="button"
+                onClick={() => setIsMobileMenuOpen((value) => !value)}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white/80 text-slate-900 lg:hidden"
+                aria-label="Toggle menu"
+              >
+                {isMobileMenuOpen ? <X className="h-4.5 w-4.5" /> : <Menu className="h-4.5 w-4.5" />}
+              </button>
             </div>
           </div>
-        )}
-      </header>
 
+          {isMobileMenuOpen ? (
+            <div className="border-t border-slate-200/70 px-4 py-4 sm:px-5 lg:hidden">
+              <form onSubmit={handleSearch}>
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="search"
+                    value={searchInput}
+                    onChange={(event) => {
+                      hasSearchInteraction.current = true
+                      setSearchInput(event.target.value)
+                    }}
+                    placeholder="Search medicines..."
+                    className="h-11 w-full rounded-full border border-slate-200 bg-white px-4 pl-11 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-slate-300"
+                  />
+                </div>
+              </form>
+
+              <nav className="mt-4 grid gap-2">
+                {primaryLinks.map(({ href, label }) => (
+                  <Link
+                    key={href}
+                    href={href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="rounded-[20px] border border-slate-200/80 bg-white/80 px-4 py-3 text-sm font-medium text-slate-900"
+                  >
+                    {label}
+                  </Link>
+                ))}
+                {isAdmin ? (
+                  <Link
+                    href="/admin"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="rounded-[20px] border border-teal-200 bg-teal-50 px-4 py-3 text-sm font-semibold text-teal-700"
+                  >
+                    Admin Panel
+                  </Link>
+                ) : null}
+              </nav>
+
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                {session?.user ? (
+                  <>
+                    <div className="rounded-[24px] border border-slate-200/80 bg-white/80 px-4 py-4">
+                      <p className="rx-kicker text-teal-700">Signed in</p>
+                      <p className="mt-2 text-sm font-medium text-slate-900">
+                        {session.user.name ?? session.user.email}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void authClient.signOut()
+                        setIsMobileMenuOpen(false)
+                      }}
+                      className="rounded-[24px] border border-red-200 bg-red-50 px-4 py-4 text-left text-sm font-semibold text-red-600"
+                    >
+                      Sign out
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/auth/login" onClick={() => setIsMobileMenuOpen(false)} className="rx-btn-secondary">
+                      Login
+                    </Link>
+                    <Link href="/auth/register" onClick={() => setIsMobileMenuOpen(false)} className="rx-btn-primary">
+                      Register
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </header>
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </>
   )

@@ -19,58 +19,102 @@ function getFromPrice(product: Doc<'products'>): { price: number; perUnit: strin
       return { price: minPerUnit, perUnit: product.unit }
     }
   }
-  const discounted = product.price * (1 - product.discount / 100)
-  return { price: discounted, perUnit: product.unit }
+
+  return {
+    price: product.price * (1 - product.discount / 100),
+    perUnit: product.unit,
+  }
 }
 
 export function ProductCard({ product }: { product: Doc<'products'> }) {
   const fromPrice = getFromPrice(product)
+  const dosageOptions = product.pricingMatrix?.map((entry) => entry.dosage) ?? product.dosageOptions ?? []
+  const productHref = `/${product.slug ?? product._id}`
 
   return (
-    <article className="pharma-card overflow-hidden">
-      <div className="relative p-5">
-        {product.discount > 0 && (
-          <span className="absolute right-0 top-0 rounded-bl-2xl rounded-tr-2xl bg-red-500 px-3 py-1 text-lg font-bold text-white">
-            -{product.discount}%
-          </span>
-        )}
-        <Link href={`/${product.slug ?? product._id}`} className="block">
-          <img
-            src={product.image}
-            alt={product.imageAlt ?? product.name}
-            className="mx-auto h-24 w-24 object-contain"
-            onError={(e) => {
-              ;(e.currentTarget as HTMLImageElement).src = 'https://placehold.co/200x200/f1f5f9/94a3b8?text=No+Image'
-            }}
-          />
-          <h3 className="mt-4 text-center text-xl font-bold text-slate-900">{product.name}</h3>
-          <p className="mt-1 text-center text-sm text-slate-500">{product.genericName}</p>
-          <p className="mt-2 text-center text-lg font-bold text-slate-900">
-            {formatPrice(fromPrice.price)} per {fromPrice.perUnit}
-          </p>
-        </Link>
+    <article className="group rx-card overflow-hidden transition duration-300 hover:-translate-y-1 hover:shadow-[0_30px_85px_-42px_rgba(15,23,42,0.9)]">
+      <div className="rx-gradient-hero relative overflow-hidden px-5 py-5 text-white">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.18),transparent_25%)]" />
+        <div className="relative flex items-start justify-between gap-3">
+          <span className="rx-badge border-white/10 bg-white/10 text-white">{product.category}</span>
+          {product.discount > 0 ? (
+            <span className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-950">
+              {product.discount}% off
+            </span>
+          ) : null}
+        </div>
 
-        {/* Dosage chips derived from pricing matrix */}
-        {product.pricingMatrix && product.pricingMatrix.length > 0 && (
-          <div className="mt-3 flex flex-wrap justify-center gap-1.5">
-            {product.pricingMatrix.map((entry) => (
+        <Link href={productHref} className="relative mt-6 block">
+          <div className="flex min-h-[180px] items-center justify-center">
+            <img
+              src={product.image}
+              alt={product.imageAlt ?? product.name}
+              className="rx-floating h-32 w-32 object-contain drop-shadow-[0_28px_34px_rgba(2,6,23,0.45)] transition duration-300 group-hover:scale-105"
+              onError={(event) => {
+                ;(event.currentTarget as HTMLImageElement).src =
+                  'https://placehold.co/240x240/f8fafc/94a3b8?text=No+Image'
+              }}
+            />
+          </div>
+        </Link>
+      </div>
+
+      <div className="p-5">
+        {product.genericName ? <p className="rx-kicker text-teal-700">{product.genericName}</p> : null}
+        <Link href={productHref}>
+          <h3 className="mt-3 text-xl font-semibold leading-tight text-slate-950 transition group-hover:text-teal-700">
+            {product.name}
+          </h3>
+        </Link>
+        {product.description ? (
+          <p className="mt-3 min-h-[3.5rem] text-sm leading-7 text-slate-600">{product.description}</p>
+        ) : null}
+
+        <div className="mt-5 flex items-end justify-between gap-4">
+          <div>
+            <p className="text-2xl font-semibold tracking-tight text-slate-950">{formatPrice(fromPrice.price)}</p>
+            <p className="mt-1 text-xs uppercase tracking-[0.22em] text-slate-500">From / {fromPrice.perUnit}</p>
+          </div>
+          <span
+            className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] ${
+              product.inStock ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'
+            }`}
+          >
+            {product.inStock ? 'In stock' : 'Out of stock'}
+          </span>
+        </div>
+
+        {dosageOptions.length > 0 ? (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {dosageOptions.slice(0, 3).map((dosage) => (
               <Link
-                key={entry.dosage}
-                href={`/${product.slug ?? product._id}?dosage=${encodeURIComponent(entry.dosage)}`}
-                className="rounded-full bg-sky-50 px-2.5 py-0.5 text-xs font-semibold text-sky-700 transition hover:bg-sky-100"
+                key={dosage}
+                href={`${productHref}?dosage=${encodeURIComponent(dosage)}#purchase-options`}
+                className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700"
               >
-                {entry.dosage}
+                {dosage}
               </Link>
             ))}
+            {dosageOptions.length > 3 ? (
+              <Link
+                href={productHref}
+                className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-500 transition hover:border-slate-300 hover:text-slate-700"
+              >
+                +{dosageOptions.length - 3} more
+              </Link>
+            ) : null}
           </div>
-        )}
+        ) : null}
+
+        <div className="mt-6 flex items-center justify-between">
+          <Link href={productHref} className="text-sm font-semibold text-slate-950">
+            View details
+          </Link>
+          <Link href={productHref} className="rx-btn-primary px-4 py-2.5 text-xs uppercase tracking-[0.24em]">
+            Shop
+          </Link>
+        </div>
       </div>
-      <Link
-        href={`/${product.slug ?? product._id}`}
-        className="flex w-full items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 py-3 text-base font-semibold text-white transition hover:from-emerald-600 hover:to-teal-600"
-      >
-        View Item
-      </Link>
     </article>
   )
 }

@@ -3,16 +3,15 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { ChevronLeft, ShoppingCart, ChevronDown, ChevronUp, Check } from 'lucide-react'
+import { ArrowLeft, Minus, Plus, ShoppingBag, Sparkles } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { api } from '@/convex/_generated/api'
+import type { Id } from '@/convex/_generated/dataModel'
 import { authClient } from '@/lib/auth-client'
-import { renderMarkdownContent } from '@/lib/markdown'
 import { formatPrice } from '@/lib/utils'
 
-// ── Package row ────────────────────────────────────────────────────────────────
-
 type PackageRowProps = {
+  productId: Id<'products'>
   dosage: string
   pillCount: number
   originalPrice: number
@@ -20,15 +19,69 @@ type PackageRowProps = {
   benefits: string[]
   expiryDate?: string
   unit: string
-  image: string
-  imageAlt?: string
   inStock: boolean
+  quantity: number
+  pending: boolean
   onAddToCart: (dosage: string, pillCount: number, price: number) => void
-  adding: boolean
-  justAdded: boolean
+  onSetQuantity: (args: { productId: Id<'products'>; dosage?: string; pillCount?: number; quantity: number }) => void
+}
+
+function ProductCartControl({
+  quantity,
+  pending,
+  inStock,
+  onAdd,
+  onDecrease,
+  onIncrease,
+}: {
+  quantity: number
+  pending: boolean
+  inStock: boolean
+  onAdd: () => void
+  onDecrease: () => void
+  onIncrease: () => void
+}) {
+  if (quantity > 0) {
+    return (
+      <div className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2 shadow-sm">
+        <button
+          type="button"
+          disabled={pending}
+          onClick={onDecrease}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-500 transition hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-50"
+          aria-label="Decrease quantity"
+        >
+          <Minus className="h-4 w-4" />
+        </button>
+        <span className="min-w-10 text-center text-sm font-semibold text-slate-950">{quantity}</span>
+        <button
+          type="button"
+          disabled={pending || !inStock || quantity >= 99}
+          onClick={onIncrease}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-500 transition hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-50"
+          aria-label="Increase quantity"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      disabled={pending || !inStock}
+      onClick={onAdd}
+      className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      <ShoppingBag className="h-4 w-4" />
+      {pending ? 'Adding...' : 'Add to cart'}
+    </button>
+  )
 }
 
 function PackageRow({
+  productId,
   dosage,
   pillCount,
   originalPrice,
@@ -36,12 +89,11 @@ function PackageRow({
   benefits,
   expiryDate,
   unit,
-  image,
-  imageAlt,
   inStock,
+  quantity,
+  pending,
   onAddToCart,
-  adding,
-  justAdded,
+  onSetQuantity,
 }: PackageRowProps) {
   const perUnit = price / pillCount
   const savings = originalPrice - price
@@ -52,102 +104,90 @@ function PackageRow({
       : expiryDate || null
 
   return (
-    <div className="grid grid-cols-[120px_1fr_auto] items-start gap-4 border-b border-slate-100 py-5 last:border-0 md:grid-cols-[160px_1fr_1fr_auto]">
-      <div>
-        <p className="text-base font-bold text-slate-900">{dosage}</p>
-        <p className="text-sm text-slate-500">
-          {pillCount} {unit}s
-        </p>
-        {formattedExpiryDate ? <p className="text-xs text-slate-400">Expires: {formattedExpiryDate}</p> : null}
-        <img src={image} alt={imageAlt ?? dosage} className="mt-2 h-12 w-12 object-contain" />
-      </div>
-      <div>
-        {originalPrice > price && <p className="text-sm text-slate-400 line-through">{formatPrice(originalPrice)}</p>}
-        <p className="text-xl font-bold text-slate-900">{formatPrice(price)}</p>
-        <p className="text-sm text-slate-500">
-          {formatPrice(perUnit)} per {unit}
-        </p>
-      </div>
-      <div className="hidden space-y-1 md:block">
-        {benefits.map((b) => (
-          <p key={b} className="text-sm text-slate-600">
-            + {b}
-          </p>
-        ))}
-      </div>
-      <div className="flex flex-col items-end gap-1">
-        <button
-          type="button"
-          disabled={adding || !inStock}
-          onClick={() => onAddToCart(dosage, pillCount, price)}
-          className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:border-teal-400 hover:bg-teal-50 hover:text-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {justAdded ? (
-            <>
-              <Check className="h-4 w-4 text-teal-600" />
-              Added
-            </>
-          ) : adding ? (
-            'Adding...'
-          ) : (
-            <>
-              <ShoppingCart className="h-4 w-4" />
-              Add to cart
-            </>
-          )}
-        </button>
-        {savings > 0 && <p className="text-xs font-semibold text-red-500">save: {formatPrice(savings)}</p>}
+    <div className="rx-card p-5">
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
+        <div>
+          <div>
+            <p className="rx-kicker text-teal-700">Dose option</p>
+            <h3 className="mt-2 text-xl font-semibold text-slate-950">{dosage}</h3>
+            <p className="mt-1 text-sm text-slate-500">
+              {pillCount} {unit}
+              {pillCount > 1 ? 's' : ''}
+            </p>
+            {formattedExpiryDate ? (
+              <p className="mt-1 text-xs uppercase tracking-[0.22em] text-slate-400">Expiry {formattedExpiryDate}</p>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="grid flex-1 gap-5 lg:grid-cols-[170px_minmax(0,1fr)_auto] lg:items-center">
+          <div>
+            {originalPrice > price ? (
+              <p className="text-sm text-slate-400 line-through">{formatPrice(originalPrice)}</p>
+            ) : null}
+            <p className="text-3xl font-semibold tracking-tight text-slate-950">{formatPrice(price)}</p>
+            <p className="mt-1 text-xs uppercase tracking-[0.22em] text-slate-500">
+              {formatPrice(perUnit)} / {unit}
+            </p>
+            {savings > 0 ? (
+              <span className="mt-3 inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                Save {formatPrice(savings)}
+              </span>
+            ) : null}
+          </div>
+
+          <div className="space-y-2">
+            {benefits.length > 0
+              ? benefits.map((benefit) => (
+                  <p key={benefit} className="flex items-start gap-2 text-sm leading-6 text-slate-600">
+                    <span className="mt-2 h-1.5 w-1.5 rounded-full bg-teal-600" />
+                    <span>{benefit}</span>
+                  </p>
+                ))
+              : null}
+          </div>
+
+          <ProductCartControl
+            quantity={quantity}
+            pending={pending}
+            inStock={inStock}
+            onAdd={() => onAddToCart(dosage, pillCount, price)}
+            onDecrease={() => onSetQuantity({ productId, dosage, pillCount, quantity: quantity - 1 })}
+            onIncrease={() => onSetQuantity({ productId, dosage, pillCount, quantity: quantity + 1 })}
+          />
+        </div>
       </div>
     </div>
   )
 }
 
-// ── Product description accordion ────────────────────────────────────────────
-
-function ProductDescriptionAccordion({ content }: { content: string }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <section className="pharma-card overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between px-6 py-4 text-left"
-      >
-        <h2 className="text-lg font-bold text-slate-900">Product Description</h2>
-        {open ? <ChevronUp className="h-5 w-5 text-slate-500" /> : <ChevronDown className="h-5 w-5 text-slate-500" />}
-      </button>
-      {open && <div className="border-t border-slate-100 px-6 py-5">{renderMarkdownContent(content)}</div>}
-    </section>
-  )
-}
-
-// ── Main component ────────────────────────────────────────────────────────────
-
 export function ProductDetailContent({ productId }: { productId: string }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { data: session } = authClient.useSession()
+  const cart = useQuery(api.cart.getMyCart)
   const addItem = useMutation(api.cart.addItem)
-
+  const updateItemQuantity = useMutation(api.cart.updateItemQuantity)
   const product = useQuery(api.products.getBySlugOrId, productId ? { identifier: productId } : 'skip')
 
   const [selectedDosage, setSelectedDosage] = useState<string | null>(null)
-  const [addingKey, setAddingKey] = useState<string | null>(null)
-  const [justAddedKey, setJustAddedKey] = useState<string | null>(null)
+  const [pendingKey, setPendingKey] = useState<string | null>(null)
 
-  const dosages = product?.pricingMatrix?.map((d) => d.dosage) ?? product?.dosageOptions ?? []
+  const dosages = product?.pricingMatrix?.map((entry) => entry.dosage) ?? product?.dosageOptions ?? []
   const hasPricingMatrix = !!(product?.pricingMatrix && product.pricingMatrix.length > 0)
+  const requestedDosage = searchParams.get('dosage')
 
   useEffect(() => {
-    if (!product) return
-    const paramDosage = searchParams.get('dosage')
-    if (paramDosage && dosages.includes(paramDosage)) {
-      setSelectedDosage(paramDosage)
-    } else if (dosages.length > 0 && !selectedDosage) {
-      setSelectedDosage(dosages[0])
+    if (requestedDosage && dosages.includes(requestedDosage)) {
+      setSelectedDosage((current) => (current === requestedDosage ? current : requestedDosage))
+      return
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [product])
+
+    setSelectedDosage((current) => {
+      if (current && dosages.includes(current)) return current
+      return dosages[0] ?? null
+    })
+  }, [dosages, requestedDosage])
 
   const handleAddToCart = async (dosage?: string, pillCount?: number, unitPrice?: number) => {
     if (!product) return
@@ -157,33 +197,64 @@ export function ProductDetailContent({ productId }: { productId: string }) {
     }
     const key = dosage ? `${dosage}-${pillCount ?? ''}` : 'simple'
     try {
-      setAddingKey(key)
+      setPendingKey(key)
       await addItem({ productId: product._id, quantity: 1, dosage, pillCount, unitPrice })
-      setJustAddedKey(key)
-      setTimeout(() => setJustAddedKey(null), 2000)
-      if (!dosage) router.push('/cart')
     } finally {
-      setAddingKey(null)
+      setPendingKey(null)
+    }
+  }
+
+  const handleSetQuantity = async ({
+    productId,
+    dosage,
+    pillCount,
+    quantity,
+  }: {
+    productId: Id<'products'>
+    dosage?: string
+    pillCount?: number
+    quantity: number
+  }) => {
+    if (!session?.user) {
+      router.push(`/auth/login?next=/${product?.slug ?? product?._id ?? productId}`)
+      return
+    }
+
+    const key = dosage ? `${dosage}-${pillCount ?? ''}` : 'simple'
+    try {
+      setPendingKey(key)
+      await updateItemQuantity({
+        productId,
+        quantity,
+        dosage,
+        pillCount,
+      })
+    } finally {
+      setPendingKey(null)
     }
   }
 
   if (product === undefined) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-6 lg:px-6">
-        <p className="text-sm text-slate-500">Loading product...</p>
+      <div className="mx-auto max-w-7xl px-4 py-10 lg:px-6">
+        <div className="rx-card flex items-center gap-3 px-6 py-6 text-sm text-slate-500">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-teal-600" />
+          Loading product...
+        </div>
       </div>
     )
   }
 
   if (product === null) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-6 lg:px-6">
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
-          <p className="text-slate-600">Product not found.</p>
-          <Link
-            href="/products"
-            className="mt-3 inline-flex rounded-full bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
-          >
+      <div className="mx-auto max-w-4xl px-4 py-10 lg:px-6">
+        <div className="rx-card p-10 text-center">
+          <p className="rx-kicker text-teal-700">Unavailable</p>
+          <h1 className="rx-display mt-3 text-4xl text-slate-950">Product not found.</h1>
+          <p className="mt-3 text-sm leading-7 text-slate-600">
+            This product may have been removed or the link is invalid.
+          </p>
+          <Link href="/products" className="rx-btn-primary mt-6">
             Back to products
           </Link>
         </div>
@@ -191,150 +262,218 @@ export function ProductDetailContent({ productId }: { productId: string }) {
     )
   }
 
-  const selectedDosageData = product.pricingMatrix?.find((d) => d.dosage === selectedDosage)
+  const selectedDosageData = product.pricingMatrix?.find((entry) => entry.dosage === selectedDosage)
+  const basePrice = product.price * (1 - product.discount / 100)
+  const getCartQuantity = (dosage?: string, pillCount?: number) =>
+    cart?.items.find((item) => item.productId === product._id && item.dosage === dosage && item.pillCount === pillCount)
+      ?.quantity ?? 0
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 lg:px-6">
+    <div className="mx-auto max-w-7xl px-4 py-6 lg:px-6 lg:py-8">
       <Link
         href="/products"
-        className="inline-flex items-center gap-1 text-sm font-medium text-sky-700 hover:underline"
+        className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 transition hover:text-slate-950"
       >
-        <ChevronLeft className="h-4 w-4" />
+        <ArrowLeft className="h-4 w-4" />
         Back to products
       </Link>
 
-      {/* Product header */}
-      <section className="pharma-card p-5 md:p-6">
-        <div className="flex flex-wrap items-start gap-6">
-          <div className="rounded-3xl bg-slate-50 p-6">
+      <div className="mt-6 grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
+        <aside className="rx-card-dark h-fit overflow-hidden p-6 xl:sticky xl:top-28">
+          <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
             <img
               src={product.image}
               alt={product.imageAlt ?? product.name}
-              className="h-40 w-40 object-contain"
-              onError={(e) => {
-                ;(e.currentTarget as HTMLImageElement).src = 'https://placehold.co/200x200/f1f5f9/94a3b8?text=No+Image'
+              className="rx-floating mx-auto h-56 w-56 object-contain"
+              onError={(event) => {
+                ;(event.currentTarget as HTMLImageElement).src =
+                  'https://placehold.co/280x280/f8fafc/94a3b8?text=No+Image'
               }}
             />
           </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              {product.discount > 0 && (
-                <span className="rounded-full bg-red-500 px-3 py-1 text-xs font-semibold text-white">
-                  -{product.discount}%
-                </span>
-              )}
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                {product.category}
+
+          <div className="mt-6 flex flex-wrap gap-2">
+            <span className="rx-badge border-white/10 bg-white/10 text-white">{product.category}</span>
+            {product.discount > 0 ? (
+              <span className="rx-badge border-amber-300/20 bg-amber-300/10 text-amber-100">
+                {product.discount}% off
               </span>
+            ) : null}
+            <span
+              className={`rx-badge ${
+                product.inStock
+                  ? 'border-emerald-300/20 bg-emerald-300/10 text-emerald-100'
+                  : 'border-red-300/20 bg-red-300/10 text-red-100'
+              }`}
+            >
+              {product.inStock ? 'In stock' : 'Out of stock'}
+            </span>
+          </div>
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+            {product.genericName ? (
+              <div className="rounded-[24px] border border-white/10 bg-white/5 px-4 py-4">
+                <p className="rx-kicker text-teal-200">Generic</p>
+                <p className="mt-2 text-sm font-medium text-white">{product.genericName}</p>
+              </div>
+            ) : null}
+            <div className="rounded-[24px] border border-white/10 bg-white/5 px-4 py-4">
+              <p className="rx-kicker text-teal-200">Unit</p>
+              <p className="mt-2 text-sm font-medium text-white">{product.unit}</p>
             </div>
-            <h1 className="mt-3 text-2xl font-bold text-slate-900 md:text-3xl">
-              {product.name} <span className="text-lg font-normal text-slate-500">( {product.genericName} )</span>
-            </h1>
-            {product.description && (
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">{product.description}</p>
-            )}
-            {/* Show price + add-to-cart only when no dosage tabs at all */}
-            {dosages.length === 0 && (
-              <>
-                <p className="mt-3 text-2xl font-bold text-slate-900">
-                  {formatPrice(product.price)}
-                  <span className="ml-1 text-base font-medium text-slate-500">per {product.unit}</span>
-                </p>
-                <button
-                  type="button"
-                  onClick={() =>
-                    void handleAddToCart(undefined, undefined, product.price * (1 - product.discount / 100))
-                  }
-                  disabled={addingKey !== null || !product.inStock}
-                  className="mt-5 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3 text-sm font-semibold text-white hover:from-emerald-600 hover:to-teal-600 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <ShoppingCart className="h-4 w-4" />
-                  {addingKey !== null ? 'Adding...' : 'Add to cart'}
-                </button>
-              </>
-            )}
           </div>
-        </div>
-      </section>
+        </aside>
 
-      {/* Dosage tabs + packages (shown whenever dosages exist) */}
-      {dosages.length > 0 && (
-        <section className="pharma-card overflow-hidden">
-          {/* Dosage selector */}
-          <div className="flex flex-wrap gap-2 border-b border-slate-100 px-5 py-4">
-            {dosages.map((dosage) => (
-              <button
-                key={dosage}
-                type="button"
-                onClick={() => setSelectedDosage(dosage)}
-                className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
-                  selectedDosage === dosage
-                    ? 'bg-teal-600 text-white'
-                    : 'border border-slate-300 bg-white text-slate-700 hover:border-teal-400 hover:bg-teal-50'
-                }`}
-              >
-                {dosage}
-              </button>
-            ))}
-          </div>
+        <div className="space-y-6">
+          <section className="rx-card p-6 sm:p-8">
+            <p className="rx-kicker text-teal-700">Product spotlight</p>
+            <h1 className="rx-display mt-3 text-4xl leading-none text-slate-950 sm:text-5xl">{product.name}</h1>
+            {product.genericName ? (
+              <p className="mt-3 text-sm uppercase tracking-[0.24em] text-slate-500">
+                Generic name: {product.genericName}
+              </p>
+            ) : null}
+            {product.description ? (
+              <p className="mt-5 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">{product.description}</p>
+            ) : null}
 
-          <div className="px-5">
-            {hasPricingMatrix && selectedDosageData ? (
-              /* Full package pricing rows */
-              selectedDosageData.packages.map((pkg) => {
-                const key = `${selectedDosage}-${pkg.pillCount}`
-                return (
-                  <PackageRow
-                    key={key}
-                    dosage={selectedDosage!}
-                    pillCount={pkg.pillCount}
-                    originalPrice={pkg.originalPrice}
-                    price={pkg.price}
-                    benefits={pkg.benefits ?? []}
-                    expiryDate={pkg.expiryDate}
-                    unit={product.unit}
-                    image={product.image}
-                    imageAlt={product.imageAlt}
+            {dosages.length === 0 ? (
+              <div className="mt-8 rounded-[28px] border border-slate-200/80 bg-slate-50/80 p-5">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <p className="rx-kicker text-teal-700">Simple pricing</p>
+                    <p className="mt-3 text-4xl font-semibold tracking-tight text-slate-950">
+                      {formatPrice(basePrice)}
+                    </p>
+                    <p className="mt-1 text-xs uppercase tracking-[0.22em] text-slate-500">Per {product.unit}</p>
+                  </div>
+                  <ProductCartControl
+                    quantity={getCartQuantity(undefined, undefined)}
+                    pending={pendingKey === 'simple'}
                     inStock={product.inStock}
-                    onAddToCart={(d, pc, p) => void handleAddToCart(d, pc, p)}
-                    adding={addingKey === key}
-                    justAdded={justAddedKey === key}
+                    onAdd={() => void handleAddToCart(undefined, undefined, basePrice)}
+                    onDecrease={() =>
+                      void handleSetQuantity({
+                        productId: product._id,
+                        quantity: getCartQuantity(undefined, undefined) - 1,
+                      })
+                    }
+                    onIncrease={() =>
+                      void handleSetQuantity({
+                        productId: product._id,
+                        quantity: getCartQuantity(undefined, undefined) + 1,
+                      })
+                    }
                   />
-                )
-              })
-            ) : (
-              /* Fallback: simple add-to-cart for selected dosage */
-              <div className="flex items-center justify-between py-6">
-                <div>
-                  <p className="text-2xl font-bold text-slate-900">
-                    {formatPrice(product.price * (1 - product.discount / 100))}
-                    <span className="ml-1 text-base font-medium text-slate-500">per {product.unit}</span>
-                  </p>
-                  {selectedDosage && <p className="mt-1 text-sm text-slate-500">Selected: {selectedDosage}</p>}
                 </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    void handleAddToCart(
-                      selectedDosage ?? undefined,
-                      undefined,
-                      product.price * (1 - product.discount / 100),
-                    )
-                  }
-                  disabled={addingKey !== null || !product.inStock}
-                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3 text-sm font-semibold text-white hover:from-emerald-600 hover:to-teal-600 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <ShoppingCart className="h-4 w-4" />
-                  {addingKey !== null ? 'Adding...' : 'Add to cart'}
-                </button>
+              </div>
+            ) : (
+              <div className="mt-8">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <p className="rx-kicker text-teal-700">Dosage selector</p>
+                    <h2 className="mt-2 text-2xl font-semibold text-slate-950">Choose how you want to buy it.</h2>
+                  </div>
+                  <div className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600">
+                    {dosages.length} option{dosages.length > 1 ? 's' : ''}
+                  </div>
+                </div>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {dosages.map((dosage) => (
+                    <button
+                      key={dosage}
+                      type="button"
+                      onClick={() => setSelectedDosage(dosage)}
+                      className={`rounded-full px-4 py-2.5 text-sm font-semibold transition ${
+                        selectedDosage === dosage
+                          ? 'bg-slate-950 text-white'
+                          : 'border border-slate-200 bg-white text-slate-700 hover:border-teal-300 hover:text-teal-700'
+                      }`}
+                    >
+                      {dosage}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
-          </div>
-        </section>
-      )}
+          </section>
 
-      {/* Full product description accordion */}
-      {product.fullDescription && <ProductDescriptionAccordion content={product.fullDescription} />}
+          {dosages.length > 0 ? (
+            <section id="purchase-options" className="scroll-mt-32 space-y-4">
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <p className="rx-kicker text-teal-700">Purchase options</p>
+                  <h2 className="rx-display mt-2 text-3xl text-slate-950">
+                    {selectedDosage ? `${selectedDosage} packages` : 'Available packages'}
+                  </h2>
+                </div>
+                <div className="hidden items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs uppercase tracking-[0.22em] text-slate-500 sm:inline-flex">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Available packages
+                </div>
+              </div>
+
+              {hasPricingMatrix && selectedDosageData ? (
+                selectedDosageData.packages.map((pkg) => {
+                  const key = `${selectedDosage}-${pkg.pillCount}`
+                  return (
+                    <PackageRow
+                      key={key}
+                      productId={product._id}
+                      dosage={selectedDosage!}
+                      pillCount={pkg.pillCount}
+                      originalPrice={pkg.originalPrice}
+                      price={pkg.price}
+                      benefits={pkg.benefits ?? []}
+                      expiryDate={pkg.expiryDate}
+                      unit={product.unit}
+                      inStock={product.inStock}
+                      quantity={getCartQuantity(selectedDosage!, pkg.pillCount)}
+                      pending={pendingKey === key}
+                      onAddToCart={(dosage, pillCount, price) => void handleAddToCart(dosage, pillCount, price)}
+                      onSetQuantity={({ productId, dosage, pillCount, quantity }) =>
+                        void handleSetQuantity({ productId, dosage, pillCount, quantity })
+                      }
+                    />
+                  )
+                })
+              ) : (
+                <div className="rx-card p-6">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                      <p className="rx-kicker text-teal-700">Selected dosage</p>
+                      <h3 className="mt-3 text-3xl font-semibold text-slate-950">{formatPrice(basePrice)}</h3>
+                      <p className="mt-2 text-sm text-slate-600">
+                        Dosage: <span className="font-semibold text-slate-900">{selectedDosage}</span>
+                      </p>
+                    </div>
+                    <ProductCartControl
+                      quantity={getCartQuantity(selectedDosage ?? undefined, undefined)}
+                      pending={pendingKey === `${selectedDosage ?? 'simple'}-`}
+                      inStock={product.inStock}
+                      onAdd={() => void handleAddToCart(selectedDosage ?? undefined, undefined, basePrice)}
+                      onDecrease={() =>
+                        void handleSetQuantity({
+                          productId: product._id,
+                          dosage: selectedDosage ?? undefined,
+                          quantity: getCartQuantity(selectedDosage ?? undefined, undefined) - 1,
+                        })
+                      }
+                      onIncrease={() =>
+                        void handleSetQuantity({
+                          productId: product._id,
+                          dosage: selectedDosage ?? undefined,
+                          quantity: getCartQuantity(selectedDosage ?? undefined, undefined) + 1,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              )}
+            </section>
+          ) : null}
+        </div>
+      </div>
     </div>
   )
 }

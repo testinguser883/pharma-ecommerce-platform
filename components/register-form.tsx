@@ -17,17 +17,10 @@ export function RegisterForm() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setErrorMessage(null)
-
     await authClient.signUp.email(
+      { name, email, password },
       {
-        name,
-        email,
-        password,
-      },
-      {
-        onRequest: () => {
-          setIsSubmitting(true)
-        },
+        onRequest: () => setIsSubmitting(true),
         onSuccess: () => {
           setIsSubmitting(false)
           router.push('/')
@@ -41,61 +34,67 @@ export function RegisterForm() {
   }
 
   return (
-    <section className="mx-auto w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h1 className="text-2xl font-bold text-slate-900">Create account</h1>
-      <p className="mt-1 text-sm text-slate-500">Register to manage prescriptions and checkout securely.</p>
+    <div className="rx-card w-full p-6 sm:p-8">
+      <p className="rx-kicker text-teal-700">New account</p>
+      <h1 className="rx-display mt-3 text-4xl text-slate-950">Create your profile.</h1>
+      <p className="mt-3 text-sm leading-7 text-slate-600">
+        Set up an account to save your cart, place orders, and track delivery progress.
+      </p>
 
-      <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-        <label className="block space-y-1 text-sm">
-          <span className="font-medium text-slate-700">Full name</span>
+      <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+        <div>
+          <label className="rx-label">Full name</label>
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}
             required
-            className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none ring-sky-200 focus:border-sky-300 focus:ring-2"
+            placeholder="John Doe"
+            className="rx-input mt-2"
           />
-        </label>
+        </div>
 
-        <label className="block space-y-1 text-sm">
-          <span className="font-medium text-slate-700">Email</span>
+        <div>
+          <label className="rx-label">Email</label>
           <input
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             required
-            className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none ring-sky-200 focus:border-sky-300 focus:ring-2"
+            placeholder="you@example.com"
+            className="rx-input mt-2"
           />
-        </label>
+        </div>
 
-        <label className="block space-y-1 text-sm">
-          <span className="font-medium text-slate-700">Password</span>
+        <div>
+          <label className="rx-label">Password</label>
           <input
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             required
             minLength={8}
-            className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none ring-sky-200 focus:border-sky-300 focus:ring-2"
+            placeholder="At least 8 characters"
+            className="rx-input mt-2"
           />
-        </label>
+        </div>
 
-        {errorMessage && <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{errorMessage}</p>}
+        {errorMessage ? (
+          <div className="rounded-[20px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+            {errorMessage}
+          </div>
+        ) : null}
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full rounded-full bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isSubmitting ? 'Creating account...' : 'Register'}
+        <button type="submit" disabled={isSubmitting} className="rx-btn-primary w-full">
+          {isSubmitting ? 'Creating account...' : 'Create account'}
         </button>
       </form>
 
-      <p className="mt-4 text-center text-sm text-slate-600">
+      <p className="mt-6 text-sm text-slate-600">
         Already have an account?{' '}
-        <Link href="/auth/login" className="font-semibold text-sky-700 hover:underline">
-          Login
+        <Link href="/auth/login" className="font-semibold text-slate-950">
+          Sign in
         </Link>
       </p>
-    </section>
+    </div>
   )
 }

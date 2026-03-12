@@ -1,10 +1,16 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useQuery } from 'convex/react'
+import { ChevronLeft, ChevronRight, Shield, Truck, Zap } from 'lucide-react'
 import { api } from '@/convex/_generated/api'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
-import Link from 'next/link'
+
+const featureBadges = [
+  { icon: Shield, label: 'Quality Assured' },
+  { icon: Truck, label: 'Fast Delivery' },
+  { icon: Zap, label: 'Easy Ordering' },
+]
 
 export function ImageSlider() {
   const images = useQuery(api.admin.listActiveSliderImages)
@@ -13,91 +19,141 @@ export function ImageSlider() {
   useEffect(() => {
     if (!images || images.length <= 1) return
     const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % images.length)
-    }, 4000)
+      setCurrent((value) => (value + 1) % images.length)
+    }, 4500)
     return () => clearInterval(timer)
   }, [images])
 
-  // Fallback hero when no slider images configured
   if (!images || images.length === 0) {
     return (
-      <section className="pharma-gradient relative overflow-hidden rounded-3xl px-6 py-10 text-white shadow-md md:px-10">
-        <div className="grid items-center gap-8 md:grid-cols-[1fr_280px]">
-          <div className="text-center md:text-left">
-            <h1 className="text-4xl font-bold leading-tight md:text-5xl">More Convenience</h1>
-            <p className="mt-2 text-2xl font-semibold text-sky-100">Order from the comfort of your own home</p>
-            <p className="mt-5 max-w-2xl text-base text-cyan-50/95">
-              Our goal and mission are on the surface: we try our best to provide quality products and service.
+      <section className="rx-card-dark relative overflow-hidden px-6 py-8 sm:px-8 lg:px-10 lg:py-10">
+        <div className="pointer-events-none absolute inset-y-0 right-[-10%] hidden w-[40%] bg-[radial-gradient(circle,rgba(245,158,11,0.18),transparent_55%)] blur-3xl md:block" />
+        <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,1fr)_280px]">
+          <div>
+            <p className="rx-kicker text-teal-200">Trusted Pharma Store</p>
+            <h2 className="rx-display mt-4 max-w-2xl text-4xl leading-none text-white sm:text-5xl">
+              More Convenience.{' '}
+              <span className="bg-gradient-to-r from-teal-200 to-cyan-200 bg-clip-text text-transparent">
+                Better Health.
+              </span>
+            </h2>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
+              Order quality medicines from the comfort of your home. Fast delivery, genuine products.
             </p>
-            <Link
-              href="/products"
-              className="mt-7 inline-flex rounded-full bg-white px-8 py-2.5 text-sm font-semibold text-sky-700 shadow hover:bg-sky-50"
-            >
-              Browse Products
-            </Link>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link href="/products" className="rx-btn-primary">
+                Browse Products
+              </Link>
+              <Link href="/about-us" className="rx-btn-ghost">
+                Learn More
+              </Link>
+            </div>
+            <div className="mt-6 flex flex-wrap gap-2">
+              {featureBadges.map(({ icon: Icon, label }) => (
+                <span key={label} className="rx-badge border-white/10 bg-white/5 text-slate-200">
+                  <Icon className="mr-2 h-3.5 w-3.5" />
+                  {label}
+                </span>
+              ))}
+            </div>
           </div>
-          <div className="mx-auto max-w-[260px]">
-            <img src="/doctor-hero.svg" alt="Professional doctor" className="w-full" />
+          <div className="mx-auto max-w-[240px]">
+            <img src="/doctor-hero.svg" alt="Professional doctor" className="rx-floating w-full drop-shadow-2xl" />
           </div>
         </div>
-        <div className="pointer-events-none absolute -left-12 -top-12 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
-        <div className="pointer-events-none absolute -bottom-16 -right-16 h-56 w-56 rounded-full bg-cyan-300/20 blur-3xl" />
       </section>
     )
   }
 
-  const prev = () => setCurrent((c) => (c - 1 + images.length) % images.length)
-  const next = () => setCurrent((c) => (c + 1) % images.length)
+  const currentImage = images[current]
+  const prev = () => setCurrent((value) => (value - 1 + images.length) % images.length)
+  const next = () => setCurrent((value) => (value + 1) % images.length)
 
   return (
-    <section className="relative overflow-hidden rounded-3xl shadow-md">
-      <div className="relative aspect-[16/6] w-full bg-slate-100">
-        {images.map((img, i) => (
+    <section className="relative overflow-hidden rounded-[34px] border border-white/10 bg-slate-950 shadow-[0_28px_80px_-45px_rgba(15,23,42,1)]">
+      <div className="relative min-h-[420px]">
+        {images.map((image, index) => (
           <img
-            key={img._id}
-            src={img.url}
-            alt={img.altText ?? `Slide ${i + 1}`}
-            title={img.titleText ?? img.altText ?? `Slide ${i + 1}`}
-            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${i === current ? 'opacity-100' : 'opacity-0'}`}
+            key={image._id}
+            src={image.url}
+            alt={image.altText ?? `Slide ${index + 1}`}
+            title={image.titleText ?? image.altText ?? `Slide ${index + 1}`}
+            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${
+              index === current ? 'opacity-100' : 'opacity-0'
+            }`}
           />
         ))}
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.9),rgba(2,6,23,0.45),rgba(2,6,23,0.75))]" />
 
-        {/* Prev / Next */}
-        {images.length > 1 && (
-          <>
-            <button
-              type="button"
-              onClick={prev}
-              aria-label="Previous slide"
-              className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm hover:bg-black/50"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <button
-              type="button"
-              onClick={next}
-              aria-label="Next slide"
-              className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm hover:bg-black/50"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          </>
-        )}
+        <div className="relative flex min-h-[420px] flex-col justify-between p-6 sm:p-8">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-wrap gap-2">
+              {featureBadges.map(({ icon: Icon, label }) => (
+                <span key={label} className="rx-badge border-white/10 bg-white/10 text-white">
+                  <Icon className="mr-2 h-3.5 w-3.5" />
+                  {label}
+                </span>
+              ))}
+            </div>
+            {images.length > 1 ? (
+              <div className="hidden items-center gap-2 sm:flex">
+                <button
+                  type="button"
+                  onClick={prev}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/20 text-white transition hover:bg-black/35"
+                  aria-label="Previous slide"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={next}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/20 text-white transition hover:bg-black/35"
+                  aria-label="Next slide"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              </div>
+            ) : null}
+          </div>
 
-        {/* Dots */}
-        {images.length > 1 && (
-          <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
-            {images.map((_, i) => (
+          <div className="max-w-xl">
+            <p className="rx-kicker text-teal-200">Trusted Pharma Store</p>
+            <h2 className="rx-display mt-4 text-4xl leading-none text-white sm:text-5xl">
+              More Convenience.{' '}
+              <span className="bg-gradient-to-r from-teal-200 to-cyan-200 bg-clip-text text-transparent">
+                Better Health.
+              </span>
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-slate-300 sm:text-base">
+              Order quality medicines from the comfort of your home. Fast delivery, genuine products.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link href="/products" className="rx-btn-primary">
+                Browse Products
+              </Link>
+              <Link href="/about-us" className="rx-btn-ghost">
+                Learn More
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {images.length > 1 ? (
+          <div className="absolute bottom-6 left-6 flex gap-2 sm:left-8">
+            {images.map((_, index) => (
               <button
-                key={i}
+                key={index}
                 type="button"
-                onClick={() => setCurrent(i)}
-                aria-label={`Go to slide ${i + 1}`}
-                className={`h-2 rounded-full transition-all ${i === current ? 'w-6 bg-white' : 'w-2 bg-white/50'}`}
+                onClick={() => setCurrent(index)}
+                className={`h-2 rounded-full transition-all ${
+                  index === current ? 'w-8 bg-white' : 'w-2 bg-white/40 hover:bg-white/70'
+                }`}
+                aria-label={`Go to slide ${index + 1}`}
               />
             ))}
           </div>
-        )}
+        ) : null}
       </div>
     </section>
   )

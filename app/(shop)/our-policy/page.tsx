@@ -1,61 +1,64 @@
+import { ContentPageShell, ContentSection } from '@/components/content-page-shell'
+
 export default function OurPolicyPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 lg:px-6">
-      <h1 className="mb-6 text-2xl font-bold text-slate-800">Our Policy</h1>
-
-      <div className="space-y-6 text-slate-600">
-        <div>
-          <h2 className="mb-2 font-semibold text-slate-700">Ordering Policy</h2>
-          <p>
-            All orders placed on pharma-ecommerce-platform-5an9.vercel.app are subject to availability and confirmation.
-            We reserve the right to refuse or cancel any order at our discretion. Customers are responsible for ensuring
-            they provide accurate shipping information.
+    <ContentPageShell
+      eyebrow="Policy"
+      title="Policies presented with the same clarity as the product flow."
+      description="Review the key policies for ordering, payment, shipping, privacy, and compliance."
+      stats={[
+        { label: 'Payments', value: 'BTC' },
+        { label: 'Shipping', value: 'Worldwide' },
+        { label: 'Returns', value: 'Limited' },
+      ]}
+    >
+      <div className="space-y-6">
+        <ContentSection
+          title="Ordering policy"
+          description="Availability and order confirmation still govern the purchasing flow."
+        >
+          <p className="text-sm leading-7 text-slate-600">
+            Orders are subject to availability and confirmation. The team may refuse or cancel orders at its discretion,
+            and customers are responsible for providing accurate shipping information.
           </p>
-        </div>
+        </ContentSection>
 
-        <div>
-          <h2 className="mb-2 font-semibold text-slate-700">Payment Policy</h2>
-          <p>
-            We accept Bitcoin (BTC) as our payment method. Orders are processed once payment has been confirmed on the
-            blockchain. We do not store any payment credentials on our servers.
+        <ContentSection title="Payment policy" description="Bitcoin is the current payment method.">
+          <p className="text-sm leading-7 text-slate-600">
+            Bitcoin (BTC) is the accepted payment method. Orders are processed after payment is confirmed, and payment
+            credentials are not stored on the platform.
           </p>
-        </div>
+        </ContentSection>
 
-        <div>
-          <h2 className="mb-2 font-semibold text-slate-700">Shipping Policy</h2>
-          <p>
-            We ship worldwide using tracked and discreet packaging. Delivery times vary by destination. We are not
-            responsible for delays caused by customs or postal services. Customers are responsible for understanding the
-            import regulations in their country.
-          </p>
-        </div>
+        <ContentSection title="Shipping and returns" description="Shipping and refund expectations remain explicit.">
+          <div className="space-y-4 text-sm leading-7 text-slate-600">
+            <p>
+              Orders ship worldwide in discreet packaging, but delivery times vary and may be affected by customs or
+              postal delays.
+            </p>
+            <p>
+              Returns are limited to damaged or incorrectly shipped items. Refund requests should be submitted within 48
+              hours with supporting evidence.
+            </p>
+          </div>
+        </ContentSection>
 
-        <div>
-          <h2 className="mb-2 font-semibold text-slate-700">Returns & Refunds</h2>
-          <p>
-            Due to the nature of pharmaceutical products, we do not accept returns except in cases of damaged or
-            incorrectly shipped items. Refund requests must be submitted within 48 hours of receiving your order with
-            supporting evidence (photos).
-          </p>
-        </div>
-
-        <div>
-          <h2 className="mb-2 font-semibold text-slate-700">Privacy Policy</h2>
-          <p>
-            We take your privacy seriously. All personal information collected during checkout is used solely for order
-            fulfillment and is never shared with third parties. Please refer to our full privacy policy for more
-            details.
-          </p>
-        </div>
-
-        <div>
-          <h2 className="mb-2 font-semibold text-slate-700">Compliance</h2>
-          <p>
-            Customers are solely responsible for ensuring that the products they order are legal in their jurisdiction.
-            We comply with all applicable international trade laws and regulations.
-          </p>
-        </div>
+        <ContentSection
+          title="Privacy and compliance"
+          description="Customer responsibility and privacy handling remain the same."
+        >
+          <div className="space-y-4 text-sm leading-7 text-slate-600">
+            <p>
+              Personal information collected during checkout is used for order fulfillment and should not be shared with
+              unauthorized third parties.
+            </p>
+            <p>
+              Customers are responsible for ensuring the legality of products in their jurisdiction, while the store
+              continues to operate within applicable trade and shipping constraints.
+            </p>
+          </div>
+        </ContentSection>
       </div>
-    </div>
+    </ContentPageShell>
   )
 }

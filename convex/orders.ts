@@ -1,7 +1,7 @@
 import { action, internalMutation, internalQuery, mutation, query } from './_generated/server'
 import { v } from 'convex/values'
 import type { MutationCtx, QueryCtx } from './_generated/server'
-import { internal } from './_generated/api'
+import { api, internal } from './_generated/api'
 
 type ConvexCtx = QueryCtx | MutationCtx
 
@@ -196,10 +196,25 @@ export const createNowPaymentsInvoice = action({
     orderId: v.id('orders'),
     total: v.number(),
   },
-  handler: async (_ctx, args) => {
+  handler: async (ctx, args) => {
     const apiKey = process.env.NOWPAYMENTS_API_KEY
     if (!apiKey) {
       throw new Error('Payment provider not configured')
+    }
+
+    const order = await ctx.runQuery(api.orders.getById, { orderId: args.orderId })
+    if (!order) {
+      throw new Error('Order not found')
+    }
+
+    if (order.status !== 'pending_payment' && order.status !== 'pending') {
+      throw new Error('Payment invoice is no longer available for this order')
+    }
+
+    const expectedTotal = Number(order.total.toFixed(2))
+    const requestedTotal = Number(args.total.toFixed(2))
+    if (expectedTotal !== requestedTotal) {
+      throw new Error('Order total mismatch')
     }
 
     const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
@@ -241,6 +256,8 @@ export const confirmCryptoPayment = internalMutation({
   handler: async (ctx, args) => {
     const order = await ctx.db.get(args.orderId)
     if (!order) return
+    if (order.status !== 'pending_payment' && order.status !== 'pending') return
+    if (order.nowPaymentsId) return
     await ctx.db.patch(args.orderId, {
       status: 'paid',
       nowPaymentsId: args.nowPaymentsId,
