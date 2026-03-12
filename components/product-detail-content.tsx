@@ -3,11 +3,10 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { ArrowLeft, Check, ChevronDown, ChevronUp, ShoppingBag, Sparkles } from 'lucide-react'
+import { ArrowLeft, Check, ShoppingBag, Sparkles } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { api } from '@/convex/_generated/api'
 import { authClient } from '@/lib/auth-client'
-import { renderMarkdownContent } from '@/lib/markdown'
 import { formatPrice } from '@/lib/utils'
 
 type PackageRowProps = {
@@ -18,8 +17,6 @@ type PackageRowProps = {
   benefits: string[]
   expiryDate?: string
   unit: string
-  image: string
-  imageAlt?: string
   inStock: boolean
   onAddToCart: (dosage: string, pillCount: number, price: number) => void
   adding: boolean
@@ -34,8 +31,6 @@ function PackageRow({
   benefits,
   expiryDate,
   unit,
-  image,
-  imageAlt,
   inStock,
   onAddToCart,
   adding,
@@ -52,10 +47,7 @@ function PackageRow({
   return (
     <div className="rx-card p-5">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
-        <div className="flex items-center gap-4">
-          <div className="flex h-20 w-20 items-center justify-center rounded-[24px] bg-slate-50">
-            <img src={image} alt={imageAlt ?? dosage} className="h-14 w-14 object-contain" />
-          </div>
+        <div>
           <div>
             <p className="rx-kicker text-teal-700">Dose option</p>
             <h3 className="mt-2 text-xl font-semibold text-slate-950">{dosage}</h3>
@@ -123,29 +115,6 @@ function PackageRow({
         </div>
       </div>
     </div>
-  )
-}
-
-function ProductDescriptionAccordion({ content }: { content: string }) {
-  const [open, setOpen] = useState(false)
-
-  return (
-    <section className="rx-card overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
-      >
-        <div>
-          <p className="rx-kicker text-teal-700">Expanded details</p>
-          <h2 className="mt-2 text-2xl font-semibold text-slate-950">Full product description</h2>
-        </div>
-        <span className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500">
-          {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-        </span>
-      </button>
-      {open ? <div className="border-t border-slate-200/70 px-6 py-6">{renderMarkdownContent(content)}</div> : null}
-    </section>
   )
 }
 
@@ -374,8 +343,6 @@ export function ProductDetailContent({ productId }: { productId: string }) {
                       benefits={pkg.benefits ?? []}
                       expiryDate={pkg.expiryDate}
                       unit={product.unit}
-                      image={product.image}
-                      imageAlt={product.imageAlt}
                       inStock={product.inStock}
                       onAddToCart={(dosage, pillCount, price) => void handleAddToCart(dosage, pillCount, price)}
                       adding={addingKey === key}
@@ -407,8 +374,6 @@ export function ProductDetailContent({ productId }: { productId: string }) {
               )}
             </section>
           ) : null}
-
-          {product.fullDescription ? <ProductDescriptionAccordion content={product.fullDescription} /> : null}
         </div>
       </div>
     </div>
