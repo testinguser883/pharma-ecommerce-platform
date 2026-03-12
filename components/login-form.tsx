@@ -9,7 +9,11 @@ import { authClient } from '@/lib/auth-client'
 export function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const nextPath = searchParams.get('next') ?? '/'
+  const nextParam = searchParams.get('next')
+  const nextPath =
+    nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//') && !nextParam.includes('://')
+      ? nextParam
+      : '/'
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
