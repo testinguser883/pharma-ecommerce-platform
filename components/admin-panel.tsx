@@ -554,8 +554,8 @@ function OrdersTab() {
                         )}
                       </td>
                       <td className="px-4 py-3 text-xs text-slate-600">
-                        {order.items.slice(0, 2).map((item) => (
-                          <div key={item.productId}>
+                        {order.items.slice(0, 2).map((item, index) => (
+                          <div key={`${item.productId}-${item.dosage ?? ''}-${item.pillCount ?? ''}-${index}`}>
                             {item.name} ×{item.quantity}
                           </div>
                         ))}
@@ -888,8 +888,8 @@ function OrderDetailModal({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {order.items.map((item) => (
-                    <tr key={item.productId}>
+                  {order.items.map((item, index) => (
+                    <tr key={`${item.productId}-${item.dosage ?? ''}-${item.pillCount ?? ''}-${index}`}>
                       <td className="px-4 py-2.5">
                         <div className="flex items-center gap-2">
                           {item.image && (
