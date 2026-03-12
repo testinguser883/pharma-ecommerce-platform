@@ -3,14 +3,12 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { ChevronLeft, ShoppingCart, ChevronDown, ChevronUp, Check } from 'lucide-react'
+import { ArrowLeft, Check, ChevronDown, ChevronUp, ShoppingBag, Sparkles } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { api } from '@/convex/_generated/api'
 import { authClient } from '@/lib/auth-client'
 import { renderMarkdownContent } from '@/lib/markdown'
 import { formatPrice } from '@/lib/utils'
-
-// ── Package row ────────────────────────────────────────────────────────────────
 
 type PackageRowProps = {
   dosage: string
@@ -52,124 +50,122 @@ function PackageRow({
       : expiryDate || null
 
   return (
-    <div className="grid grid-cols-[1fr_auto] items-center gap-4 rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition-all hover:border-teal-200 hover:bg-teal-50/30 md:grid-cols-[140px_1fr_1fr_auto]">
-      {/* Dosage + pill count */}
-      <div className="flex items-center gap-3 md:flex-col md:items-start md:gap-1">
-        <img src={image} alt={imageAlt ?? dosage} className="h-10 w-10 shrink-0 object-contain" />
-        <div>
-          <p className="text-sm font-bold text-slate-900">{dosage}</p>
-          <p className="text-xs text-slate-500">
-            {pillCount} {unit}s
-          </p>
-          {formattedExpiryDate && (
-            <p className="text-xs text-slate-400">Exp: {formattedExpiryDate}</p>
-          )}
+    <div className="rx-card p-5">
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
+        <div className="flex items-center gap-4">
+          <div className="flex h-20 w-20 items-center justify-center rounded-[24px] bg-slate-50">
+            <img src={image} alt={imageAlt ?? dosage} className="h-14 w-14 object-contain" />
+          </div>
+          <div>
+            <p className="rx-kicker text-teal-700">Dose option</p>
+            <h3 className="mt-2 text-xl font-semibold text-slate-950">{dosage}</h3>
+            <p className="mt-1 text-sm text-slate-500">
+              {pillCount} {unit}
+              {pillCount > 1 ? 's' : ''}
+            </p>
+            {formattedExpiryDate ? (
+              <p className="mt-1 text-xs uppercase tracking-[0.22em] text-slate-400">Expiry {formattedExpiryDate}</p>
+            ) : null}
+          </div>
         </div>
-      </div>
 
-      {/* Price */}
-      <div className="hidden md:block">
-        {originalPrice > price && (
-          <p className="text-xs text-slate-400 line-through">{formatPrice(originalPrice)}</p>
-        )}
-        <p className="text-lg font-extrabold text-slate-900">{formatPrice(price)}</p>
-        <p className="text-xs text-slate-500">
-          {formatPrice(perUnit)} / {unit}
-        </p>
-        {savings > 0 && (
-          <span className="mt-1 inline-flex rounded-full bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-600">
-            Save {formatPrice(savings)}
-          </span>
-        )}
-      </div>
+        <div className="grid flex-1 gap-5 lg:grid-cols-[170px_minmax(0,1fr)_auto] lg:items-center">
+          <div>
+            {originalPrice > price ? (
+              <p className="text-sm text-slate-400 line-through">{formatPrice(originalPrice)}</p>
+            ) : null}
+            <p className="text-3xl font-semibold tracking-tight text-slate-950">{formatPrice(price)}</p>
+            <p className="mt-1 text-xs uppercase tracking-[0.22em] text-slate-500">
+              {formatPrice(perUnit)} / {unit}
+            </p>
+            {savings > 0 ? (
+              <span className="mt-3 inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                Save {formatPrice(savings)}
+              </span>
+            ) : null}
+          </div>
 
-      {/* Benefits */}
-      <div className="hidden md:block space-y-1">
-        {benefits.map((b) => (
-          <p key={b} className="flex items-center gap-1 text-xs text-slate-600">
-            <span className="h-1 w-1 rounded-full bg-teal-500 shrink-0" />
-            {b}
-          </p>
-        ))}
-      </div>
+          <div className="space-y-2">
+            {benefits.length > 0 ? (
+              benefits.map((benefit) => (
+                <p key={benefit} className="flex items-start gap-2 text-sm leading-6 text-slate-600">
+                  <span className="mt-2 h-1.5 w-1.5 rounded-full bg-teal-600" />
+                  <span>{benefit}</span>
+                </p>
+              ))
+            ) : (
+              <p className="text-sm leading-7 text-slate-600">
+                Package pricing stays connected to the original product data while being presented in a clearer card
+                layout.
+              </p>
+            )}
+          </div>
 
-      {/* CTA */}
-      <div className="flex flex-col items-end gap-1">
-        {/* Price on mobile */}
-        <div className="mb-1 text-right md:hidden">
-          {originalPrice > price && (
-            <p className="text-xs text-slate-400 line-through">{formatPrice(originalPrice)}</p>
-          )}
-          <p className="text-base font-extrabold text-slate-900">{formatPrice(price)}</p>
-          {savings > 0 && (
-            <p className="text-xs font-semibold text-red-500">Save {formatPrice(savings)}</p>
-          )}
+          <button
+            type="button"
+            disabled={adding || !inStock}
+            onClick={() => onAddToCart(dosage, pillCount, price)}
+            className={`inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition ${
+              justAdded
+                ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
+                : 'bg-slate-950 text-white hover:bg-teal-700'
+            } disabled:cursor-not-allowed disabled:opacity-60`}
+          >
+            {justAdded ? (
+              <>
+                <Check className="h-4 w-4" />
+                Added
+              </>
+            ) : adding ? (
+              'Adding...'
+            ) : (
+              <>
+                <ShoppingBag className="h-4 w-4" />
+                Add to cart
+              </>
+            )}
+          </button>
         </div>
-        <button
-          type="button"
-          disabled={adding || !inStock}
-          onClick={() => onAddToCart(dosage, pillCount, price)}
-          className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
-            justAdded
-              ? 'bg-teal-50 border border-teal-300 text-teal-700'
-              : 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white hover:from-teal-500 hover:to-cyan-500 shadow-sm'
-          }`}
-        >
-          {justAdded ? (
-            <>
-              <Check className="h-4 w-4" />
-              Added
-            </>
-          ) : adding ? (
-            'Adding...'
-          ) : (
-            <>
-              <ShoppingCart className="h-4 w-4" />
-              Add
-            </>
-          )}
-        </button>
       </div>
     </div>
   )
 }
 
-// ── Product description accordion ────────────────────────────────────────────
-
 function ProductDescriptionAccordion({ content }: { content: string }) {
   const [open, setOpen] = useState(false)
+
   return (
     <section className="rx-card overflow-hidden">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between px-5 py-4 text-left hover:bg-slate-50 transition-colors"
+        onClick={() => setOpen((value) => !value)}
+        className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
       >
-        <h2 className="text-base font-bold text-slate-900">Product Description</h2>
-        <span className={`flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-all ${open ? 'bg-teal-50 border-teal-200 text-teal-600' : ''}`}>
+        <div>
+          <p className="rx-kicker text-teal-700">Expanded details</p>
+          <h2 className="mt-2 text-2xl font-semibold text-slate-950">Full product description</h2>
+        </div>
+        <span className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500">
           {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </span>
       </button>
-      {open && <div className="border-t border-slate-100 px-5 py-5 prose prose-sm max-w-none">{renderMarkdownContent(content)}</div>}
+      {open ? <div className="border-t border-slate-200/70 px-6 py-6">{renderMarkdownContent(content)}</div> : null}
     </section>
   )
 }
-
-// ── Main component ────────────────────────────────────────────────────────────
 
 export function ProductDetailContent({ productId }: { productId: string }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { data: session } = authClient.useSession()
   const addItem = useMutation(api.cart.addItem)
-
   const product = useQuery(api.products.getBySlugOrId, productId ? { identifier: productId } : 'skip')
 
   const [selectedDosage, setSelectedDosage] = useState<string | null>(null)
   const [addingKey, setAddingKey] = useState<string | null>(null)
   const [justAddedKey, setJustAddedKey] = useState<string | null>(null)
 
-  const dosages = product?.pricingMatrix?.map((d) => d.dosage) ?? product?.dosageOptions ?? []
+  const dosages = product?.pricingMatrix?.map((entry) => entry.dosage) ?? product?.dosageOptions ?? []
   const hasPricingMatrix = !!(product?.pricingMatrix && product.pricingMatrix.length > 0)
 
   useEffect(() => {
@@ -203,9 +199,9 @@ export function ProductDetailContent({ productId }: { productId: string }) {
 
   if (product === undefined) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-8 lg:px-6">
-        <div className="flex items-center gap-3 text-sm text-slate-400">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
+      <div className="mx-auto max-w-7xl px-4 py-10 lg:px-6">
+        <div className="rx-card flex items-center gap-3 px-6 py-6 text-sm text-slate-500">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-teal-600" />
           Loading product...
         </div>
       </div>
@@ -214,11 +210,14 @@ export function ProductDetailContent({ productId }: { productId: string }) {
 
   if (product === null) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-10 lg:px-6">
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center">
-          <p className="text-lg font-semibold text-slate-700">Product not found.</p>
-          <p className="mt-1 text-sm text-slate-400">This product may have been removed or the link is invalid.</p>
-          <Link href="/products" className="rx-btn-primary mt-5">
+      <div className="mx-auto max-w-4xl px-4 py-10 lg:px-6">
+        <div className="rx-card p-10 text-center">
+          <p className="rx-kicker text-teal-700">Unavailable</p>
+          <h1 className="rx-display mt-3 text-4xl text-slate-950">Product not found.</h1>
+          <p className="mt-3 text-sm leading-7 text-slate-600">
+            This product may have been removed or the link is invalid.
+          </p>
+          <Link href="/products" className="rx-btn-primary mt-6">
             Back to products
           </Link>
         </div>
@@ -226,166 +225,193 @@ export function ProductDetailContent({ productId }: { productId: string }) {
     )
   }
 
-  const selectedDosageData = product.pricingMatrix?.find((d) => d.dosage === selectedDosage)
+  const selectedDosageData = product.pricingMatrix?.find((entry) => entry.dosage === selectedDosage)
+  const basePrice = product.price * (1 - product.discount / 100)
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4 px-4 py-6 lg:px-6">
+    <div className="mx-auto max-w-7xl px-4 py-6 lg:px-6 lg:py-8">
       <Link
         href="/products"
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-teal-700 hover:text-teal-600 transition-colors"
+        className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 transition hover:text-slate-950"
       >
-        <ChevronLeft className="h-4 w-4" />
+        <ArrowLeft className="h-4 w-4" />
         Back to products
       </Link>
 
-      {/* Product header */}
-      <section className="rx-card overflow-hidden">
-        <div className="flex flex-wrap items-start gap-6 p-5 md:p-6">
-          {/* Image */}
-          <div className="shrink-0 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 p-5">
+      <div className="mt-6 grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
+        <aside className="rx-card-dark h-fit overflow-hidden p-6 xl:sticky xl:top-28">
+          <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
             <img
               src={product.image}
               alt={product.imageAlt ?? product.name}
-              className="h-36 w-36 object-contain"
-              onError={(e) => {
-                ;(e.currentTarget as HTMLImageElement).src = 'https://placehold.co/200x200/f1f5f9/94a3b8?text=No+Image'
+              className="rx-floating mx-auto h-56 w-56 object-contain"
+              onError={(event) => {
+                ;(event.currentTarget as HTMLImageElement).src =
+                  'https://placehold.co/280x280/f8fafc/94a3b8?text=No+Image'
               }}
             />
           </div>
 
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              {product.discount > 0 && (
-                <span className="rounded-full bg-red-500 px-2.5 py-0.5 text-xs font-bold text-white">
-                  -{product.discount}% OFF
-                </span>
-              )}
-              <span className="rounded-full border border-teal-200 bg-teal-50 px-2.5 py-0.5 text-xs font-semibold text-teal-700">
-                {product.category}
+          <div className="mt-6 flex flex-wrap gap-2">
+            <span className="rx-badge border-white/10 bg-white/10 text-white">{product.category}</span>
+            {product.discount > 0 ? (
+              <span className="rx-badge border-amber-300/20 bg-amber-300/10 text-amber-100">
+                {product.discount}% off
               </span>
-              {!product.inStock && (
-                <span className="rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-600">
-                  Out of Stock
-                </span>
-              )}
-            </div>
-
-            <h1 className="mt-2 text-xl font-extrabold text-slate-900 md:text-2xl lg:text-3xl">
-              {product.name}
-            </h1>
-            {product.genericName && (
-              <p className="mt-0.5 text-sm text-slate-400">Generic: {product.genericName}</p>
-            )}
-
-            {product.description && (
-              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600">{product.description}</p>
-            )}
-
-            {/* Simple add-to-cart when no dosage tabs */}
-            {dosages.length === 0 && (
-              <div className="mt-4">
-                <p className="text-2xl font-extrabold text-slate-900">
-                  {formatPrice(product.price)}
-                  <span className="ml-1.5 text-sm font-normal text-slate-400">per {product.unit}</span>
-                </p>
-                <button
-                  type="button"
-                  onClick={() =>
-                    void handleAddToCart(undefined, undefined, product.price * (1 - product.discount / 100))
-                  }
-                  disabled={addingKey !== null || !product.inStock}
-                  className="rx-btn-primary mt-4"
-                >
-                  <ShoppingCart className="h-4 w-4" />
-                  {addingKey !== null ? 'Adding...' : 'Add to Cart'}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Dosage tabs + packages */}
-      {dosages.length > 0 && (
-        <section className="rx-card overflow-hidden">
-          {/* Dosage selector header */}
-          <div className="border-b border-slate-100 bg-slate-50/50 px-5 py-4">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-400">Select Dosage</p>
-            <div className="flex flex-wrap gap-2">
-              {dosages.map((dosage) => (
-                <button
-                  key={dosage}
-                  type="button"
-                  onClick={() => setSelectedDosage(dosage)}
-                  className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-all ${
-                    selectedDosage === dosage
-                      ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-sm'
-                      : 'border border-slate-200 bg-white text-slate-700 hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700'
-                  }`}
-                >
-                  {dosage}
-                </button>
-              ))}
-            </div>
+            ) : null}
+            <span
+              className={`rx-badge ${
+                product.inStock
+                  ? 'border-emerald-300/20 bg-emerald-300/10 text-emerald-100'
+                  : 'border-red-300/20 bg-red-300/10 text-red-100'
+              }`}
+            >
+              {product.inStock ? 'In stock' : 'Out of stock'}
+            </span>
           </div>
 
-          <div className="space-y-2 p-4">
-            {hasPricingMatrix && selectedDosageData ? (
-              selectedDosageData.packages.map((pkg) => {
-                const key = `${selectedDosage}-${pkg.pillCount}`
-                return (
-                  <PackageRow
-                    key={key}
-                    dosage={selectedDosage!}
-                    pillCount={pkg.pillCount}
-                    originalPrice={pkg.originalPrice}
-                    price={pkg.price}
-                    benefits={pkg.benefits ?? []}
-                    expiryDate={pkg.expiryDate}
-                    unit={product.unit}
-                    image={product.image}
-                    imageAlt={product.imageAlt}
-                    inStock={product.inStock}
-                    onAddToCart={(d, pc, p) => void handleAddToCart(d, pc, p)}
-                    adding={addingKey === key}
-                    justAdded={justAddedKey === key}
-                  />
-                )
-              })
-            ) : (
-              <div className="flex items-center justify-between rounded-xl bg-slate-50 p-5">
-                <div>
-                  <p className="text-2xl font-extrabold text-slate-900">
-                    {formatPrice(product.price * (1 - product.discount / 100))}
-                    <span className="ml-1.5 text-sm font-normal text-slate-400">per {product.unit}</span>
-                  </p>
-                  {selectedDosage && (
-                    <p className="mt-1 text-sm text-slate-500">Dosage: <strong>{selectedDosage}</strong></p>
-                  )}
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+            <div className="rounded-[24px] border border-white/10 bg-white/5 px-4 py-4">
+              <p className="rx-kicker text-teal-200">Generic</p>
+              <p className="mt-2 text-sm font-medium text-white">{product.genericName || 'Not specified'}</p>
+            </div>
+            <div className="rounded-[24px] border border-white/10 bg-white/5 px-4 py-4">
+              <p className="rx-kicker text-teal-200">Unit</p>
+              <p className="mt-2 text-sm font-medium text-white">{product.unit}</p>
+            </div>
+          </div>
+        </aside>
+
+        <div className="space-y-6">
+          <section className="rx-card p-6 sm:p-8">
+            <p className="rx-kicker text-teal-700">Product spotlight</p>
+            <h1 className="rx-display mt-3 text-4xl leading-none text-slate-950 sm:text-5xl">{product.name}</h1>
+            {product.genericName ? (
+              <p className="mt-3 text-sm uppercase tracking-[0.24em] text-slate-500">
+                Generic name: {product.genericName}
+              </p>
+            ) : null}
+            {product.description ? (
+              <p className="mt-5 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">{product.description}</p>
+            ) : null}
+
+            {dosages.length === 0 ? (
+              <div className="mt-8 rounded-[28px] border border-slate-200/80 bg-slate-50/80 p-5">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <p className="rx-kicker text-teal-700">Simple pricing</p>
+                    <p className="mt-3 text-4xl font-semibold tracking-tight text-slate-950">
+                      {formatPrice(basePrice)}
+                    </p>
+                    <p className="mt-1 text-xs uppercase tracking-[0.22em] text-slate-500">Per {product.unit}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void handleAddToCart(undefined, undefined, basePrice)}
+                    disabled={addingKey !== null || !product.inStock}
+                    className="rx-btn-primary"
+                  >
+                    <ShoppingBag className="h-4 w-4" />
+                    {addingKey !== null ? 'Adding...' : 'Add to cart'}
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    void handleAddToCart(
-                      selectedDosage ?? undefined,
-                      undefined,
-                      product.price * (1 - product.discount / 100),
-                    )
-                  }
-                  disabled={addingKey !== null || !product.inStock}
-                  className="rx-btn-primary"
-                >
-                  <ShoppingCart className="h-4 w-4" />
-                  {addingKey !== null ? 'Adding...' : 'Add to Cart'}
-                </button>
+              </div>
+            ) : (
+              <div className="mt-8">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <p className="rx-kicker text-teal-700">Dosage selector</p>
+                    <h2 className="mt-2 text-2xl font-semibold text-slate-950">Choose how you want to buy it.</h2>
+                  </div>
+                  <div className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600">
+                    {dosages.length} option{dosages.length > 1 ? 's' : ''}
+                  </div>
+                </div>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {dosages.map((dosage) => (
+                    <button
+                      key={dosage}
+                      type="button"
+                      onClick={() => setSelectedDosage(dosage)}
+                      className={`rounded-full px-4 py-2.5 text-sm font-semibold transition ${
+                        selectedDosage === dosage
+                          ? 'bg-slate-950 text-white'
+                          : 'border border-slate-200 bg-white text-slate-700 hover:border-teal-300 hover:text-teal-700'
+                      }`}
+                    >
+                      {dosage}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
-          </div>
-        </section>
-      )}
+          </section>
 
-      {/* Full product description accordion */}
-      {product.fullDescription && <ProductDescriptionAccordion content={product.fullDescription} />}
+          {dosages.length > 0 ? (
+            <section className="space-y-4">
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <p className="rx-kicker text-teal-700">Purchase options</p>
+                  <h2 className="rx-display mt-2 text-3xl text-slate-950">
+                    {selectedDosage ? `${selectedDosage} packages` : 'Available packages'}
+                  </h2>
+                </div>
+                <div className="hidden items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs uppercase tracking-[0.22em] text-slate-500 sm:inline-flex">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Available packages
+                </div>
+              </div>
+
+              {hasPricingMatrix && selectedDosageData ? (
+                selectedDosageData.packages.map((pkg) => {
+                  const key = `${selectedDosage}-${pkg.pillCount}`
+                  return (
+                    <PackageRow
+                      key={key}
+                      dosage={selectedDosage!}
+                      pillCount={pkg.pillCount}
+                      originalPrice={pkg.originalPrice}
+                      price={pkg.price}
+                      benefits={pkg.benefits ?? []}
+                      expiryDate={pkg.expiryDate}
+                      unit={product.unit}
+                      image={product.image}
+                      imageAlt={product.imageAlt}
+                      inStock={product.inStock}
+                      onAddToCart={(dosage, pillCount, price) => void handleAddToCart(dosage, pillCount, price)}
+                      adding={addingKey === key}
+                      justAdded={justAddedKey === key}
+                    />
+                  )
+                })
+              ) : (
+                <div className="rx-card p-6">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                      <p className="rx-kicker text-teal-700">Selected dosage</p>
+                      <h3 className="mt-3 text-3xl font-semibold text-slate-950">{formatPrice(basePrice)}</h3>
+                      <p className="mt-2 text-sm text-slate-600">
+                        Dosage: <span className="font-semibold text-slate-900">{selectedDosage}</span>
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void handleAddToCart(selectedDosage ?? undefined, undefined, basePrice)}
+                      disabled={addingKey !== null || !product.inStock}
+                      className="rx-btn-primary"
+                    >
+                      <ShoppingBag className="h-4 w-4" />
+                      {addingKey !== null ? 'Adding...' : 'Add to cart'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </section>
+          ) : null}
+
+          {product.fullDescription ? <ProductDescriptionAccordion content={product.fullDescription} /> : null}
+        </div>
+      </div>
     </div>
   )
 }

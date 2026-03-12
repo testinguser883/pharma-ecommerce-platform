@@ -1,7 +1,9 @@
 'use client'
 
-import { FormEvent, useState } from 'react'
+import type { FormEvent, ReactNode } from 'react'
+import { useState } from 'react'
 import { useAction, useMutation, useQuery } from 'convex/react'
+import { Bitcoin, ShieldCheck, Truck } from 'lucide-react'
 import { api } from '@/convex/_generated/api'
 import { COUNTRIES } from '@/lib/countries'
 import { formatPrice } from '@/lib/utils'
@@ -48,57 +50,61 @@ const MONTHS = [
 ]
 
 const currentYear = new Date().getFullYear()
-const YEARS = Array.from({ length: 100 }, (_, i) => currentYear - 18 - i)
-const DAYS = Array.from({ length: 31 }, (_, i) => i + 1)
+const YEARS = Array.from({ length: 100 }, (_, index) => currentYear - 18 - index)
+const DAYS = Array.from({ length: 31 }, (_, index) => index + 1)
 
 const EMPTY_BILLING: BillingForm = {
   isNewCustomer: true,
-  mobilePhone: '+919876543210',
-  email: 'test@example.com',
-  dobYear: '1990',
-  dobMonth: 'January',
-  dobDay: '1',
-  firstName: 'John',
-  lastName: 'Doe',
-  streetAddress: '123 Main Street',
-  city: 'Mumbai',
+  mobilePhone: '',
+  email: '',
+  dobYear: '',
+  dobMonth: '',
+  dobDay: '',
+  firstName: '',
+  lastName: '',
+  streetAddress: '',
+  city: '',
   country: 'IN',
-  state: 'Maharashtra',
-  zipCode: '400001',
+  state: '',
+  zipCode: '',
 }
 
 const EMPTY_SHIPPING: ShippingForm = {
-  firstName: 'John',
-  lastName: 'Doe',
-  streetAddress: '123 Main Street',
-  city: 'Mumbai',
+  firstName: '',
+  lastName: '',
+  streetAddress: '',
+  city: '',
   country: 'IN',
-  state: 'Maharashtra',
-  zipCode: '400001',
+  state: '',
+  zipCode: '',
 }
 
-const inputClass =
-  'w-full border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-200 bg-white'
-const selectClass =
-  'w-full border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-200 bg-white appearance-none'
-const labelClass = 'block text-xs font-semibold uppercase tracking-wide text-slate-700 mb-1'
-
-function SectionHeader({ number, title }: { number: number; title: string }) {
+function SectionCard({
+  eyebrow,
+  title,
+  description,
+  children,
+}: {
+  eyebrow: string
+  title: string
+  description: string
+  children: ReactNode
+}) {
   return (
-    <div className="flex items-center gap-3 mb-4">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center bg-sky-600 text-white text-lg font-bold">
-        {number}
-      </div>
-      <h2 className="text-base font-bold uppercase tracking-widest text-sky-700">{title}</h2>
-    </div>
+    <section className="rx-card p-6 sm:p-8">
+      <p className="rx-kicker text-teal-700">{eyebrow}</p>
+      <h2 className="mt-3 text-3xl font-semibold text-slate-950">{title}</h2>
+      <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">{description}</p>
+      <div className="mt-6">{children}</div>
+    </section>
   )
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
-      <label className={labelClass}>{label}</label>
-      {children}
+      <label className="rx-label">{label}</label>
+      <div className="mt-2">{children}</div>
     </div>
   )
 }
@@ -113,10 +119,10 @@ export function CheckoutPageContent() {
   const [shippingSameAsBilling, setShippingSameAsBilling] = useState(false)
   const [isCryptoSubmitting, setIsCryptoSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
   const setBillingField = <K extends keyof BillingForm>(key: K, value: BillingForm[K]) =>
     setBilling((prev) => {
       const next = { ...prev, [key]: value }
-      // Reset state when country changes
       if (key === 'country') next.state = ''
       return next
     })
@@ -131,7 +137,7 @@ export function CheckoutPageContent() {
   const buildBillingAddress = () => {
     const dob =
       billing.dobYear && billing.dobMonth && billing.dobDay
-        ? `${billing.dobYear}-${billing.dobMonth.padStart(2, '0')}-${String(billing.dobDay).padStart(2, '0')}`
+        ? `${billing.dobYear}-${billing.dobMonth}-${String(billing.dobDay).padStart(2, '0')}`
         : undefined
     return {
       isNewCustomer: billing.isNewCustomer,
@@ -142,7 +148,7 @@ export function CheckoutPageContent() {
       lastName: billing.lastName,
       streetAddress: billing.streetAddress,
       city: billing.city,
-      country: COUNTRIES.find((c) => c.code === billing.country)?.name ?? billing.country,
+      country: COUNTRIES.find((country) => country.code === billing.country)?.name ?? billing.country,
       state: billing.state,
       zipCode: billing.zipCode,
     }
@@ -156,7 +162,7 @@ export function CheckoutPageContent() {
       lastName: shipping.lastName,
       streetAddress: shipping.streetAddress,
       city: shipping.city,
-      country: COUNTRIES.find((c) => c.code === shipping.country)?.name ?? shipping.country,
+      country: COUNTRIES.find((country) => country.code === shipping.country)?.name ?? shipping.country,
       state: shipping.state,
       zipCode: shipping.zipCode,
     }
@@ -168,13 +174,13 @@ export function CheckoutPageContent() {
     if (!billing.mobilePhone.trim()) return 'Mobile phone is required.'
     if (!billing.streetAddress.trim()) return 'Street address is required.'
     if (!billing.city.trim()) return 'City is required.'
-    if (!billing.state) return 'State / Province is required.'
+    if (!billing.state.trim()) return 'State / Province is required.'
     if (!billing.zipCode.trim()) return 'ZIP / Postal code is required.'
     if (!shippingSameAsBilling) {
       if (!shipping.firstName.trim() || !shipping.lastName.trim()) return 'Shipping: First and last name are required.'
       if (!shipping.streetAddress.trim()) return 'Shipping: Street address is required.'
       if (!shipping.city.trim()) return 'Shipping: City is required.'
-      if (!shipping.state) return 'Shipping: State / Province is required.'
+      if (!shipping.state.trim()) return 'Shipping: State / Province is required.'
       if (!shipping.zipCode.trim()) return 'Shipping: ZIP / Postal code is required.'
     }
     return null
@@ -182,20 +188,19 @@ export function CheckoutPageContent() {
 
   const handleCheckoutSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    await handleCryptoCheckout()
-  }
-
-  const handleCryptoCheckout = async () => {
     setErrorMessage(null)
+
     if (!cart || cart.items.length === 0) {
       setErrorMessage('Your cart is empty.')
       return
     }
+
     const validationError = validateForm()
     if (validationError) {
       setErrorMessage(validationError)
       return
     }
+
     try {
       setIsCryptoSubmitting(true)
       const { orderId, total } = await createPendingCryptoOrder({
@@ -212,8 +217,8 @@ export function CheckoutPageContent() {
 
   if (cart === undefined) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-6 lg:px-6">
-        <p className="text-sm text-slate-500">Loading checkout...</p>
+      <div className="mx-auto max-w-7xl px-4 py-10 lg:px-6">
+        <div className="rx-card px-6 py-6 text-sm text-slate-500">Loading checkout...</div>
       </div>
     )
   }
@@ -221,319 +226,353 @@ export function CheckoutPageContent() {
   const cartEmpty = !cart || cart.items.length === 0
 
   return (
-    <div className="mx-auto grid max-w-7xl gap-5 px-4 py-6 lg:grid-cols-[1fr_320px] lg:px-6">
-      <form onSubmit={handleCheckoutSubmit}>
-        {/* ── Section 1: Billing Address ── */}
-        <div className="border border-slate-200 bg-white p-6 shadow-sm mb-5">
-          <SectionHeader number={1} title="Billing Address" />
+    <div className="mx-auto max-w-7xl px-4 py-6 lg:px-6 lg:py-8">
+      <section className="rx-card-dark overflow-hidden px-6 py-8 sm:px-8 lg:px-10">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px]">
+          <div>
+            <p className="rx-kicker text-teal-200">Checkout</p>
+            <h1 className="rx-display mt-4 text-5xl leading-none text-white sm:text-6xl">Complete your order</h1>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
+              Enter your billing and shipping details, then continue to payment.
+            </p>
+          </div>
+          <div className="space-y-3">
+            <div className="rounded-[24px] border border-white/10 bg-white/5 p-4">
+              <div className="flex items-center gap-3 text-white">
+                <Bitcoin className="h-5 w-5 text-amber-300" />
+                <span className="font-semibold">Crypto payment required</span>
+              </div>
+              <p className="mt-3 text-sm leading-7 text-slate-300">
+                You will be redirected to the payment invoice after placing the order.
+              </p>
+            </div>
+            <div className="rounded-[24px] border border-white/10 bg-white/5 p-4">
+              <div className="flex items-center gap-3 text-white">
+                <ShieldCheck className="h-5 w-5 text-teal-200" />
+                <span className="font-semibold">Shipping details</span>
+              </div>
+              <p className="mt-3 text-sm leading-7 text-slate-300">
+                Make sure your address information is accurate before continuing.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
 
-          <div className="space-y-4">
-            {/* New customer */}
-            <Field label="New Customer?:">
-              <div className="relative">
+      <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <form onSubmit={handleCheckoutSubmit} className="space-y-6">
+          <SectionCard
+            eyebrow="Billing details"
+            title="Billing information"
+            description="Enter the details for the person placing the order."
+          >
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="New customer">
                 <select
-                  className={selectClass}
+                  className="rx-input appearance-none"
                   value={billing.isNewCustomer ? 'yes' : 'no'}
-                  onChange={(e) => setBillingField('isNewCustomer', e.target.value === 'yes')}
+                  onChange={(event) => setBillingField('isNewCustomer', event.target.value === 'yes')}
                 >
                   <option value="yes">Yes</option>
                   <option value="no">No</option>
                 </select>
-                <span className="pointer-events-none absolute right-3 top-2.5 text-slate-400">▾</span>
-              </div>
-            </Field>
-
-            {/* Mobile Phone */}
-            <Field label="Mobile Phone:">
-              <input
-                type="tel"
-                className={inputClass}
-                placeholder="+91"
-                value={billing.mobilePhone}
-                onChange={(e) => setBillingField('mobilePhone', e.target.value)}
-              />
-            </Field>
-
-            {/* E-Mail */}
-            <Field label="E-Mail:">
-              <input
-                type="email"
-                className={inputClass}
-                placeholder="your@email.com"
-                value={billing.email}
-                onChange={(e) => setBillingField('email', e.target.value)}
-              />
-            </Field>
-
-            {/* Date of Birth */}
-            <Field label="Date of Birth:">
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1">
-                  <select
-                    className={selectClass}
-                    value={billing.dobYear}
-                    onChange={(e) => setBillingField('dobYear', e.target.value)}
-                  >
-                    <option value="">year</option>
-                    {YEARS.map((y) => (
-                      <option key={y} value={String(y)}>
-                        {y}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="pointer-events-none absolute right-2 top-2.5 text-xs text-slate-400">▾</span>
-                </div>
-                <span className="text-slate-500">–</span>
-                <div className="relative flex-1">
-                  <select
-                    className={selectClass}
-                    value={billing.dobMonth}
-                    onChange={(e) => setBillingField('dobMonth', e.target.value)}
-                  >
-                    <option value="">month</option>
-                    {MONTHS.map((m, i) => (
-                      <option key={m} value={String(i + 1).padStart(2, '0')}>
-                        {m}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="pointer-events-none absolute right-2 top-2.5 text-xs text-slate-400">▾</span>
-                </div>
-                <span className="text-slate-500">–</span>
-                <div className="relative flex-1">
-                  <select
-                    className={selectClass}
-                    value={billing.dobDay}
-                    onChange={(e) => setBillingField('dobDay', e.target.value)}
-                  >
-                    <option value="">day</option>
-                    {DAYS.map((d) => (
-                      <option key={d} value={String(d)}>
-                        {d}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="pointer-events-none absolute right-2 top-2.5 text-xs text-slate-400">▾</span>
-                </div>
-              </div>
-            </Field>
-
-            {/* First + Last Name */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="First Name:">
+              </Field>
+              <Field label="Mobile phone">
                 <input
-                  type="text"
-                  className={inputClass}
-                  value={billing.firstName}
-                  onChange={(e) => setBillingField('firstName', e.target.value)}
+                  type="tel"
+                  className="rx-input"
+                  placeholder="+91"
+                  value={billing.mobilePhone}
+                  onChange={(event) => setBillingField('mobilePhone', event.target.value)}
                 />
               </Field>
-              <Field label="Last Name:">
+              <Field label="Email">
                 <input
-                  type="text"
-                  className={inputClass}
-                  value={billing.lastName}
-                  onChange={(e) => setBillingField('lastName', e.target.value)}
+                  type="email"
+                  className="rx-input"
+                  placeholder="you@example.com"
+                  value={billing.email}
+                  onChange={(event) => setBillingField('email', event.target.value)}
                 />
               </Field>
-            </div>
-
-            {/* Street Address */}
-            <Field label="Street Address:">
-              <input
-                type="text"
-                className={inputClass}
-                value={billing.streetAddress}
-                onChange={(e) => setBillingField('streetAddress', e.target.value)}
-              />
-            </Field>
-
-            {/* City */}
-            <Field label="City:">
-              <input
-                type="text"
-                className={inputClass}
-                value={billing.city}
-                onChange={(e) => setBillingField('city', e.target.value)}
-              />
-            </Field>
-
-            {/* Country */}
-            <Field label="Country:">
-              <div className="relative">
+              <Field label="Country">
                 <select
-                  className={selectClass}
+                  className="rx-input appearance-none"
                   value={billing.country}
-                  onChange={(e) => setBillingField('country', e.target.value)}
+                  onChange={(event) => setBillingField('country', event.target.value)}
                 >
-                  {COUNTRIES.map((c) => (
-                    <option key={c.code} value={c.code}>
-                      {c.name}
+                  {COUNTRIES.map((country) => (
+                    <option key={country.code} value={country.code}>
+                      {country.name}
                     </option>
                   ))}
                 </select>
-                <span className="pointer-events-none absolute right-3 top-2.5 text-slate-400">▾</span>
-              </div>
-            </Field>
+              </Field>
+              <Field label="Date of birth">
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <select
+                    className="rx-input appearance-none"
+                    value={billing.dobYear}
+                    onChange={(event) => setBillingField('dobYear', event.target.value)}
+                  >
+                    <option value="">Year</option>
+                    {YEARS.map((year) => (
+                      <option key={year} value={String(year)}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    className="rx-input appearance-none"
+                    value={billing.dobMonth}
+                    onChange={(event) => setBillingField('dobMonth', event.target.value)}
+                  >
+                    <option value="">Month</option>
+                    {MONTHS.map((month, index) => (
+                      <option key={month} value={String(index + 1).padStart(2, '0')}>
+                        {month}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    className="rx-input appearance-none"
+                    value={billing.dobDay}
+                    onChange={(event) => setBillingField('dobDay', event.target.value)}
+                  >
+                    <option value="">Day</option>
+                    {DAYS.map((day) => (
+                      <option key={day} value={String(day)}>
+                        {day}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </Field>
+            </div>
 
-            {/* State / Province */}
-            <Field label="State / Province:">
-              <input
-                type="text"
-                className={inputClass}
-                placeholder="State / Province"
-                value={billing.state}
-                onChange={(e) => setBillingField('state', e.target.value)}
-              />
-            </Field>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <Field label="First name">
+                <input
+                  type="text"
+                  className="rx-input"
+                  value={billing.firstName}
+                  onChange={(event) => setBillingField('firstName', event.target.value)}
+                />
+              </Field>
+              <Field label="Last name">
+                <input
+                  type="text"
+                  className="rx-input"
+                  value={billing.lastName}
+                  onChange={(event) => setBillingField('lastName', event.target.value)}
+                />
+              </Field>
+            </div>
 
-            {/* ZIP */}
-            <Field label="ZIP/Postal Code:">
-              <input
-                type="text"
-                className={inputClass}
-                value={billing.zipCode}
-                onChange={(e) => setBillingField('zipCode', e.target.value)}
-              />
-            </Field>
-          </div>
+            <div className="mt-4 grid gap-4">
+              <Field label="Street address">
+                <input
+                  type="text"
+                  className="rx-input"
+                  value={billing.streetAddress}
+                  onChange={(event) => setBillingField('streetAddress', event.target.value)}
+                />
+              </Field>
+            </div>
 
-          {/* Shipping section (inside the same card) */}
-          <div className="mt-6">
-            <h3 className="mb-4 text-center text-sm font-bold uppercase tracking-widest text-sky-700">
-              Shipping Address
-            </h3>
+            <div className="mt-4 grid gap-4 sm:grid-cols-3">
+              <Field label="City">
+                <input
+                  type="text"
+                  className="rx-input"
+                  value={billing.city}
+                  onChange={(event) => setBillingField('city', event.target.value)}
+                />
+              </Field>
+              <Field label="State / province">
+                <input
+                  type="text"
+                  className="rx-input"
+                  value={billing.state}
+                  onChange={(event) => setBillingField('state', event.target.value)}
+                />
+              </Field>
+              <Field label="ZIP / postal code">
+                <input
+                  type="text"
+                  className="rx-input"
+                  value={billing.zipCode}
+                  onChange={(event) => setBillingField('zipCode', event.target.value)}
+                />
+              </Field>
+            </div>
+          </SectionCard>
 
-            {/* "Same as Billing" checkbox - shown first so users can skip the form */}
-            <label className="mb-4 flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+          <SectionCard
+            eyebrow="Shipping details"
+            title="Shipping information"
+            description="Enter the delivery address or copy the billing details."
+          >
+            <label className="flex items-center gap-3 rounded-[22px] border border-slate-200/80 bg-slate-50/80 px-4 py-4 text-sm font-medium text-slate-700">
               <input
                 type="checkbox"
                 checked={shippingSameAsBilling}
-                onChange={(e) => setShippingSameAsBilling(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-400"
+                onChange={(event) => setShippingSameAsBilling(event.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
               />
-              Shipping address same as billing
+              Shipping address is the same as billing
             </label>
 
-            {!shippingSameAsBilling && (
-              <div className="space-y-4 mb-4">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <Field label="First Name:">
+            {!shippingSameAsBilling ? (
+              <div className="mt-6 space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field label="First name">
                     <input
                       type="text"
-                      className={inputClass}
+                      className="rx-input"
                       value={shipping.firstName}
-                      onChange={(e) => setShippingField('firstName', e.target.value)}
+                      onChange={(event) => setShippingField('firstName', event.target.value)}
                     />
                   </Field>
-                  <Field label="Last Name:">
+                  <Field label="Last name">
                     <input
                       type="text"
-                      className={inputClass}
+                      className="rx-input"
                       value={shipping.lastName}
-                      onChange={(e) => setShippingField('lastName', e.target.value)}
+                      onChange={(event) => setShippingField('lastName', event.target.value)}
                     />
                   </Field>
                 </div>
-                <Field label="Street Address:">
+
+                <Field label="Street address">
                   <input
                     type="text"
-                    className={inputClass}
+                    className="rx-input"
                     value={shipping.streetAddress}
-                    onChange={(e) => setShippingField('streetAddress', e.target.value)}
+                    onChange={(event) => setShippingField('streetAddress', event.target.value)}
                   />
                 </Field>
-                <Field label="City:">
-                  <input
-                    type="text"
-                    className={inputClass}
-                    value={shipping.city}
-                    onChange={(e) => setShippingField('city', e.target.value)}
-                  />
-                </Field>
-                <Field label="Country:">
-                  <div className="relative">
+
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <Field label="City">
+                    <input
+                      type="text"
+                      className="rx-input"
+                      value={shipping.city}
+                      onChange={(event) => setShippingField('city', event.target.value)}
+                    />
+                  </Field>
+                  <Field label="Country">
                     <select
-                      className={selectClass}
+                      className="rx-input appearance-none"
                       value={shipping.country}
-                      onChange={(e) => setShippingField('country', e.target.value)}
+                      onChange={(event) => setShippingField('country', event.target.value)}
                     >
-                      {COUNTRIES.map((c) => (
-                        <option key={c.code} value={c.code}>
-                          {c.name}
+                      {COUNTRIES.map((country) => (
+                        <option key={country.code} value={country.code}>
+                          {country.name}
                         </option>
                       ))}
                     </select>
-                    <span className="pointer-events-none absolute right-3 top-2.5 text-slate-400">▾</span>
-                  </div>
-                </Field>
-                <Field label="State / Province:">
+                  </Field>
+                  <Field label="State / province">
+                    <input
+                      type="text"
+                      className="rx-input"
+                      value={shipping.state}
+                      onChange={(event) => setShippingField('state', event.target.value)}
+                    />
+                  </Field>
+                </div>
+
+                <Field label="ZIP / postal code">
                   <input
                     type="text"
-                    className={inputClass}
-                    placeholder="State / Province"
-                    value={shipping.state}
-                    onChange={(e) => setShippingField('state', e.target.value)}
-                  />
-                </Field>
-                <Field label="ZIP/Postal Code:">
-                  <input
-                    type="text"
-                    className={inputClass}
+                    className="rx-input"
                     value={shipping.zipCode}
-                    onChange={(e) => setShippingField('zipCode', e.target.value)}
+                    onChange={(event) => setShippingField('zipCode', event.target.value)}
                   />
                 </Field>
               </div>
-            )}
-          </div>
-        </div>
+            ) : null}
+          </SectionCard>
 
-        {errorMessage && <p className="mb-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{errorMessage}</p>}
-
-        {/* Action button */}
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="submit"
-            disabled={isCryptoSubmitting || cartEmpty}
-            className="inline-flex items-center gap-2 rounded-full bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
+          <SectionCard
+            eyebrow="Payment"
+            title="Continue to payment"
+            description="Review your information, then proceed to the payment invoice."
           >
-            {isCryptoSubmitting ? (
-              'Redirecting...'
-            ) : (
-              <>
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M11.944 17.97L4.58 13.62 11.943 24l7.37-10.38-7.372 4.35zM12.056 0L4.69 12.223l7.365 4.354 7.365-4.35L12.056 0z" />
-                </svg>
-                Pay with Crypto (Required)
-              </>
-            )}
-          </button>
-        </div>
-      </form>
+            {errorMessage ? (
+              <div className="rounded-[22px] border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-600">
+                {errorMessage}
+              </div>
+            ) : null}
 
-      {/* Order Summary */}
-      <aside className="pharma-card h-fit p-5">
-        <h2 className="text-lg font-bold text-slate-900">Order Summary</h2>
-        <ul className="mt-4 space-y-2">
-          {cart?.items.map((item) => (
-            <li key={item.productId} className="flex items-center justify-between text-sm">
-              <span className="text-slate-600">
-                {item.name} × {item.quantity}
-              </span>
-              <span className="font-medium text-slate-900">{formatPrice(item.lineTotal)}</span>
-            </li>
-          ))}
-        </ul>
-        <div className="mt-3 border-t border-slate-200 pt-3 text-sm">
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-slate-900">Total</span>
-            <div className="text-right">
-              <span className="text-lg font-bold text-slate-900">{formatPrice(cart?.total ?? 0)}</span>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <button type="submit" disabled={isCryptoSubmitting || cartEmpty} className="rx-btn-primary">
+                <Bitcoin className="h-4 w-4" />
+                {isCryptoSubmitting ? 'Redirecting...' : 'Pay with crypto'}
+              </button>
+              <span className="text-sm text-slate-500">Crypto is currently the required payment method.</span>
+            </div>
+          </SectionCard>
+        </form>
+
+        <aside className="space-y-4 lg:sticky lg:top-28 lg:h-fit">
+          <div className="rx-card overflow-hidden">
+            <div className="rx-gradient-hero px-6 py-5 text-white">
+              <p className="rx-kicker text-teal-200">Order summary</p>
+              <h2 className="mt-2 text-2xl font-semibold">Current basket</h2>
+            </div>
+            <div className="p-6">
+              {cart?.items.length ? (
+                <ul className="space-y-3">
+                  {cart.items.map((item, index) => (
+                    <li
+                      key={`${item.productId}-${item.dosage ?? ''}-${item.pillCount ?? ''}-${index}`}
+                      className="rounded-[22px] border border-slate-200/80 bg-slate-50/80 px-4 py-4"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-950">{item.name}</p>
+                          <p className="mt-1 text-xs uppercase tracking-[0.22em] text-slate-500">
+                            {item.quantity} × {item.unit}
+                          </p>
+                        </div>
+                        <span className="text-sm font-semibold text-slate-950">{formatPrice(item.lineTotal)}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm leading-7 text-slate-600">Your cart is empty.</p>
+              )}
+
+              <div className="mt-5 border-t border-slate-200 pt-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-500">Total</span>
+                  <span className="text-2xl font-semibold text-slate-950">{formatPrice(cart?.total ?? 0)}</span>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </aside>
+
+          <div className="rx-card p-6">
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-[18px] bg-teal-50 text-teal-700">
+                <Truck className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="rx-kicker text-teal-700">Dispatch note</p>
+                <p className="text-sm font-semibold text-slate-950">Check your shipping address carefully.</p>
+              </div>
+            </div>
+            <p className="mt-4 text-sm leading-7 text-slate-600">
+              Correct address information helps avoid delays with processing and delivery.
+            </p>
+          </div>
+        </aside>
+      </div>
     </div>
   )
 }

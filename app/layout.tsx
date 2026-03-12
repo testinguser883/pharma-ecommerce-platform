@@ -7,12 +7,13 @@ import { ConvexClientProvider } from './convex-client-provider'
 import { getToken } from '@/lib/auth-server'
 import { buildHomeSchemas } from '@/lib/home-schema'
 import { siteInputs } from '@/lib/site-inputs'
+import { brand } from '@/lib/brand'
 
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Pharma eCommerce Platform',
-  description: 'Trusted online pharmaceutical platform with secure authentication and real-time cart sync.',
+  title: `${brand.name} | Design-Led Digital Pharmacy`,
+  description: brand.tagline,
 }
 
 function serializeJsonLd(schema: unknown) {
@@ -61,7 +62,7 @@ export default async function RootLayout({
           />
         ))}
       </head>
-      <body className="min-h-screen bg-slate-100 text-slate-900 antialiased">
+      <body className="min-h-screen text-slate-900 antialiased">
         <ConvexClientProvider initialToken={token}>{children}</ConvexClientProvider>
       </body>
     </html>

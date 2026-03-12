@@ -1,17 +1,19 @@
+import { brand } from './brand'
+
 export const siteInputs = {
   home: {
-    seoTitle: 'Pharma eCommerce Platform',
+    seoTitle: `${brand.name} | Digital Pharmacy Experience`,
     seoDescription: 'Trusted online pharmaceutical platform with secure authentication and real-time cart sync.',
     seoKeywords: 'online pharmacy, pharma ecommerce, medicines, healthcare',
     googleTagId: 'G-XXXXX',
     schema: {
       enabled: true,
       organization: {
-        name: 'PharmaCare',
+        name: brand.name,
         url: 'https://pharma-ecommerce-platform-5an9.vercel.app',
         logoPath: '/favicon.ico',
-        telephone: '+91-8454039832',
-        email: 'orderfulfil@tutanota.com',
+        telephone: brand.supportPhone,
+        email: brand.supportEmail,
         contactType: 'Customer Service',
         areaServed: 'Worldwide',
         availableLanguages: ['English'],

@@ -60,26 +60,26 @@ export function AdminPanel() {
 
   if (isAdmin === undefined) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+      <div className="flex min-h-screen items-center justify-center px-4">
+        <div className="rx-card-dark flex items-center gap-3 px-6 py-5 text-sm text-slate-200">
+          <Loader2 className="h-5 w-5 animate-spin text-teal-300" />
+          Loading admin panel...
+        </div>
       </div>
     )
   }
 
   if (!isAdmin) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 text-center">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center">
         <ShieldOff className="h-12 w-12 text-red-400" />
-        <h1 className="text-2xl font-bold text-slate-800">Access Denied</h1>
-        <p className="max-w-sm text-slate-500">
+        <h1 className="rx-display text-4xl text-slate-950">Access denied</h1>
+        <p className="max-w-sm text-sm leading-7 text-slate-600">
           You don&apos;t have admin access. Contact your system administrator or set the{' '}
           <code className="rounded bg-slate-100 px-1 text-sm">ADMIN_EMAIL</code> environment variable in the Convex
           dashboard.
         </p>
-        <Link
-          href="/"
-          className="rounded-full bg-teal-600 px-5 py-2 text-sm font-semibold text-white hover:bg-teal-700"
-        >
+        <Link href="/" className="rx-btn-primary">
           Back to Shop
         </Link>
       </div>
@@ -87,21 +87,24 @@ export function AdminPanel() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 lg:px-6">
+    <div className="min-h-screen px-4 py-4 lg:px-6">
+      <header className="mx-auto max-w-7xl rounded-[32px] border border-white/70 bg-white/70 shadow-[0_20px_70px_-42px_rgba(15,23,42,0.85)] backdrop-blur-xl">
+        <div className="flex flex-wrap items-center justify-between gap-4 px-4 py-4 lg:px-6">
           <div className="flex items-center gap-3">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white/80 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-white"
             >
               <ArrowLeft className="h-4 w-4" />
               Shop
             </Link>
-            <h1 className="text-xl font-bold text-slate-900">Admin Panel</h1>
+            <div>
+              <p className="rx-kicker text-teal-700">Admin surface</p>
+              <h1 className="text-xl font-bold text-slate-900">Admin Panel</h1>
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
+          <div className="flex flex-wrap gap-1 rounded-full border border-slate-200 bg-white/80 p-1">
             {(
               [
                 { id: 'products', icon: Package, label: 'Medicines' },
@@ -114,7 +117,9 @@ export function AdminPanel() {
                 key={id}
                 type="button"
                 onClick={() => setTab(id)}
-                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold transition-colors ${tab === id ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+                  tab === id ? 'bg-slate-950 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                }`}
               >
                 <Icon className="h-4 w-4" />
                 {label}
@@ -124,7 +129,7 @@ export function AdminPanel() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-7xl px-4 py-6 lg:px-6">
+      <div className="mx-auto max-w-7xl py-6">
         {tab === 'products' && <ProductsTab />}
         {tab === 'orders' && <OrdersTab />}
         {tab === 'slider' && <SliderTab />}
@@ -1638,7 +1643,7 @@ function CategoriesTab() {
 
 function StatCard({ icon, value, label }: { icon: React.ReactNode; value: number; label: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl bg-white p-4 shadow-sm">
+    <div className="rx-card flex items-center gap-3 p-4">
       {icon}
       <div>
         <p className="text-2xl font-bold text-slate-900">{value}</p>

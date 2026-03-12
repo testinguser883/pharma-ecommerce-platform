@@ -20,14 +20,9 @@ export function LoginForm() {
     event.preventDefault()
     setErrorMessage(null)
     await authClient.signIn.email(
+      { email, password },
       {
-        email,
-        password,
-      },
-      {
-        onRequest: () => {
-          setIsSubmitting(true)
-        },
+        onRequest: () => setIsSubmitting(true),
         onSuccess: () => {
           setIsSubmitting(false)
           router.push(nextPath as Route)
@@ -41,73 +36,55 @@ export function LoginForm() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-md">
-      {/* Card */}
-      <div className="rounded-2xl border border-slate-100 bg-white shadow-lg overflow-hidden">
-        {/* Top accent */}
-        <div className="h-1 bg-gradient-to-r from-teal-500 to-cyan-500" />
+    <div className="rx-card w-full p-6 sm:p-8">
+      <p className="rx-kicker text-teal-700">Account access</p>
+      <h1 className="rx-display mt-3 text-4xl text-slate-950">Welcome back.</h1>
+      <p className="mt-3 text-sm leading-7 text-slate-600">
+        Sign in to manage orders, review your cart, and continue to checkout.
+      </p>
 
-        <div className="p-7">
-          {/* Logo mark */}
-          <div className="mb-5 flex flex-col items-center text-center">
-            <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500 to-cyan-600 text-white shadow-lg shadow-teal-200 mb-3">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-6 w-6">
-                <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" />
-                <path d="m8.5 8.5 7 7" />
-              </svg>
-            </div>
-            <h1 className="text-xl font-extrabold text-slate-900">Welcome back</h1>
-            <p className="mt-0.5 text-sm text-slate-400">Sign in to manage your orders and cart.</p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                required
-                placeholder="you@example.com"
-                className="rx-input"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-                placeholder="••••••••"
-                className="rx-input"
-              />
-            </div>
-
-            {errorMessage && (
-              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-                {errorMessage}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full rounded-full bg-gradient-to-r from-teal-600 to-cyan-600 px-4 py-3 text-sm font-bold text-white shadow-sm hover:from-teal-500 hover:to-cyan-500 disabled:cursor-not-allowed disabled:opacity-60 transition-all"
-            >
-              {isSubmitting ? 'Signing in...' : 'Sign in'}
-            </button>
-          </form>
-
-          <p className="mt-5 text-center text-sm text-slate-500">
-            New here?{' '}
-            <Link href="/auth/register" className="font-semibold text-teal-600 hover:text-teal-500 hover:underline">
-              Create account
-            </Link>
-          </p>
+      <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+        <div>
+          <label className="rx-label">Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            required
+            placeholder="you@example.com"
+            className="rx-input mt-2"
+          />
         </div>
-      </div>
+
+        <div>
+          <label className="rx-label">Password</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            required
+            placeholder="••••••••"
+            className="rx-input mt-2"
+          />
+        </div>
+
+        {errorMessage ? (
+          <div className="rounded-[20px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+            {errorMessage}
+          </div>
+        ) : null}
+
+        <button type="submit" disabled={isSubmitting} className="rx-btn-primary w-full">
+          {isSubmitting ? 'Signing in...' : 'Sign in'}
+        </button>
+      </form>
+
+      <p className="mt-6 text-sm text-slate-600">
+        New here?{' '}
+        <Link href="/auth/register" className="font-semibold text-slate-950">
+          Create an account
+        </Link>
+      </p>
     </div>
   )
 }

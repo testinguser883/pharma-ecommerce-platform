@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useQuery } from 'convex/react'
-import { PackageCheck, ShoppingCart, User2 } from 'lucide-react'
+import { ArrowUpRight, PackageCheck, ShoppingBag, User2 } from 'lucide-react'
 import { api } from '@/convex/_generated/api'
 import { authClient } from '@/lib/auth-client'
 
@@ -12,59 +12,73 @@ export function AccountPageContent() {
   const orders = useQuery(api.orders.listMyOrders)
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5 px-4 py-6 lg:px-6">
-      <section className="pharma-card p-5 md:p-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="mx-auto max-w-7xl px-4 py-6 lg:px-6 lg:py-8">
+      <section className="rx-card-dark overflow-hidden px-6 py-8 sm:px-8 lg:px-10">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_220px]">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 md:text-2xl">Account Dashboard</h1>
-            <p className="mt-1 text-sm text-slate-500">Manage your profile, cart, and order history.</p>
+            <p className="rx-kicker text-teal-200">Account center</p>
+            <h1 className="rx-display mt-4 text-5xl leading-none text-white sm:text-6xl">Your account</h1>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
+              Manage your profile, cart, and order history.
+            </p>
           </div>
-          <button
-            type="button"
-            onClick={() => void authClient.signOut()}
-            className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-          >
+          <button type="button" onClick={() => void authClient.signOut()} className="rx-btn-ghost h-fit self-start">
             Sign out
           </button>
         </div>
-
-        <div className="mt-6 grid gap-4 sm:grid-cols-3">
-          <article className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <User2 className="h-5 w-5 text-sky-600" />
-            <p className="mt-2 text-xs font-medium uppercase tracking-wide text-slate-500">Signed in as</p>
-            <p className="mt-1 text-sm font-semibold text-slate-900">{currentUser?.email ?? 'Loading...'}</p>
-          </article>
-          <article className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <ShoppingCart className="h-5 w-5 text-teal-600" />
-            <p className="mt-2 text-xs font-medium uppercase tracking-wide text-slate-500">Cart items</p>
-            <p className="mt-1 text-sm font-semibold text-slate-900">{itemCount ?? 0}</p>
-          </article>
-          <article className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <PackageCheck className="h-5 w-5 text-emerald-600" />
-            <p className="mt-2 text-xs font-medium uppercase tracking-wide text-slate-500">Orders</p>
-            <p className="mt-1 text-sm font-semibold text-slate-900">{orders?.length ?? 0}</p>
-          </article>
-        </div>
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-3">
-        <Link
-          href="/cart"
-          className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:border-sky-200 hover:text-sky-700"
-        >
-          View cart
+      <section className="mt-8 grid gap-5 md:grid-cols-3">
+        <article className="rx-card p-6">
+          <User2 className="h-5 w-5 text-teal-700" />
+          <p className="rx-kicker mt-5 text-teal-700">Signed in</p>
+          <p className="mt-3 text-xl font-semibold text-slate-950">{currentUser?.email ?? 'Loading...'}</p>
+        </article>
+        <article className="rx-card p-6">
+          <ShoppingBag className="h-5 w-5 text-teal-700" />
+          <p className="rx-kicker mt-5 text-teal-700">Cart items</p>
+          <p className="mt-3 text-4xl font-semibold text-slate-950">{itemCount ?? 0}</p>
+        </article>
+        <article className="rx-card p-6">
+          <PackageCheck className="h-5 w-5 text-teal-700" />
+          <p className="rx-kicker mt-5 text-teal-700">Orders placed</p>
+          <p className="mt-3 text-4xl font-semibold text-slate-950">{orders?.length ?? 0}</p>
+        </article>
+      </section>
+
+      <section className="mt-8 grid gap-4 md:grid-cols-3">
+        <Link href="/cart" className="rx-card p-6 transition hover:-translate-y-0.5">
+          <p className="rx-kicker text-teal-700">Quick action</p>
+          <h2 className="mt-3 text-2xl font-semibold text-slate-950">Review cart</h2>
+          <p className="mt-3 text-sm leading-7 text-slate-600">
+            Adjust quantities, remove items, or continue to checkout.
+          </p>
+          <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-slate-950">
+            Open cart
+            <ArrowUpRight className="h-4 w-4" />
+          </span>
         </Link>
-        <Link
-          href="/orders"
-          className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:border-sky-200 hover:text-sky-700"
-        >
-          View orders
+        <Link href="/orders" className="rx-card p-6 transition hover:-translate-y-0.5">
+          <p className="rx-kicker text-teal-700">Quick action</p>
+          <h2 className="mt-3 text-2xl font-semibold text-slate-950">Track orders</h2>
+          <p className="mt-3 text-sm leading-7 text-slate-600">
+            See payment, fulfillment, and shipping progress for every order.
+          </p>
+          <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-slate-950">
+            Open orders
+            <ArrowUpRight className="h-4 w-4" />
+          </span>
         </Link>
-        <Link
-          href="/checkout"
-          className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:border-sky-200 hover:text-sky-700"
-        >
-          Checkout
+        <Link href="/checkout" className="rx-card p-6 transition hover:-translate-y-0.5">
+          <p className="rx-kicker text-teal-700">Quick action</p>
+          <h2 className="mt-3 text-2xl font-semibold text-slate-950">Go to checkout</h2>
+          <p className="mt-3 text-sm leading-7 text-slate-600">
+            Continue to payment with the current cart and shipping details.
+          </p>
+          <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-slate-950">
+            Start checkout
+            <ArrowUpRight className="h-4 w-4" />
+          </span>
         </Link>
       </section>
     </div>

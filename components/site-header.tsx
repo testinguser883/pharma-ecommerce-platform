@@ -2,13 +2,21 @@
 
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
-import { LogOut, Menu, Pill, Search, ShoppingCart, UserRound, X, ChevronDown } from 'lucide-react'
+import { HeartPulse, LogOut, Menu, Search, ShoppingBag, UserRound, X } from 'lucide-react'
 import { useQuery } from 'convex/react'
 import { useRouter } from 'next/navigation'
 import { authClient } from '@/lib/auth-client'
 import { api } from '@/convex/_generated/api'
 import { CartDrawer } from './cart-drawer'
 import { cn } from '@/lib/utils'
+import { brand } from '@/lib/brand'
+
+const primaryLinks = [
+  { href: '/products', label: 'Products' },
+  { href: '/about-us', label: 'About' },
+  { href: '/faq', label: 'FAQ' },
+  { href: '/contact-us', label: 'Support' },
+]
 
 export function SiteHeader() {
   const [isCartOpen, setIsCartOpen] = useState(false)
@@ -23,7 +31,7 @@ export function SiteHeader() {
   const hasSearchInteraction = useRef(false)
 
   useEffect(() => {
-    const onScroll = () => setIsScrolled(window.scrollY > 8)
+    const onScroll = () => setIsScrolled(window.scrollY > 18)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
@@ -34,7 +42,7 @@ export function SiteHeader() {
     debounceRef.current = setTimeout(() => {
       const q = searchInput.trim()
       router.push(q ? `/products?q=${encodeURIComponent(q)}` : '/products')
-    }, 300)
+    }, 280)
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
@@ -48,229 +56,227 @@ export function SiteHeader() {
     setIsMobileMenuOpen(false)
   }
 
-  const navLinks = [
-    { href: '/', label: 'Home' },
-    { href: '/products', label: 'Products' },
-    { href: '/orders', label: 'Orders' },
-    { href: '/account', label: 'Account' },
-  ]
-
   return (
     <>
-      <header
-        className={cn(
-          'sticky top-0 z-40 transition-all duration-300',
-          isScrolled
-            ? 'bg-slate-950/95 backdrop-blur-md shadow-lg shadow-black/20'
-            : 'bg-slate-950',
-        )}
-      >
-        {/* Top accent line */}
-        <div className="h-0.5 bg-gradient-to-r from-teal-500 via-cyan-400 to-teal-500" />
-
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 lg:px-6">
-          {/* Logo */}
-          <Link href="/" className="inline-flex shrink-0 items-center gap-2.5 group">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-400 to-cyan-500 text-white shadow-lg shadow-teal-900/30 group-hover:shadow-teal-500/40 transition-all duration-200">
-              <Pill className="h-4.5 w-4.5" />
-            </span>
-            <span className="text-base font-bold tracking-tight text-white group-hover:text-teal-300 transition-colors">
-              PharmaCare
-            </span>
-          </Link>
-
-          {/* Desktop search */}
-          <form onSubmit={handleSearch} className="hidden flex-1 max-w-sm md:flex">
-            <div className="relative w-full">
-              <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <input
-                type="search"
-                value={searchInput}
-                onChange={(e) => {
-                  hasSearchInteraction.current = true
-                  setSearchInput(e.target.value)
-                }}
-                placeholder="Search medicines..."
-                className="w-full rounded-full border border-slate-700 bg-slate-800/80 py-2 pl-9 pr-4 text-sm text-slate-200 placeholder:text-slate-500 outline-none ring-teal-500/30 focus:border-teal-500/70 focus:ring-2 focus:bg-slate-800 transition-all"
-              />
-            </div>
-          </form>
-
-          {/* Desktop nav */}
-          <nav className="hidden items-center gap-1 lg:flex">
-            {navLinks.map(({ href, label }) => (
-              <Link
-                key={href}
-                href={href}
-                className="px-3 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-all duration-150"
-              >
-                {label}
-              </Link>
-            ))}
-            {isAdmin && (
-              <Link
-                href="/admin"
-                className="px-3 py-2 text-sm font-semibold text-teal-400 hover:text-teal-300 hover:bg-teal-950/50 rounded-lg transition-all duration-150"
-              >
-                Admin
-              </Link>
-            )}
-          </nav>
-
-          {/* Right actions */}
-          <div className="flex items-center gap-2">
-            {/* Cart button */}
-            <button
-              type="button"
-              onClick={() => setIsCartOpen(true)}
-              className="relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-700 bg-slate-800 text-slate-300 hover:border-teal-500/50 hover:text-teal-400 hover:bg-slate-700 transition-all duration-150"
-              aria-label="Open cart"
-            >
-              <ShoppingCart className="h-4.5 w-4.5" />
-              {cartItemCount > 0 && (
-                <span className="absolute -right-1 -top-1 inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-teal-500 px-1 text-[9px] font-bold text-white shadow-lg">
-                  {cartItemCount > 99 ? '99+' : cartItemCount}
-                </span>
-              )}
-            </button>
-
-            {session?.user ? (
-              <>
-                <Link
-                  href="/account"
-                  className="hidden items-center gap-1.5 rounded-full border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm font-medium text-slate-300 hover:border-teal-500/50 hover:text-teal-300 hover:bg-slate-700 transition-all sm:inline-flex"
-                >
-                  <UserRound className="h-3.5 w-3.5" />
-                  <span className="max-w-[100px] truncate">{session.user.name ?? session.user.email}</span>
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => void authClient.signOut()}
-                  className="hidden h-9 w-9 items-center justify-center rounded-full border border-slate-700 bg-slate-800 text-slate-400 hover:border-red-500/50 hover:text-red-400 hover:bg-slate-700 transition-all sm:inline-flex"
-                  aria-label="Sign out"
-                >
-                  <LogOut className="h-4 w-4" />
-                </button>
-              </>
-            ) : (
-              <div className="hidden items-center gap-2 sm:flex">
-                <Link
-                  href="/auth/login"
-                  className="rounded-full border border-slate-700 px-4 py-1.5 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-all"
-                >
-                  Login
-                </Link>
-                <Link
-                  href="/auth/register"
-                  className="rounded-full bg-gradient-to-r from-teal-600 to-cyan-600 px-4 py-1.5 text-sm font-semibold text-white shadow-sm hover:from-teal-500 hover:to-cyan-500 transition-all"
-                >
-                  Register
-                </Link>
+      <header className="sticky top-0 z-40 px-4 pt-4 lg:px-6">
+        <div
+          className={cn(
+            'mx-auto max-w-7xl rounded-[32px] border backdrop-blur-xl transition-all duration-300',
+            isScrolled
+              ? 'border-white/70 bg-white/78 shadow-[0_20px_70px_-40px_rgba(15,23,42,0.85)]'
+              : 'border-white/55 bg-white/58 shadow-[0_18px_60px_-42px_rgba(15,23,42,0.6)]',
+          )}
+        >
+          <div className="flex items-center gap-3 px-4 py-4 sm:px-5">
+            <Link href="/" className="flex shrink-0 items-center gap-3">
+              <span className="inline-flex h-12 w-12 items-center justify-center rounded-[20px] bg-slate-950 text-white shadow-lg shadow-slate-950/20">
+                <HeartPulse className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="text-base font-semibold tracking-tight text-slate-950">{brand.name}</p>
               </div>
-            )}
+            </Link>
 
-            {/* Mobile hamburger */}
-            <button
-              type="button"
-              onClick={() => setIsMobileMenuOpen((v) => !v)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 lg:hidden"
-              aria-label="Toggle menu"
-            >
-              {isMobileMenuOpen ? <X className="h-4.5 w-4.5" /> : <Menu className="h-4.5 w-4.5" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile menu */}
-        {isMobileMenuOpen && (
-          <div className="border-t border-slate-800 bg-slate-900 px-4 pb-5 lg:hidden">
-            {/* Mobile search */}
-            <form onSubmit={handleSearch} className="pt-4">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+            <form onSubmit={handleSearch} className="hidden min-w-0 flex-1 xl:flex">
+              <div className="relative w-full">
+                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   type="search"
                   value={searchInput}
-                  onChange={(e) => {
+                  onChange={(event) => {
                     hasSearchInteraction.current = true
-                    setSearchInput(e.target.value)
+                    setSearchInput(event.target.value)
                   }}
-                  placeholder="Search medicines..."
-                  className="w-full rounded-full border border-slate-700 bg-slate-800 py-2.5 pl-9 pr-4 text-sm text-slate-200 placeholder:text-slate-500 outline-none focus:border-teal-500/70 focus:ring-2 focus:ring-teal-500/20"
+                  placeholder="Search by product or generic name"
+                  className="rx-input h-12 rounded-full border-white bg-white/80 pl-11 pr-4 shadow-inner"
                 />
               </div>
             </form>
 
-            {/* Mobile nav links */}
-            <nav className="mt-3 space-y-0.5">
-              {navLinks.map(({ href, label }) => (
+            <nav className="hidden items-center gap-1.5 lg:flex">
+              {primaryLinks.map(({ href, label }) => (
                 <Link
                   key={href}
                   href={href}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="block rounded-xl px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-all"
+                  className="rounded-full px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-950 hover:text-white"
                 >
                   {label}
                 </Link>
               ))}
-              {isAdmin && (
-                <Link
-                  href="/admin"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-teal-400 hover:bg-teal-950/50"
-                >
-                  Admin Panel
-                </Link>
-              )}
-            </nav>
-
-            {/* Mobile auth */}
-            <div className="mt-3 border-t border-slate-800 pt-3">
               {session?.user ? (
-                <div className="flex items-center justify-between">
+                <>
+                  <Link
+                    href="/orders"
+                    className="rounded-full px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-950 hover:text-white"
+                  >
+                    Orders
+                  </Link>
                   <Link
                     href="/account"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-2 text-sm font-medium text-slate-300"
+                    className="rounded-full px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-950 hover:text-white"
                   >
-                    <UserRound className="h-4 w-4 text-teal-400" />
-                    {session.user.name ?? session.user.email}
+                    Account
+                  </Link>
+                </>
+              ) : null}
+              {isAdmin ? (
+                <Link
+                  href="/admin"
+                  className="rounded-full border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-700 transition hover:border-teal-300 hover:bg-teal-100"
+                >
+                  Admin
+                </Link>
+              ) : null}
+            </nav>
+
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsCartOpen(true)}
+                className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white/80 text-slate-900 transition hover:-translate-y-0.5 hover:border-teal-300 hover:bg-white"
+                aria-label="Open cart"
+              >
+                <ShoppingBag className="h-4.5 w-4.5" />
+                {cartItemCount > 0 ? (
+                  <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-slate-950 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                    {cartItemCount > 99 ? '99+' : cartItemCount}
+                  </span>
+                ) : null}
+              </button>
+
+              {session?.user ? (
+                <>
+                  <Link
+                    href="/account"
+                    className="hidden items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 py-2.5 text-sm font-medium text-slate-900 transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white sm:inline-flex"
+                  >
+                    <UserRound className="h-4 w-4 text-teal-700" />
+                    <span className="max-w-[120px] truncate">{session.user.name ?? session.user.email}</span>
                   </Link>
                   <button
                     type="button"
-                    onClick={() => {
-                      void authClient.signOut()
-                      setIsMobileMenuOpen(false)
-                    }}
-                    className="flex items-center gap-1.5 text-sm font-medium text-red-400 hover:text-red-300"
+                    onClick={() => void authClient.signOut()}
+                    className="hidden h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white/80 text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 sm:inline-flex"
+                    aria-label="Sign out"
                   >
                     <LogOut className="h-4 w-4" />
-                    Sign out
                   </button>
-                </div>
+                </>
               ) : (
-                <div className="flex gap-2">
-                  <Link
-                    href="/auth/login"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex-1 rounded-full border border-slate-700 py-2.5 text-center text-sm font-medium text-slate-300 hover:bg-slate-800"
-                  >
-                    Login
+                <div className="hidden items-center gap-2 sm:flex">
+                  <Link href="/auth/login" className="rx-btn-secondary py-2.5">
+                    Sign in
                   </Link>
-                  <Link
-                    href="/auth/register"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex-1 rounded-full bg-gradient-to-r from-teal-600 to-cyan-600 py-2.5 text-center text-sm font-semibold text-white"
-                  >
-                    Register
+                  <Link href="/auth/register" className="rx-btn-primary py-2.5">
+                    Create account
                   </Link>
                 </div>
               )}
+
+              <button
+                type="button"
+                onClick={() => setIsMobileMenuOpen((value) => !value)}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white/80 text-slate-900 lg:hidden"
+                aria-label="Toggle menu"
+              >
+                {isMobileMenuOpen ? <X className="h-4.5 w-4.5" /> : <Menu className="h-4.5 w-4.5" />}
+              </button>
             </div>
           </div>
-        )}
-      </header>
 
+          {isMobileMenuOpen ? (
+            <div className="border-t border-slate-200/70 px-4 py-4 sm:px-5 lg:hidden">
+              <form onSubmit={handleSearch}>
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="search"
+                    value={searchInput}
+                    onChange={(event) => {
+                      hasSearchInteraction.current = true
+                      setSearchInput(event.target.value)
+                    }}
+                    placeholder="Search products"
+                    className="rx-input rounded-full pl-11"
+                  />
+                </div>
+              </form>
+
+              <nav className="mt-4 grid gap-2">
+                {primaryLinks.map(({ href, label }) => (
+                  <Link
+                    key={href}
+                    href={href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="rounded-[20px] border border-slate-200/80 bg-white/80 px-4 py-3 text-sm font-medium text-slate-900"
+                  >
+                    {label}
+                  </Link>
+                ))}
+                {session?.user ? (
+                  <>
+                    <Link
+                      href="/orders"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="rounded-[20px] border border-slate-200/80 bg-white/80 px-4 py-3 text-sm font-medium text-slate-900"
+                    >
+                      Orders
+                    </Link>
+                    <Link
+                      href="/account"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="rounded-[20px] border border-slate-200/80 bg-white/80 px-4 py-3 text-sm font-medium text-slate-900"
+                    >
+                      Account
+                    </Link>
+                  </>
+                ) : null}
+                {isAdmin ? (
+                  <Link
+                    href="/admin"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="rounded-[20px] border border-teal-200 bg-teal-50 px-4 py-3 text-sm font-semibold text-teal-700"
+                  >
+                    Admin panel
+                  </Link>
+                ) : null}
+              </nav>
+
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                {session?.user ? (
+                  <>
+                    <div className="rounded-[24px] border border-slate-200/80 bg-white/80 px-4 py-4">
+                      <p className="rx-kicker text-teal-700">Signed in</p>
+                      <p className="mt-2 text-sm font-medium text-slate-900">
+                        {session.user.name ?? session.user.email}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void authClient.signOut()
+                        setIsMobileMenuOpen(false)
+                      }}
+                      className="rounded-[24px] border border-red-200 bg-red-50 px-4 py-4 text-left text-sm font-semibold text-red-600"
+                    >
+                      Sign out
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/auth/login" onClick={() => setIsMobileMenuOpen(false)} className="rx-btn-secondary">
+                      Sign in
+                    </Link>
+                    <Link href="/auth/register" onClick={() => setIsMobileMenuOpen(false)} className="rx-btn-primary">
+                      Create account
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </header>
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </>
   )

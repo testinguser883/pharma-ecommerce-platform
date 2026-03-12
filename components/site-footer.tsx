@@ -1,123 +1,116 @@
 import Link from 'next/link'
-import { Pill, Bitcoin, Mail, Shield } from 'lucide-react'
+import { ArrowUpRight, BadgeCheck, Bitcoin, HeartPulse, Mail, MapPin, ShieldCheck } from 'lucide-react'
+import { brand } from '@/lib/brand'
+
+const footerGroups = [
+  {
+    title: 'Explore',
+    links: [
+      { href: '/', label: 'Home' },
+      { href: '/products', label: 'Catalog' },
+      { href: '/about-us', label: 'About' },
+      { href: '/testimonials', label: 'Testimonials' },
+    ],
+  },
+  {
+    title: 'Support',
+    links: [
+      { href: '/faq', label: 'FAQ' },
+      { href: '/contact-us', label: 'Contact us' },
+      { href: '/our-policy', label: 'Our policy' },
+      { href: '/terms-conditions', label: 'Terms & conditions' },
+    ],
+  },
+]
 
 export function SiteFooter() {
   return (
-    <footer className="bg-slate-950 text-slate-300">
-      {/* Top accent */}
-      <div className="h-px bg-gradient-to-r from-transparent via-teal-500/40 to-transparent" />
-
-      <div className="mx-auto max-w-7xl px-4 py-12 lg:px-6">
-        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Brand column */}
-          <div className="space-y-4">
-            <Link href="/" className="inline-flex items-center gap-2.5 group">
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-400 to-cyan-500 text-white shadow-lg shadow-teal-900/30">
-                <Pill className="h-4.5 w-4.5" />
+    <footer className="relative z-10 mt-16 px-4 pb-4 lg:px-6">
+      <div className="mx-auto max-w-7xl overflow-hidden rounded-[36px] border border-white/10 bg-slate-950 text-slate-200 shadow-[0_42px_100px_-45px_rgba(15,23,42,0.95)]">
+        <div className="grid gap-8 px-6 py-8 sm:px-8 lg:grid-cols-[1.2fr_0.8fr_0.8fr_1fr] lg:px-10 lg:py-10">
+          <div>
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-12 w-12 items-center justify-center rounded-[20px] bg-white/10 text-white">
+                <HeartPulse className="h-5 w-5" />
               </span>
-              <span className="text-base font-bold text-white group-hover:text-teal-300 transition-colors">
-                PharmaCare
-              </span>
-            </Link>
-            <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
-              Quality pharmaceutical products delivered to your doorstep. Your health, our mission.
+              <div>
+                <p className="text-lg font-semibold text-white">{brand.name}</p>
+              </div>
+            </div>
+            <p className="mt-5 max-w-md text-sm leading-7 text-slate-400">
+              Quality pharmaceutical products delivered with discretion, secure ordering, and dependable support.
             </p>
-            <div className="flex items-center gap-2">
-              <span className="rx-badge bg-orange-500/15 text-orange-400 border border-orange-500/20">
-                <Bitcoin className="h-3 w-3 mr-1" />
-                BTC Accepted
+            <div className="mt-6 flex flex-wrap gap-2">
+              <span className="rx-badge border-teal-500/30 bg-teal-500/10 text-teal-200">
+                <BadgeCheck className="mr-2 h-3.5 w-3.5" />
+                Curated product library
+              </span>
+              <span className="rx-badge border-amber-400/30 bg-amber-400/10 text-amber-100">
+                <Bitcoin className="mr-2 h-3.5 w-3.5" />
+                Crypto payments accepted
               </span>
             </div>
           </div>
 
-          {/* Quick links */}
-          <div>
-            <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-slate-500">Quick Links</p>
-            <ul className="space-y-2.5">
-              {[
-                { href: '/', label: 'Home' },
-                { href: '/products', label: 'Products' },
-                { href: '/orders', label: 'Order Status' },
-                { href: '/faq', label: 'FAQ' },
-              ].map(({ href, label }) => (
-                <li key={href}>
-                  <Link
-                    href={href}
-                    className="text-sm text-slate-400 hover:text-teal-400 transition-colors hover:translate-x-0.5 inline-block"
-                  >
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Company */}
-          <div>
-            <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-slate-500">Company</p>
-            <ul className="space-y-2.5">
-              {[
-                { href: '/about-us', label: 'About Us' },
-                { href: '/contact-us', label: 'Contact Us' },
-                { href: '/testimonials', label: 'Testimonials' },
-                { href: '/our-policy', label: 'Our Policy' },
-                { href: '/terms-conditions', label: 'Terms & Conditions' },
-              ].map(({ href, label }) => (
-                <li key={href}>
-                  <Link
-                    href={href}
-                    className="text-sm text-slate-400 hover:text-teal-400 transition-colors hover:translate-x-0.5 inline-block"
-                  >
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Contact & Payment */}
-          <div>
-            <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-slate-500">Support</p>
-            <div className="space-y-3">
-              <div className="flex items-start gap-2 text-sm text-slate-400">
-                <Mail className="h-4 w-4 text-teal-500 mt-0.5 shrink-0" />
-                <span>Contact us via our support page for assistance.</span>
-              </div>
-              <Link
-                href="/contact-us"
-                className="inline-flex items-center gap-2 rounded-full border border-teal-500/30 bg-teal-500/10 px-4 py-2 text-sm font-medium text-teal-400 hover:bg-teal-500/20 hover:border-teal-400/50 transition-all"
-              >
-                Get in Touch
-              </Link>
+          {footerGroups.map((group) => (
+            <div key={group.title}>
+              <p className="rx-kicker text-slate-500">{group.title}</p>
+              <ul className="mt-4 space-y-3">
+                {group.links.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="inline-flex items-center gap-2 text-sm text-slate-300 transition hover:text-white"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
+          ))}
 
-            <div className="mt-6 space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Payment Methods</p>
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-lg border border-orange-500/20 bg-orange-500/10 px-3 py-1.5 text-xs font-semibold text-orange-400">
-                  <Bitcoin className="h-3.5 w-3.5" />
-                  Bitcoin (BTC)
-                </span>
+          <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+            <p className="rx-kicker text-slate-500">Support desk</p>
+            <div className="mt-4 space-y-4 text-sm text-slate-300">
+              <div className="flex items-start gap-3">
+                <Mail className="mt-0.5 h-4 w-4 text-teal-300" />
+                <div>
+                  <p className="font-medium text-white">{brand.supportEmail}</p>
+                  <p className="mt-1 text-slate-400">Use the contact page for order, product, and account support.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <MapPin className="mt-0.5 h-4 w-4 text-teal-300" />
+                <p className="leading-6 text-slate-400">{brand.supportHours}</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <ShieldCheck className="mt-0.5 h-4 w-4 text-teal-300" />
+                <p className="leading-6 text-slate-400">
+                  Use the support page for order, product, and account questions.
+                </p>
               </div>
             </div>
+            <Link
+              href="/contact-us"
+              className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/15"
+            >
+              Contact support
+              <ArrowUpRight className="h-4 w-4" />
+            </Link>
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="mt-10 border-t border-slate-800 pt-6">
-          <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:justify-between sm:text-left">
-            <p className="text-xs text-slate-500">
-              © {new Date().getFullYear()} PharmaCare. All rights reserved.
+        <div className="border-t border-white/10 px-6 py-4 text-xs text-slate-500 sm:px-8 lg:px-10">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p>
+              © {new Date().getFullYear()} {brand.name}. All rights reserved.
             </p>
-            <div className="flex items-center gap-1.5 text-xs text-slate-600">
-              <Shield className="h-3 w-3 text-teal-600" />
-              Secure & encrypted transactions
-            </div>
+            <p>
+              If you do not receive an automatic support confirmation after reaching out, please try contacting the team
+              again.
+            </p>
           </div>
-          <p className="mt-3 text-xs text-slate-600 text-center max-w-2xl mx-auto">
-            Please note: after contacting us you will receive an automatic confirmation. Our support team will reply ASAP.
-            If you did not receive a confirmation, your message may not have reached us — please try again.
-          </p>
         </div>
       </div>
     </footer>

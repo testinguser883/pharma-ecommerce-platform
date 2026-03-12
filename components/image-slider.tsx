@@ -1,15 +1,15 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useQuery } from 'convex/react'
+import { ChevronLeft, ChevronRight, ShieldCheck, Truck } from 'lucide-react'
 import { api } from '@/convex/_generated/api'
-import { ChevronLeft, ChevronRight, Zap, Shield, Truck } from 'lucide-react'
-import Link from 'next/link'
+import { brand } from '@/lib/brand'
 
-const FEATURE_BADGES = [
-  { icon: Shield, text: 'Quality Assured' },
-  { icon: Truck, text: 'Fast Delivery' },
-  { icon: Zap, text: 'Easy Ordering' },
+const featureBadges = [
+  { icon: ShieldCheck, label: 'Quality checked' },
+  { icon: Truck, label: 'Discreet dispatch' },
 ]
 
 export function ImageSlider() {
@@ -19,132 +19,135 @@ export function ImageSlider() {
   useEffect(() => {
     if (!images || images.length <= 1) return
     const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % images.length)
-    }, 4000)
+      setCurrent((value) => (value + 1) % images.length)
+    }, 4500)
     return () => clearInterval(timer)
   }, [images])
 
-  // Fallback hero when no slider images configured
   if (!images || images.length === 0) {
     return (
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-xl">
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-teal-500/10 blur-3xl" />
-          <div className="absolute -bottom-20 -right-20 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
-          <div
-            className="absolute inset-0 opacity-[0.03]"
-            style={{
-              backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)',
-              backgroundSize: '40px 40px',
-            }}
-          />
-        </div>
-
-        <div className="relative grid items-center gap-6 px-8 py-10 md:grid-cols-[1fr_260px] md:px-12 md:py-14">
+      <section className="rx-card-dark relative overflow-hidden px-6 py-8 sm:px-8 lg:px-10 lg:py-10">
+        <div className="pointer-events-none absolute inset-y-0 right-[-10%] hidden w-[40%] bg-[radial-gradient(circle,rgba(245,158,11,0.18),transparent_55%)] blur-3xl md:block" />
+        <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,1fr)_280px]">
           <div>
-            <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-teal-500/30 bg-teal-500/10 px-3 py-1 text-xs font-semibold text-teal-400">
-              <Zap className="h-3 w-3" />
-              Trusted Pharma Store
-            </div>
-
-            <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-white md:text-5xl">
-              More Convenience.{' '}
-              <span className="bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent">
-                Better Health.
-              </span>
-            </h1>
-            <p className="mt-3 max-w-lg text-base text-slate-400 md:text-lg">
-              Order quality medicines from the comfort of your home. Fast delivery, genuine products.
+            <p className="rx-kicker text-teal-200">Trusted online pharmacy</p>
+            <h2 className="rx-display mt-4 max-w-2xl text-4xl leading-none text-white sm:text-5xl">
+              Order from the comfort of your own home.
+            </h2>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
+              Browse quality medicines, manage your cart, and place orders with secure checkout.
             </p>
-
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link
-                href="/products"
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-500 to-cyan-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-teal-900/30 hover:from-teal-400 hover:to-cyan-400 transition-all"
-              >
-                Browse Products
+              <Link href="/products" className="rx-btn-primary">
+                Browse the catalog
               </Link>
-              <Link
-                href="/about-us"
-                className="inline-flex items-center gap-2 rounded-full border border-slate-600 px-6 py-2.5 text-sm font-semibold text-slate-300 hover:border-slate-500 hover:text-white transition-all"
-              >
-                Learn More
+              <Link href="/about-us" className="rx-btn-ghost">
+                Read the story
               </Link>
             </div>
-
-            <div className="mt-6 flex flex-wrap gap-3">
-              {FEATURE_BADGES.map(({ icon: Icon, text }) => (
-                <div
-                  key={text}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-800/60 px-3 py-1 text-xs font-medium text-slate-400"
-                >
-                  <Icon className="h-3 w-3 text-teal-500" />
-                  {text}
-                </div>
+            <div className="mt-6 flex flex-wrap gap-2">
+              {featureBadges.map(({ icon: Icon, label }) => (
+                <span key={label} className="rx-badge border-white/10 bg-white/5 text-slate-200">
+                  <Icon className="mr-2 h-3.5 w-3.5" />
+                  {label}
+                </span>
               ))}
             </div>
           </div>
-
-          <div className="mx-auto max-w-[220px] md:max-w-[240px]">
-            <img src="/doctor-hero.svg" alt="Professional doctor" className="w-full drop-shadow-2xl" />
+          <div className="mx-auto max-w-[240px]">
+            <img src="/doctor-hero.svg" alt="Doctor illustration" className="rx-floating w-full drop-shadow-2xl" />
           </div>
         </div>
       </section>
     )
   }
 
-  const prev = () => setCurrent((c) => (c - 1 + images.length) % images.length)
-  const next = () => setCurrent((c) => (c + 1) % images.length)
+  const currentImage = images[current]
+  const prev = () => setCurrent((value) => (value - 1 + images.length) % images.length)
+  const next = () => setCurrent((value) => (value + 1) % images.length)
 
   return (
-    <section className="relative overflow-hidden rounded-2xl shadow-xl">
-      <div className="relative aspect-[16/6] w-full bg-slate-900">
-        {images.map((img, i) => (
+    <section className="relative overflow-hidden rounded-[34px] border border-white/10 bg-slate-950 shadow-[0_28px_80px_-45px_rgba(15,23,42,1)]">
+      <div className="relative min-h-[420px]">
+        {images.map((image, index) => (
           <img
-            key={img._id}
-            src={img.url}
-            alt={img.altText ?? `Slide ${i + 1}`}
-            title={img.titleText ?? img.altText ?? `Slide ${i + 1}`}
-            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${i === current ? 'opacity-100' : 'opacity-0'}`}
+            key={image._id}
+            src={image.url}
+            alt={image.altText ?? `Slide ${index + 1}`}
+            title={image.titleText ?? image.altText ?? `Slide ${index + 1}`}
+            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${
+              index === current ? 'opacity-100' : 'opacity-0'
+            }`}
           />
         ))}
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.9),rgba(2,6,23,0.45),rgba(2,6,23,0.75))]" />
 
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/30 to-transparent" />
+        <div className="relative flex min-h-[420px] flex-col justify-between p-6 sm:p-8">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-wrap gap-2">
+              {featureBadges.map(({ icon: Icon, label }) => (
+                <span key={label} className="rx-badge border-white/10 bg-white/10 text-white">
+                  <Icon className="mr-2 h-3.5 w-3.5" />
+                  {label}
+                </span>
+              ))}
+            </div>
+            {images.length > 1 ? (
+              <div className="hidden items-center gap-2 sm:flex">
+                <button
+                  type="button"
+                  onClick={prev}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/20 text-white transition hover:bg-black/35"
+                  aria-label="Previous slide"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={next}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/20 text-white transition hover:bg-black/35"
+                  aria-label="Next slide"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              </div>
+            ) : null}
+          </div>
 
-        {images.length > 1 && (
-          <>
-            <button
-              type="button"
-              onClick={prev}
-              aria-label="Previous slide"
-              className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-black/60 transition-all border border-white/10"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <button
-              type="button"
-              onClick={next}
-              aria-label="Next slide"
-              className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-black/60 transition-all border border-white/10"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          </>
-        )}
+          <div className="max-w-xl">
+            <p className="rx-kicker text-teal-200">{brand.name}</p>
+            <h2 className="rx-display mt-4 text-4xl leading-none text-white sm:text-5xl">
+              {currentImage.titleText?.trim() || 'Quality medicines delivered with care.'}
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-slate-300 sm:text-base">
+              {currentImage.altText?.trim() || 'Browse products, manage your cart, and place your order with ease.'}
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link href="/products" className="rx-btn-primary">
+                Shop now
+              </Link>
+              <Link href="/contact-us" className="rx-btn-ghost">
+                Contact support
+              </Link>
+            </div>
+          </div>
+        </div>
 
-        {images.length > 1 && (
-          <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
-            {images.map((_, i) => (
+        {images.length > 1 ? (
+          <div className="absolute bottom-6 left-6 flex gap-2 sm:left-8">
+            {images.map((_, index) => (
               <button
-                key={i}
+                key={index}
                 type="button"
-                onClick={() => setCurrent(i)}
-                aria-label={`Go to slide ${i + 1}`}
-                className={`h-1.5 rounded-full transition-all duration-300 ${i === current ? 'w-6 bg-teal-400' : 'w-1.5 bg-white/40 hover:bg-white/60'}`}
+                onClick={() => setCurrent(index)}
+                className={`h-2 rounded-full transition-all ${
+                  index === current ? 'w-8 bg-white' : 'w-2 bg-white/40 hover:bg-white/70'
+                }`}
+                aria-label={`Go to slide ${index + 1}`}
               />
             ))}
           </div>
-        )}
+        ) : null}
       </div>
     </section>
   )

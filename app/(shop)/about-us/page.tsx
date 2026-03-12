@@ -1,41 +1,70 @@
+import { ContentPageShell, ContentSection, InfoTile } from '@/components/content-page-shell'
+import { brand } from '@/lib/brand'
+
 export default function AboutUsPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 lg:px-6">
-      <h1 className="mb-6 text-2xl font-bold text-slate-800">About Us</h1>
+    <ContentPageShell
+      eyebrow="About the store"
+      title={`About ${brand.name}`}
+      description="Learn more about our mission, our standards, and what customers can expect when ordering from us."
+      stats={[
+        { label: 'Support', value: 'Direct' },
+        { label: 'Payment', value: 'BTC' },
+        { label: 'Shipping', value: 'Worldwide' },
+      ]}
+      aside={
+        <InfoTile
+          title="Need support?"
+          body="Use the contact page if you have questions about products, orders, or delivery."
+        />
+      }
+    >
+      <div className="space-y-6">
+        <ContentSection
+          title="Who we are"
+          description="Our goal is to provide quality pharmaceutical products with reliable service."
+        >
+          <div className="space-y-4 text-sm leading-7 text-slate-600">
+            <p>
+              {brand.name} is a trusted source for pharmaceutical products delivered with discretion, speed, and care.
+            </p>
+            <p>We focus on dependable ordering, clear product information, and responsive support for our customers.</p>
+          </div>
+        </ContentSection>
 
-      <div className="space-y-5 text-slate-600">
-        <p>
-          Welcome to pharma-ecommerce-platform-5an9.vercel.app — your trusted source for pharmaceutical products
-          delivered with discretion, speed, and care.
-        </p>
+        <ContentSection
+          title="Our mission"
+          description="We aim to make access to healthcare products simpler and more dependable."
+        >
+          <p className="text-sm leading-7 text-slate-600">
+            Our mission is to provide safe, reliable, and affordable pharmaceutical products through a secure and
+            easy-to-use online platform.
+          </p>
+        </ContentSection>
 
-        <p>
-          We are committed to providing our customers with access to high-quality medications at competitive prices. Our
-          team of pharmacy professionals ensures that every product listed on our platform meets the highest standards
-          of safety and efficacy.
-        </p>
-
-        <p>
-          Since our founding, we have served thousands of satisfied customers around the world. We understand that
-          access to healthcare is a fundamental need, and we work hard every day to make that access simpler and more
-          affordable.
-        </p>
-
-        <h2 className="mt-6 text-lg font-semibold text-slate-700">Our Mission</h2>
-        <p>
-          Our mission is to provide safe, reliable, and affordable pharmaceutical products to customers worldwide
-          through a secure and easy-to-use online platform.
-        </p>
-
-        <h2 className="mt-6 text-lg font-semibold text-slate-700">Why Choose Us?</h2>
-        <ul className="list-disc pl-5 space-y-2">
-          <li>Wide selection of pharmaceutical products</li>
-          <li>Secure Bitcoin payment processing</li>
-          <li>Discreet and reliable shipping worldwide</li>
-          <li>Dedicated customer support team</li>
-          <li>Strict quality control and product verification</li>
-        </ul>
+        <ContentSection title="Why choose us?" description="What customers can expect when ordering from us.">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="rounded-[24px] border border-slate-200/80 bg-slate-50/80 p-5">
+              <h3 className="text-lg font-semibold text-slate-950">Wide product selection</h3>
+              <p className="mt-3 text-sm leading-7 text-slate-600">
+                Browse a broad catalog of pharmaceutical products.
+              </p>
+            </div>
+            <div className="rounded-[24px] border border-slate-200/80 bg-slate-50/80 p-5">
+              <h3 className="text-lg font-semibold text-slate-950">Secure payment</h3>
+              <p className="mt-3 text-sm leading-7 text-slate-600">
+                Orders are processed through secure Bitcoin payment.
+              </p>
+            </div>
+            <div className="rounded-[24px] border border-slate-200/80 bg-slate-50/80 p-5">
+              <h3 className="text-lg font-semibold text-slate-950">Reliable delivery</h3>
+              <p className="mt-3 text-sm leading-7 text-slate-600">
+                We focus on discreet shipping and dependable support.
+              </p>
+            </div>
+          </div>
+        </ContentSection>
       </div>
-    </div>
+    </ContentPageShell>
   )
 }

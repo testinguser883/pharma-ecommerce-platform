@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useQuery } from 'convex/react'
+import { ArrowUpRight, Sparkles } from 'lucide-react'
 import { api } from '@/convex/_generated/api'
 import { formatPrice } from '@/lib/utils'
 
@@ -17,27 +18,24 @@ function normalizeTrackingWebsite(url: string) {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  pending_payment: { label: 'Pending Payment', color: 'bg-yellow-100 text-yellow-800' },
+  pending_payment: { label: 'Pending payment', color: 'bg-amber-50 text-amber-700' },
   pending: { label: 'Pending', color: 'bg-slate-100 text-slate-700' },
-  paid: { label: 'Paid', color: 'bg-blue-100 text-blue-800' },
-  processing: { label: 'Processing', color: 'bg-orange-100 text-orange-800' },
-  shipped: { label: 'Shipped', color: 'bg-purple-100 text-purple-700' },
-  delivered: { label: 'Delivered', color: 'bg-green-100 text-green-800' },
-  cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-700' },
+  paid: { label: 'Paid', color: 'bg-sky-50 text-sky-700' },
+  processing: { label: 'Processing', color: 'bg-orange-50 text-orange-700' },
+  shipped: { label: 'Shipped', color: 'bg-violet-50 text-violet-700' },
+  delivered: { label: 'Delivered', color: 'bg-emerald-50 text-emerald-700' },
+  cancelled: { label: 'Cancelled', color: 'bg-red-50 text-red-600' },
 }
 
 const STATUS_STEPS = ['pending_payment', 'paid', 'processing', 'shipped', 'delivered']
 
 function OrderStatusTracker({ status }: { status: string }) {
   if (status === 'cancelled') {
-    return (
-      <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-center text-sm font-semibold text-red-600">
-        Order Cancelled
-      </div>
-    )
+    return <div className="rounded-full bg-red-50 px-4 py-2 text-sm font-semibold text-red-600">Order cancelled</div>
   }
 
-  const currentIdx = STATUS_STEPS.indexOf(status)
+  const normalizedStatus = status === 'pending' ? 'pending_payment' : status
+  const currentIndex = STATUS_STEPS.indexOf(normalizedStatus)
   const labels: Record<string, string> = {
     pending_payment: 'Payment',
     paid: 'Paid',
@@ -47,42 +45,20 @@ function OrderStatusTracker({ status }: { status: string }) {
   }
 
   return (
-    <div className="mt-4 flex items-center">
-      {STATUS_STEPS.map((step, i) => {
-        const done = currentIdx >= i
-        const active = currentIdx === i
+    <div className="grid gap-3 sm:grid-cols-5">
+      {STATUS_STEPS.map((step, index) => {
+        const done = currentIndex >= index
+        const active = currentIndex === index
         return (
-          <div key={step} className="flex flex-1 flex-col items-center">
-            <div className="relative flex w-full items-center">
-              {i > 0 && (
-                <div className={`h-0.5 flex-1 transition-colors ${done ? 'bg-teal-500' : 'bg-slate-200'}`} />
-              )}
-              <div
-                className={`h-5 w-5 shrink-0 rounded-full transition-all ${
-                  active
-                    ? 'border-2 border-teal-500 bg-teal-500 ring-4 ring-teal-100'
-                    : done
-                      ? 'border-2 border-teal-500 bg-teal-500'
-                      : 'border-2 border-slate-200 bg-white'
-                }`}
-              >
-                {done && !active && (
-                  <svg className="h-full w-full p-0.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                    <path d="M20 6 9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
-              </div>
-              {i < STATUS_STEPS.length - 1 && (
-                <div className={`h-0.5 flex-1 transition-colors ${done && currentIdx > i ? 'bg-teal-500' : 'bg-slate-200'}`} />
-              )}
-            </div>
-            <span
-              className={`mt-1.5 text-center text-[10px] font-semibold ${
-                active ? 'text-teal-700' : done ? 'text-teal-500' : 'text-slate-400'
+          <div key={step} className="rounded-[22px] border border-slate-200/80 bg-slate-50/80 px-4 py-4">
+            <div
+              className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold ${
+                active ? 'bg-slate-950 text-white' : done ? 'bg-teal-600 text-white' : 'bg-white text-slate-400'
               }`}
             >
-              {labels[step]}
-            </span>
+              {index + 1}
+            </div>
+            <p className={`mt-3 text-sm font-semibold ${done ? 'text-slate-950' : 'text-slate-400'}`}>{labels[step]}</p>
           </div>
         )
       })}
@@ -94,119 +70,137 @@ export function OrdersPageContent() {
   const orders = useQuery(api.orders.listMyOrders)
 
   return (
-    <div className="mx-auto max-w-4xl space-y-4 px-4 py-6 lg:px-6">
-      <div>
-        <h1 className="text-2xl font-extrabold text-slate-900">My Orders</h1>
-        <p className="mt-0.5 text-sm text-slate-400">Track and manage your order history.</p>
-      </div>
+    <div className="mx-auto max-w-7xl px-4 py-6 lg:px-6 lg:py-8">
+      <section className="rx-card-dark overflow-hidden px-6 py-8 sm:px-8 lg:px-10">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_220px]">
+          <div>
+            <p className="rx-kicker text-teal-200">Order center</p>
+            <h1 className="rx-display mt-4 text-5xl leading-none text-white sm:text-6xl">My orders</h1>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
+              Track your order status, payment progress, and delivery updates.
+            </p>
+          </div>
+          <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+            <p className="rx-kicker text-teal-200">History</p>
+            <p className="mt-4 text-4xl font-semibold text-white">{orders?.length ?? '...'}</p>
+            <p className="mt-1 text-xs uppercase tracking-[0.24em] text-slate-400">Orders found</p>
+          </div>
+        </div>
+      </section>
 
-      {orders === undefined ? (
-        <div className="flex items-center gap-2 text-sm text-slate-400">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
-          Loading orders...
-        </div>
-      ) : orders.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center">
-          <p className="text-slate-500">No orders yet.</p>
-          <Link href="/products" className="rx-btn-primary mt-4">
-            Browse products
-          </Link>
-        </div>
-      ) : (
-        <ul className="space-y-4">
-          {orders.map((order) => {
-            const statusCfg = STATUS_CONFIG[order.status] ?? {
+      <div className="mt-8 space-y-5">
+        {orders === undefined ? (
+          <div className="rx-card px-6 py-6 text-sm text-slate-500">Loading orders...</div>
+        ) : orders.length === 0 ? (
+          <div className="rx-card p-10 text-center">
+            <p className="rx-kicker text-teal-700">No history yet</p>
+            <h2 className="rx-display mt-3 text-4xl text-slate-950">No orders found.</h2>
+            <p className="mt-3 text-sm leading-7 text-slate-600">
+              Start with the catalog and your first order will appear here.
+            </p>
+            <Link href="/products" className="rx-btn-primary mt-6">
+              Browse products
+            </Link>
+          </div>
+        ) : (
+          orders.map((order) => {
+            const statusConfig = STATUS_CONFIG[order.status] ?? {
               label: order.status,
               color: 'bg-slate-100 text-slate-700',
             }
             return (
-              <li key={order._id} className="rx-card overflow-hidden">
-                {/* Order header */}
-                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/50 px-5 py-3">
-                  <div>
-                    <p className="text-sm font-bold text-slate-900">
-                      Order #{order._id.slice(-8).toUpperCase()}
-                    </p>
-                    <p className="text-xs text-slate-400">{formatDate(order.createdAt)}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {order.paymentMethod === 'crypto' && (
-                      <span className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-xs font-semibold text-violet-700">
-                        Crypto
+              <article key={order._id} className="rx-card overflow-hidden">
+                <div className="rx-gradient-hero px-6 py-5 text-white">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="rx-kicker text-teal-200">Order #{order._id.slice(-8).toUpperCase()}</p>
+                      <p className="mt-2 text-sm text-slate-300">{formatDate(order.createdAt)}</p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {order.paymentMethod === 'crypto' ? (
+                        <span className="rx-badge border-white/10 bg-white/10 text-white">Crypto</span>
+                      ) : null}
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] ${statusConfig.color}`}
+                      >
+                        {statusConfig.label}
                       </span>
-                    )}
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusCfg.color}`}>
-                      {statusCfg.label}
-                    </span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="p-5">
-                  {/* Status tracker */}
+                <div className="space-y-6 p-6">
                   <OrderStatusTracker status={order.status} />
 
-                  {/* Items */}
-                  <ul className="mt-5 divide-y divide-slate-100">
-                    {order.items.map((item) => (
-                      <li key={item.productId} className="flex items-center justify-between py-2 text-sm">
-                        <span className="text-slate-600">
-                          {item.name}{' '}
-                          <span className="font-semibold text-slate-800">× {item.quantity}</span>
-                        </span>
-                        <span className="font-semibold text-slate-900">{formatPrice(item.lineTotal)}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  {/* Delivery address */}
-                  {order.billingAddress && (
-                    <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5 text-xs text-slate-500">
-                      <span className="font-semibold text-slate-700">Deliver to: </span>
-                      {order.shippingAddress &&
-                      'sameAsBilling' in order.shippingAddress &&
-                      !order.shippingAddress.sameAsBilling
-                        ? `${(order.shippingAddress as { firstName: string }).firstName} ${(order.shippingAddress as { lastName: string }).lastName}, ${(order.shippingAddress as { city: string }).city}, ${(order.shippingAddress as { country: string }).country}`
-                        : `${order.billingAddress.firstName} ${order.billingAddress.lastName}, ${order.billingAddress.city}, ${order.billingAddress.country}`}
+                  <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
+                    <div className="space-y-3">
+                      {order.items.map((item, index) => (
+                        <div
+                          key={`${item.productId}-${item.dosage ?? ''}-${item.pillCount ?? ''}-${index}`}
+                          className="rounded-[24px] border border-slate-200/80 bg-slate-50/80 px-4 py-4"
+                        >
+                          <div className="flex items-center justify-between gap-4">
+                            <div>
+                              <p className="text-sm font-semibold text-slate-950">{item.name}</p>
+                              <p className="mt-1 text-xs uppercase tracking-[0.22em] text-slate-500">
+                                Quantity {item.quantity}
+                              </p>
+                            </div>
+                            <p className="text-sm font-semibold text-slate-950">{formatPrice(item.lineTotal)}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  )}
 
-                  {/* Tracking */}
-                  {(order.trackingWebsite || order.trackingNumber) && (
-                    <div className="mt-3 rounded-xl border border-teal-100 bg-teal-50 px-4 py-3 text-sm">
-                      <p className="font-semibold text-teal-800">Tracking Details</p>
-                      {order.trackingWebsite && (
-                        <p className="mt-1 text-slate-600">
-                          Website:{' '}
-                          <a
-                            href={normalizeTrackingWebsite(order.trackingWebsite)}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="font-medium text-teal-700 underline underline-offset-2 hover:text-teal-600"
-                          >
-                            {order.trackingWebsite}
-                          </a>
+                    <div className="space-y-3">
+                      <div className="rounded-[24px] border border-slate-200/80 bg-white p-4">
+                        <p className="rx-kicker text-teal-700">Shipping</p>
+                        <p className="mt-3 text-sm leading-7 text-slate-600">
+                          {order.billingAddress
+                            ? order.shippingAddress &&
+                              'sameAsBilling' in order.shippingAddress &&
+                              !order.shippingAddress.sameAsBilling
+                              ? `${(order.shippingAddress as { firstName: string }).firstName} ${(order.shippingAddress as { lastName: string }).lastName}, ${(order.shippingAddress as { city: string }).city}, ${(order.shippingAddress as { country: string }).country}`
+                              : `${order.billingAddress.firstName} ${order.billingAddress.lastName}, ${order.billingAddress.city}, ${order.billingAddress.country}`
+                            : 'Shipping address not available.'}
                         </p>
-                      )}
-                      {order.trackingNumber && (
-                        <p className="mt-1 text-slate-600">
-                          Tracking #:{' '}
-                          <span className="font-semibold text-slate-800">{order.trackingNumber}</span>
-                        </p>
-                      )}
+                      </div>
+
+                      {order.trackingWebsite || order.trackingNumber ? (
+                        <div className="rounded-[24px] border border-teal-200 bg-teal-50/70 p-4">
+                          <div className="flex items-center gap-2 text-sm font-semibold text-teal-800">
+                            <Sparkles className="h-4 w-4" />
+                            Tracking details
+                          </div>
+                          {order.trackingWebsite ? (
+                            <a
+                              href={normalizeTrackingWebsite(order.trackingWebsite)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-teal-800"
+                            >
+                              Open tracking site
+                              <ArrowUpRight className="h-4 w-4" />
+                            </a>
+                          ) : null}
+                          {order.trackingNumber ? (
+                            <p className="mt-3 text-sm text-slate-700">Tracking #: {order.trackingNumber}</p>
+                          ) : null}
+                        </div>
+                      ) : null}
                     </div>
-                  )}
+                  </div>
 
-                  {/* Total */}
-                  <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
+                  <div className="flex items-center justify-between border-t border-slate-200 pt-4">
                     <span className="text-sm text-slate-500">Order total</span>
-                    <span className="text-lg font-extrabold text-slate-900">{formatPrice(order.total)}</span>
+                    <span className="text-2xl font-semibold text-slate-950">{formatPrice(order.total)}</span>
                   </div>
                 </div>
-              </li>
+              </article>
             )
-          })}
-        </ul>
-      )}
+          })
+        )}
+      </div>
     </div>
   )
 }

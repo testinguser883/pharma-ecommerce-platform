@@ -3,18 +3,37 @@ import { RegisterForm } from '@/components/register-form'
 
 export default function RegisterPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-4 py-12">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-32 top-1/4 h-64 w-64 rounded-full bg-teal-500/10 blur-3xl" />
-        <div className="absolute -right-32 bottom-1/4 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl" />
-      </div>
-      <div className="relative w-full max-w-md space-y-4">
-        <div className="text-center">
-          <Link href="/" className="text-sm font-medium text-slate-400 hover:text-teal-400 transition-colors">
-            ← Back to store
+    <div className="relative min-h-screen overflow-hidden px-4 py-10 lg:px-6">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(15,118,110,0.18),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.14),transparent_24%)]" />
+      <div className="relative mx-auto grid min-h-[calc(100vh-5rem)] max-w-7xl items-center gap-6 lg:grid-cols-[1fr_460px]">
+        <div className="rx-card-dark overflow-hidden px-6 py-8 sm:px-8 lg:px-10">
+          <p className="rx-kicker text-teal-200">Authentication</p>
+          <h1 className="rx-display mt-4 max-w-3xl text-5xl leading-none text-white sm:text-6xl">Create an account</h1>
+          <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
+            Create an account to save your cart and track your orders.
+          </p>
+          <div className="mt-8 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-[22px] border border-white/10 bg-white/5 px-4 py-4">
+              <p className="text-2xl font-semibold text-white">Fast</p>
+              <p className="mt-1 text-xs uppercase tracking-[0.24em] text-slate-400">Account creation</p>
+            </div>
+            <div className="rounded-[22px] border border-white/10 bg-white/5 px-4 py-4">
+              <p className="text-2xl font-semibold text-white">Saved</p>
+              <p className="mt-1 text-xs uppercase tracking-[0.24em] text-slate-400">Cart state</p>
+            </div>
+            <div className="rounded-[22px] border border-white/10 bg-white/5 px-4 py-4">
+              <p className="text-2xl font-semibold text-white">Tracked</p>
+              <p className="mt-1 text-xs uppercase tracking-[0.24em] text-slate-400">Order progress</p>
+            </div>
+          </div>
+          <Link href="/" className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-teal-200">
+            Back to store
           </Link>
         </div>
-        <RegisterForm />
+
+        <div className="relative">
+          <RegisterForm />
+        </div>
       </div>
     </div>
   )
