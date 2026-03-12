@@ -3,13 +3,15 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { ArrowLeft, Check, ShoppingBag, Sparkles } from 'lucide-react'
+import { ArrowLeft, Minus, Plus, ShoppingBag, Sparkles } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { api } from '@/convex/_generated/api'
+import type { Id } from '@/convex/_generated/dataModel'
 import { authClient } from '@/lib/auth-client'
 import { formatPrice } from '@/lib/utils'
 
 type PackageRowProps = {
+  productId: Id<'products'>
   dosage: string
   pillCount: number
   originalPrice: number
@@ -18,12 +20,68 @@ type PackageRowProps = {
   expiryDate?: string
   unit: string
   inStock: boolean
+  quantity: number
+  pending: boolean
   onAddToCart: (dosage: string, pillCount: number, price: number) => void
-  adding: boolean
-  justAdded: boolean
+  onSetQuantity: (args: { productId: Id<'products'>; dosage?: string; pillCount?: number; quantity: number }) => void
+}
+
+function ProductCartControl({
+  quantity,
+  pending,
+  inStock,
+  onAdd,
+  onDecrease,
+  onIncrease,
+}: {
+  quantity: number
+  pending: boolean
+  inStock: boolean
+  onAdd: () => void
+  onDecrease: () => void
+  onIncrease: () => void
+}) {
+  if (quantity > 0) {
+    return (
+      <div className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2 shadow-sm">
+        <button
+          type="button"
+          disabled={pending}
+          onClick={onDecrease}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-500 transition hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-50"
+          aria-label="Decrease quantity"
+        >
+          <Minus className="h-4 w-4" />
+        </button>
+        <span className="min-w-10 text-center text-sm font-semibold text-slate-950">{quantity}</span>
+        <button
+          type="button"
+          disabled={pending || !inStock || quantity >= 99}
+          onClick={onIncrease}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-500 transition hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-50"
+          aria-label="Increase quantity"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      disabled={pending || !inStock}
+      onClick={onAdd}
+      className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      <ShoppingBag className="h-4 w-4" />
+      {pending ? 'Adding...' : 'Add to cart'}
+    </button>
+  )
 }
 
 function PackageRow({
+  productId,
   dosage,
   pillCount,
   originalPrice,
@@ -32,9 +90,10 @@ function PackageRow({
   expiryDate,
   unit,
   inStock,
+  quantity,
+  pending,
   onAddToCart,
-  adding,
-  justAdded,
+  onSetQuantity,
 }: PackageRowProps) {
   const perUnit = price / pillCount
   const savings = originalPrice - price
@@ -88,30 +147,14 @@ function PackageRow({
               : null}
           </div>
 
-          <button
-            type="button"
-            disabled={adding || !inStock}
-            onClick={() => onAddToCart(dosage, pillCount, price)}
-            className={`inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition ${
-              justAdded
-                ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
-                : 'bg-slate-950 text-white hover:bg-teal-700'
-            } disabled:cursor-not-allowed disabled:opacity-60`}
-          >
-            {justAdded ? (
-              <>
-                <Check className="h-4 w-4" />
-                Added
-              </>
-            ) : adding ? (
-              'Adding...'
-            ) : (
-              <>
-                <ShoppingBag className="h-4 w-4" />
-                Add to cart
-              </>
-            )}
-          </button>
+          <ProductCartControl
+            quantity={quantity}
+            pending={pending}
+            inStock={inStock}
+            onAdd={() => onAddToCart(dosage, pillCount, price)}
+            onDecrease={() => onSetQuantity({ productId, dosage, pillCount, quantity: quantity - 1 })}
+            onIncrease={() => onSetQuantity({ productId, dosage, pillCount, quantity: quantity + 1 })}
+          />
         </div>
       </div>
     </div>
@@ -122,12 +165,13 @@ export function ProductDetailContent({ productId }: { productId: string }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { data: session } = authClient.useSession()
+  const cart = useQuery(api.cart.getMyCart)
   const addItem = useMutation(api.cart.addItem)
+  const updateItemQuantity = useMutation(api.cart.updateItemQuantity)
   const product = useQuery(api.products.getBySlugOrId, productId ? { identifier: productId } : 'skip')
 
   const [selectedDosage, setSelectedDosage] = useState<string | null>(null)
-  const [addingKey, setAddingKey] = useState<string | null>(null)
-  const [justAddedKey, setJustAddedKey] = useState<string | null>(null)
+  const [pendingKey, setPendingKey] = useState<string | null>(null)
 
   const dosages = product?.pricingMatrix?.map((entry) => entry.dosage) ?? product?.dosageOptions ?? []
   const hasPricingMatrix = !!(product?.pricingMatrix && product.pricingMatrix.length > 0)
@@ -153,13 +197,40 @@ export function ProductDetailContent({ productId }: { productId: string }) {
     }
     const key = dosage ? `${dosage}-${pillCount ?? ''}` : 'simple'
     try {
-      setAddingKey(key)
+      setPendingKey(key)
       await addItem({ productId: product._id, quantity: 1, dosage, pillCount, unitPrice })
-      setJustAddedKey(key)
-      setTimeout(() => setJustAddedKey(null), 2000)
-      if (!dosage) router.push('/cart')
     } finally {
-      setAddingKey(null)
+      setPendingKey(null)
+    }
+  }
+
+  const handleSetQuantity = async ({
+    productId,
+    dosage,
+    pillCount,
+    quantity,
+  }: {
+    productId: Id<'products'>
+    dosage?: string
+    pillCount?: number
+    quantity: number
+  }) => {
+    if (!session?.user) {
+      router.push(`/auth/login?next=/${product?.slug ?? product?._id ?? productId}`)
+      return
+    }
+
+    const key = dosage ? `${dosage}-${pillCount ?? ''}` : 'simple'
+    try {
+      setPendingKey(key)
+      await updateItemQuantity({
+        productId,
+        quantity,
+        dosage,
+        pillCount,
+      })
+    } finally {
+      setPendingKey(null)
     }
   }
 
@@ -193,6 +264,9 @@ export function ProductDetailContent({ productId }: { productId: string }) {
 
   const selectedDosageData = product.pricingMatrix?.find((entry) => entry.dosage === selectedDosage)
   const basePrice = product.price * (1 - product.discount / 100)
+  const getCartQuantity = (dosage?: string, pillCount?: number) =>
+    cart?.items.find((item) => item.productId === product._id && item.dosage === dosage && item.pillCount === pillCount)
+      ?.quantity ?? 0
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 lg:px-6 lg:py-8">
@@ -273,15 +347,24 @@ export function ProductDetailContent({ productId }: { productId: string }) {
                     </p>
                     <p className="mt-1 text-xs uppercase tracking-[0.22em] text-slate-500">Per {product.unit}</p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => void handleAddToCart(undefined, undefined, basePrice)}
-                    disabled={addingKey !== null || !product.inStock}
-                    className="rx-btn-primary"
-                  >
-                    <ShoppingBag className="h-4 w-4" />
-                    {addingKey !== null ? 'Adding...' : 'Add to cart'}
-                  </button>
+                  <ProductCartControl
+                    quantity={getCartQuantity(undefined, undefined)}
+                    pending={pendingKey === 'simple'}
+                    inStock={product.inStock}
+                    onAdd={() => void handleAddToCart(undefined, undefined, basePrice)}
+                    onDecrease={() =>
+                      void handleSetQuantity({
+                        productId: product._id,
+                        quantity: getCartQuantity(undefined, undefined) - 1,
+                      })
+                    }
+                    onIncrease={() =>
+                      void handleSetQuantity({
+                        productId: product._id,
+                        quantity: getCartQuantity(undefined, undefined) + 1,
+                      })
+                    }
+                  />
                 </div>
               </div>
             ) : (
@@ -336,6 +419,7 @@ export function ProductDetailContent({ productId }: { productId: string }) {
                   return (
                     <PackageRow
                       key={key}
+                      productId={product._id}
                       dosage={selectedDosage!}
                       pillCount={pkg.pillCount}
                       originalPrice={pkg.originalPrice}
@@ -344,9 +428,12 @@ export function ProductDetailContent({ productId }: { productId: string }) {
                       expiryDate={pkg.expiryDate}
                       unit={product.unit}
                       inStock={product.inStock}
+                      quantity={getCartQuantity(selectedDosage!, pkg.pillCount)}
+                      pending={pendingKey === key}
                       onAddToCart={(dosage, pillCount, price) => void handleAddToCart(dosage, pillCount, price)}
-                      adding={addingKey === key}
-                      justAdded={justAddedKey === key}
+                      onSetQuantity={({ productId, dosage, pillCount, quantity }) =>
+                        void handleSetQuantity({ productId, dosage, pillCount, quantity })
+                      }
                     />
                   )
                 })
@@ -360,15 +447,26 @@ export function ProductDetailContent({ productId }: { productId: string }) {
                         Dosage: <span className="font-semibold text-slate-900">{selectedDosage}</span>
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => void handleAddToCart(selectedDosage ?? undefined, undefined, basePrice)}
-                      disabled={addingKey !== null || !product.inStock}
-                      className="rx-btn-primary"
-                    >
-                      <ShoppingBag className="h-4 w-4" />
-                      {addingKey !== null ? 'Adding...' : 'Add to cart'}
-                    </button>
+                    <ProductCartControl
+                      quantity={getCartQuantity(selectedDosage ?? undefined, undefined)}
+                      pending={pendingKey === `${selectedDosage ?? 'simple'}-`}
+                      inStock={product.inStock}
+                      onAdd={() => void handleAddToCart(selectedDosage ?? undefined, undefined, basePrice)}
+                      onDecrease={() =>
+                        void handleSetQuantity({
+                          productId: product._id,
+                          dosage: selectedDosage ?? undefined,
+                          quantity: getCartQuantity(selectedDosage ?? undefined, undefined) - 1,
+                        })
+                      }
+                      onIncrease={() =>
+                        void handleSetQuantity({
+                          productId: product._id,
+                          dosage: selectedDosage ?? undefined,
+                          quantity: getCartQuantity(selectedDosage ?? undefined, undefined) + 1,
+                        })
+                      }
+                    />
                   </div>
                 </div>
               )}
