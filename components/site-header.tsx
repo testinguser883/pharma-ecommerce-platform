@@ -12,10 +12,10 @@ import { cn } from '@/lib/utils'
 import { brand } from '@/lib/brand'
 
 const primaryLinks = [
+  { href: '/', label: 'Home' },
   { href: '/products', label: 'Products' },
-  { href: '/about-us', label: 'About' },
-  { href: '/faq', label: 'FAQ' },
-  { href: '/contact-us', label: 'Support' },
+  { href: '/orders', label: 'Orders' },
+  { href: '/account', label: 'Account' },
 ]
 
 export function SiteHeader() {
@@ -87,7 +87,7 @@ export function SiteHeader() {
                     hasSearchInteraction.current = true
                     setSearchInput(event.target.value)
                   }}
-                  placeholder="Search by product or generic name"
+                  placeholder="Search medicines..."
                   className="rx-input h-12 rounded-full border-white bg-white/80 pl-11 pr-4 shadow-inner"
                 />
               </div>
@@ -103,22 +103,6 @@ export function SiteHeader() {
                   {label}
                 </Link>
               ))}
-              {session?.user ? (
-                <>
-                  <Link
-                    href="/orders"
-                    className="rounded-full px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-950 hover:text-white"
-                  >
-                    Orders
-                  </Link>
-                  <Link
-                    href="/account"
-                    className="rounded-full px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-950 hover:text-white"
-                  >
-                    Account
-                  </Link>
-                </>
-              ) : null}
               {isAdmin ? (
                 <Link
                   href="/admin"
@@ -165,10 +149,10 @@ export function SiteHeader() {
               ) : (
                 <div className="hidden items-center gap-2 sm:flex">
                   <Link href="/auth/login" className="rx-btn-secondary py-2.5">
-                    Sign in
+                    Login
                   </Link>
                   <Link href="/auth/register" className="rx-btn-primary py-2.5">
-                    Create account
+                    Register
                   </Link>
                 </div>
               )}
@@ -196,7 +180,7 @@ export function SiteHeader() {
                       hasSearchInteraction.current = true
                       setSearchInput(event.target.value)
                     }}
-                    placeholder="Search products"
+                    placeholder="Search medicines..."
                     className="rx-input rounded-full pl-11"
                   />
                 </div>
@@ -213,31 +197,13 @@ export function SiteHeader() {
                     {label}
                   </Link>
                 ))}
-                {session?.user ? (
-                  <>
-                    <Link
-                      href="/orders"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="rounded-[20px] border border-slate-200/80 bg-white/80 px-4 py-3 text-sm font-medium text-slate-900"
-                    >
-                      Orders
-                    </Link>
-                    <Link
-                      href="/account"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="rounded-[20px] border border-slate-200/80 bg-white/80 px-4 py-3 text-sm font-medium text-slate-900"
-                    >
-                      Account
-                    </Link>
-                  </>
-                ) : null}
                 {isAdmin ? (
                   <Link
                     href="/admin"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="rounded-[20px] border border-teal-200 bg-teal-50 px-4 py-3 text-sm font-semibold text-teal-700"
                   >
-                    Admin panel
+                    Admin Panel
                   </Link>
                 ) : null}
               </nav>
@@ -265,10 +231,10 @@ export function SiteHeader() {
                 ) : (
                   <>
                     <Link href="/auth/login" onClick={() => setIsMobileMenuOpen(false)} className="rx-btn-secondary">
-                      Sign in
+                      Login
                     </Link>
                     <Link href="/auth/register" onClick={() => setIsMobileMenuOpen(false)} className="rx-btn-primary">
-                      Create account
+                      Register
                     </Link>
                   </>
                 )}

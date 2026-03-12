@@ -45,23 +45,59 @@ function OrderStatusTracker({ status }: { status: string }) {
   }
 
   return (
-    <div className="grid gap-3 sm:grid-cols-5">
-      {STATUS_STEPS.map((step, index) => {
-        const done = currentIndex >= index
-        const active = currentIndex === index
-        return (
-          <div key={step} className="rounded-[22px] border border-slate-200/80 bg-slate-50/80 px-4 py-4">
-            <div
-              className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold ${
-                active ? 'bg-slate-950 text-white' : done ? 'bg-teal-600 text-white' : 'bg-white text-slate-400'
-              }`}
-            >
-              {index + 1}
+    <div className="rounded-[28px] border border-slate-200/80 bg-slate-50/70 px-4 py-5 sm:px-5">
+      <div className="relative hidden sm:block">
+        <div className="absolute left-0 right-0 top-4 h-px bg-slate-200" />
+        <div
+          className="absolute left-0 top-4 h-px bg-teal-500 transition-all"
+          style={{
+            width: currentIndex <= 0 ? '0%' : `${(currentIndex / (STATUS_STEPS.length - 1)) * 100}%`,
+          }}
+        />
+        <div className="relative grid grid-cols-5 gap-3">
+          {STATUS_STEPS.map((step, index) => {
+            const done = currentIndex >= index
+            const active = currentIndex === index
+            return (
+              <div key={step} className="flex flex-col items-center text-center">
+                <div
+                  className={`z-10 h-8 w-8 rounded-full border-2 ${
+                    done
+                      ? 'border-teal-500 bg-teal-500'
+                      : active
+                        ? 'border-slate-950 bg-slate-950'
+                        : 'border-slate-300 bg-white'
+                  }`}
+                />
+                <p
+                  className={`mt-3 text-xs font-semibold uppercase tracking-[0.18em] ${
+                    done || active ? 'text-slate-950' : 'text-slate-400'
+                  }`}
+                >
+                  {labels[step]}
+                </p>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      <div className="space-y-3 sm:hidden">
+        {STATUS_STEPS.map((step, index) => {
+          const done = currentIndex >= index
+          const active = currentIndex === index
+          return (
+            <div key={step} className="flex items-center gap-3">
+              <div
+                className={`h-3 w-3 rounded-full ${done ? 'bg-teal-500' : active ? 'bg-slate-950' : 'bg-slate-300'}`}
+              />
+              <p className={`text-sm font-semibold ${done || active ? 'text-slate-950' : 'text-slate-400'}`}>
+                {labels[step]}
+              </p>
             </div>
-            <p className={`mt-3 text-sm font-semibold ${done ? 'text-slate-950' : 'text-slate-400'}`}>{labels[step]}</p>
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -133,23 +169,29 @@ export function OrdersPageContent() {
                   <OrderStatusTracker status={order.status} />
 
                   <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
-                    <div className="space-y-3">
-                      {order.items.map((item, index) => (
-                        <div
-                          key={`${item.productId}-${item.dosage ?? ''}-${item.pillCount ?? ''}-${index}`}
-                          className="rounded-[24px] border border-slate-200/80 bg-slate-50/80 px-4 py-4"
-                        >
-                          <div className="flex items-center justify-between gap-4">
-                            <div>
-                              <p className="text-sm font-semibold text-slate-950">{item.name}</p>
-                              <p className="mt-1 text-xs uppercase tracking-[0.22em] text-slate-500">
-                                Quantity {item.quantity}
+                    <div className="rounded-[28px] border border-slate-200/80 bg-slate-50/70 px-4 py-4 sm:px-5">
+                      <p className="rx-kicker text-teal-700">Items</p>
+                      <div className="mt-3 space-y-3">
+                        {order.items.map((item, index) => (
+                          <div
+                            key={`${item.productId}-${item.dosage ?? ''}-${item.pillCount ?? ''}-${index}`}
+                            className="flex items-start justify-between gap-4 border-b border-slate-200/80 pb-3 last:border-b-0 last:pb-0"
+                          >
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-slate-950">
+                                {item.name}
+                                <span className="ml-2 text-slate-400">× {item.quantity}</span>
+                              </p>
+                              <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">
+                                {[item.dosage, item.unit].filter(Boolean).join(' • ')}
                               </p>
                             </div>
-                            <p className="text-sm font-semibold text-slate-950">{formatPrice(item.lineTotal)}</p>
+                            <p className="shrink-0 text-sm font-semibold text-slate-950">
+                              {formatPrice(item.lineTotal)}
+                            </p>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
 
                     <div className="space-y-3">

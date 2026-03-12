@@ -29,6 +29,7 @@ function getFromPrice(product: Doc<'products'>): { price: number; perUnit: strin
 export function ProductCard({ product }: { product: Doc<'products'> }) {
   const fromPrice = getFromPrice(product)
   const dosageOptions = product.pricingMatrix?.map((entry) => entry.dosage) ?? product.dosageOptions ?? []
+  const productHref = `/${product.slug ?? product._id}`
 
   return (
     <article className="group rx-card overflow-hidden transition duration-300 hover:-translate-y-1 hover:shadow-[0_30px_85px_-42px_rgba(15,23,42,0.9)]">
@@ -43,7 +44,7 @@ export function ProductCard({ product }: { product: Doc<'products'> }) {
           ) : null}
         </div>
 
-        <Link href={`/${product.slug ?? product._id}`} className="relative mt-6 block">
+        <Link href={productHref} className="relative mt-6 block">
           <div className="flex min-h-[180px] items-center justify-center">
             <img
               src={product.image}
@@ -59,15 +60,15 @@ export function ProductCard({ product }: { product: Doc<'products'> }) {
       </div>
 
       <div className="p-5">
-        <p className="rx-kicker text-teal-700">{product.genericName || 'Curated medicine'}</p>
-        <Link href={`/${product.slug ?? product._id}`}>
+        {product.genericName ? <p className="rx-kicker text-teal-700">{product.genericName}</p> : null}
+        <Link href={productHref}>
           <h3 className="mt-3 text-xl font-semibold leading-tight text-slate-950 transition group-hover:text-teal-700">
             {product.name}
           </h3>
         </Link>
-        <p className="mt-3 min-h-[3.5rem] text-sm leading-7 text-slate-600">
-          {product.description || 'Well-structured product information, clear pricing, and faster selection paths.'}
-        </p>
+        {product.description ? (
+          <p className="mt-3 min-h-[3.5rem] text-sm leading-7 text-slate-600">{product.description}</p>
+        ) : null}
 
         <div className="mt-5 flex items-end justify-between gap-4">
           <div>
@@ -86,29 +87,30 @@ export function ProductCard({ product }: { product: Doc<'products'> }) {
         {dosageOptions.length > 0 ? (
           <div className="mt-4 flex flex-wrap gap-2">
             {dosageOptions.slice(0, 3).map((dosage) => (
-              <span
+              <Link
                 key={dosage}
-                className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700"
+                href={`${productHref}?dosage=${encodeURIComponent(dosage)}#purchase-options`}
+                className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700"
               >
                 {dosage}
-              </span>
+              </Link>
             ))}
             {dosageOptions.length > 3 ? (
-              <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-500">
+              <Link
+                href={productHref}
+                className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-500 transition hover:border-slate-300 hover:text-slate-700"
+              >
                 +{dosageOptions.length - 3} more
-              </span>
+              </Link>
             ) : null}
           </div>
         ) : null}
 
         <div className="mt-6 flex items-center justify-between">
-          <Link href={`/${product.slug ?? product._id}`} className="text-sm font-semibold text-slate-950">
+          <Link href={productHref} className="text-sm font-semibold text-slate-950">
             View details
           </Link>
-          <Link
-            href={`/${product.slug ?? product._id}`}
-            className="rx-btn-primary px-4 py-2.5 text-xs uppercase tracking-[0.24em]"
-          >
+          <Link href={productHref} className="rx-btn-primary px-4 py-2.5 text-xs uppercase tracking-[0.24em]">
             Shop
           </Link>
         </div>

@@ -28,9 +28,10 @@ export function HomePageContent() {
     fetchedCategories?.map((category) => ({ _id: category._id, name: category.name })) ??
     CATEGORY_LIST.map((name) => ({ name }))
 
+  const heading = selectedCategory ?? 'Recommended'
   const emptyMessage =
     !selectedCategory && recommendedProducts?.length === 0
-      ? 'No recommended products yet. Ask your admin to mark products as recommended.'
+      ? 'No recommended products yet. Ask your admin to mark some products as recommended.'
       : undefined
 
   const handleSelectCategory = (category: string) => {
@@ -59,14 +60,7 @@ export function HomePageContent() {
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="rx-kicker text-teal-700">Products</p>
-              <h2 className="rx-display mt-3 text-4xl text-slate-950">
-                {selectedCategory ? selectedCategory : 'Recommended products'}
-              </h2>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
-                {selectedCategory
-                  ? 'Browse products in this category or clear the filter to see recommended products.'
-                  : 'Browse recommended products or view the full catalog.'}
-              </p>
+              <h2 className="rx-display mt-3 text-4xl text-slate-950">{heading}</h2>
             </div>
             <div className="flex flex-wrap gap-3">
               {selectedCategory ? (
@@ -79,7 +73,7 @@ export function HomePageContent() {
                 </button>
               ) : null}
               <Link href="/products" className="rx-btn-primary">
-                View all products
+                Browse Products
               </Link>
             </div>
           </div>

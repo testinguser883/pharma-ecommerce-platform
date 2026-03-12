@@ -28,8 +28,8 @@ export function CategorySidebar({
             <Grid2X2 className="h-4.5 w-4.5" />
           </span>
           <div>
-            <p className="rx-kicker text-teal-700">Collections</p>
-            <p className="text-sm text-slate-600">Filter the catalog by focus area.</p>
+            <p className="rx-kicker text-teal-700">Browse by</p>
+            <p className="text-sm font-semibold text-slate-900">Categories</p>
           </div>
         </div>
       </div>
@@ -93,10 +93,8 @@ export function CategorySidebar({
         </ul>
 
         <div className="mt-4 rounded-[24px] border border-slate-200/80 bg-slate-50/80 p-4">
-          <p className="rx-kicker text-teal-700">Browsing tip</p>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
-            Search from the header for brand or generic names, then use categories here to narrow the results further.
-          </p>
+          <p className="rx-kicker text-teal-700">Categories</p>
+          <p className="mt-2 text-sm leading-7 text-slate-600">Choose a category to narrow the products shown here.</p>
         </div>
       </div>
     </aside>

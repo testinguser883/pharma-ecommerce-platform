@@ -86,19 +86,14 @@ function PackageRow({
           </div>
 
           <div className="space-y-2">
-            {benefits.length > 0 ? (
-              benefits.map((benefit) => (
-                <p key={benefit} className="flex items-start gap-2 text-sm leading-6 text-slate-600">
-                  <span className="mt-2 h-1.5 w-1.5 rounded-full bg-teal-600" />
-                  <span>{benefit}</span>
-                </p>
-              ))
-            ) : (
-              <p className="text-sm leading-7 text-slate-600">
-                Package pricing stays connected to the original product data while being presented in a clearer card
-                layout.
-              </p>
-            )}
+            {benefits.length > 0
+              ? benefits.map((benefit) => (
+                  <p key={benefit} className="flex items-start gap-2 text-sm leading-6 text-slate-600">
+                    <span className="mt-2 h-1.5 w-1.5 rounded-full bg-teal-600" />
+                    <span>{benefit}</span>
+                  </p>
+                ))
+              : null}
           </div>
 
           <button
@@ -167,17 +162,19 @@ export function ProductDetailContent({ productId }: { productId: string }) {
 
   const dosages = product?.pricingMatrix?.map((entry) => entry.dosage) ?? product?.dosageOptions ?? []
   const hasPricingMatrix = !!(product?.pricingMatrix && product.pricingMatrix.length > 0)
+  const requestedDosage = searchParams.get('dosage')
 
   useEffect(() => {
-    if (!product) return
-    const paramDosage = searchParams.get('dosage')
-    if (paramDosage && dosages.includes(paramDosage)) {
-      setSelectedDosage(paramDosage)
-    } else if (dosages.length > 0 && !selectedDosage) {
-      setSelectedDosage(dosages[0])
+    if (requestedDosage && dosages.includes(requestedDosage)) {
+      setSelectedDosage((current) => (current === requestedDosage ? current : requestedDosage))
+      return
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [product])
+
+    setSelectedDosage((current) => {
+      if (current && dosages.includes(current)) return current
+      return dosages[0] ?? null
+    })
+  }, [dosages, requestedDosage])
 
   const handleAddToCart = async (dosage?: string, pillCount?: number, unitPrice?: number) => {
     if (!product) return
@@ -271,10 +268,12 @@ export function ProductDetailContent({ productId }: { productId: string }) {
           </div>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-            <div className="rounded-[24px] border border-white/10 bg-white/5 px-4 py-4">
-              <p className="rx-kicker text-teal-200">Generic</p>
-              <p className="mt-2 text-sm font-medium text-white">{product.genericName || 'Not specified'}</p>
-            </div>
+            {product.genericName ? (
+              <div className="rounded-[24px] border border-white/10 bg-white/5 px-4 py-4">
+                <p className="rx-kicker text-teal-200">Generic</p>
+                <p className="mt-2 text-sm font-medium text-white">{product.genericName}</p>
+              </div>
+            ) : null}
             <div className="rounded-[24px] border border-white/10 bg-white/5 px-4 py-4">
               <p className="rx-kicker text-teal-200">Unit</p>
               <p className="mt-2 text-sm font-medium text-white">{product.unit}</p>
@@ -348,7 +347,7 @@ export function ProductDetailContent({ productId }: { productId: string }) {
           </section>
 
           {dosages.length > 0 ? (
-            <section className="space-y-4">
+            <section id="purchase-options" className="scroll-mt-32 space-y-4">
               <div className="flex items-end justify-between gap-4">
                 <div>
                   <p className="rx-kicker text-teal-700">Purchase options</p>

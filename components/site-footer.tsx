@@ -1,24 +1,25 @@
 import Link from 'next/link'
-import { ArrowUpRight, BadgeCheck, Bitcoin, HeartPulse, Mail, MapPin, ShieldCheck } from 'lucide-react'
+import { ArrowUpRight, Bitcoin, HeartPulse, Mail, Shield } from 'lucide-react'
 import { brand } from '@/lib/brand'
 
 const footerGroups = [
   {
-    title: 'Explore',
+    title: 'Quick Links',
     links: [
       { href: '/', label: 'Home' },
-      { href: '/products', label: 'Catalog' },
-      { href: '/about-us', label: 'About' },
-      { href: '/testimonials', label: 'Testimonials' },
+      { href: '/products', label: 'Products' },
+      { href: '/orders', label: 'Order Status' },
+      { href: '/faq', label: 'FAQ' },
     ],
   },
   {
-    title: 'Support',
+    title: 'Company',
     links: [
-      { href: '/faq', label: 'FAQ' },
-      { href: '/contact-us', label: 'Contact us' },
-      { href: '/our-policy', label: 'Our policy' },
-      { href: '/terms-conditions', label: 'Terms & conditions' },
+      { href: '/about-us', label: 'About Us' },
+      { href: '/contact-us', label: 'Contact Us' },
+      { href: '/testimonials', label: 'Testimonials' },
+      { href: '/our-policy', label: 'Our Policy' },
+      { href: '/terms-conditions', label: 'Terms & Conditions' },
     ],
   },
 ]
@@ -38,16 +39,12 @@ export function SiteFooter() {
               </div>
             </div>
             <p className="mt-5 max-w-md text-sm leading-7 text-slate-400">
-              Quality pharmaceutical products delivered with discretion, secure ordering, and dependable support.
+              Quality pharmaceutical products delivered to your doorstep. Your health, our mission.
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
-              <span className="rx-badge border-teal-500/30 bg-teal-500/10 text-teal-200">
-                <BadgeCheck className="mr-2 h-3.5 w-3.5" />
-                Curated product library
-              </span>
               <span className="rx-badge border-amber-400/30 bg-amber-400/10 text-amber-100">
                 <Bitcoin className="mr-2 h-3.5 w-3.5" />
-                Crypto payments accepted
+                BTC Accepted
               </span>
             </div>
           </div>
@@ -71,31 +68,25 @@ export function SiteFooter() {
           ))}
 
           <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
-            <p className="rx-kicker text-slate-500">Support desk</p>
+            <p className="rx-kicker text-slate-500">Support</p>
             <div className="mt-4 space-y-4 text-sm text-slate-300">
               <div className="flex items-start gap-3">
                 <Mail className="mt-0.5 h-4 w-4 text-teal-300" />
-                <div>
-                  <p className="font-medium text-white">{brand.supportEmail}</p>
-                  <p className="mt-1 text-slate-400">Use the contact page for order, product, and account support.</p>
-                </div>
+                <p className="leading-6 text-slate-400">Contact us via our support page for assistance.</p>
               </div>
-              <div className="flex items-start gap-3">
-                <MapPin className="mt-0.5 h-4 w-4 text-teal-300" />
-                <p className="leading-6 text-slate-400">{brand.supportHours}</p>
-              </div>
-              <div className="flex items-start gap-3">
-                <ShieldCheck className="mt-0.5 h-4 w-4 text-teal-300" />
-                <p className="leading-6 text-slate-400">
-                  Use the support page for order, product, and account questions.
-                </p>
-              </div>
+            </div>
+            <div className="mt-6 space-y-2">
+              <p className="rx-kicker text-slate-500">Payment Methods</p>
+              <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/30 bg-amber-400/10 px-3 py-1.5 text-xs font-semibold text-amber-100">
+                <Bitcoin className="h-3.5 w-3.5" />
+                Bitcoin (BTC)
+              </span>
             </div>
             <Link
               href="/contact-us"
               className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/15"
             >
-              Contact support
+              Get in Touch
               <ArrowUpRight className="h-4 w-4" />
             </Link>
           </div>
@@ -106,11 +97,15 @@ export function SiteFooter() {
             <p>
               © {new Date().getFullYear()} {brand.name}. All rights reserved.
             </p>
-            <p>
-              If you do not receive an automatic support confirmation after reaching out, please try contacting the team
-              again.
-            </p>
+            <div className="flex items-center gap-1.5">
+              <Shield className="h-3.5 w-3.5 text-teal-300" />
+              <p>Secure & encrypted transactions</p>
+            </div>
           </div>
+          <p className="mt-3 max-w-2xl text-center text-xs text-slate-500 sm:text-left">
+            Please note: after contacting us you will receive an automatic confirmation. Our support team will reply
+            ASAP. If you did not receive a confirmation, your message may not have reached us. Please try again.
+          </p>
         </div>
       </div>
     </footer>

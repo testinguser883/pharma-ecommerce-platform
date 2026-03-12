@@ -3,13 +3,13 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useQuery } from 'convex/react'
-import { ChevronLeft, ChevronRight, ShieldCheck, Truck } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Shield, Truck, Zap } from 'lucide-react'
 import { api } from '@/convex/_generated/api'
-import { brand } from '@/lib/brand'
 
 const featureBadges = [
-  { icon: ShieldCheck, label: 'Quality checked' },
-  { icon: Truck, label: 'Discreet dispatch' },
+  { icon: Shield, label: 'Quality Assured' },
+  { icon: Truck, label: 'Fast Delivery' },
+  { icon: Zap, label: 'Easy Ordering' },
 ]
 
 export function ImageSlider() {
@@ -30,19 +30,22 @@ export function ImageSlider() {
         <div className="pointer-events-none absolute inset-y-0 right-[-10%] hidden w-[40%] bg-[radial-gradient(circle,rgba(245,158,11,0.18),transparent_55%)] blur-3xl md:block" />
         <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,1fr)_280px]">
           <div>
-            <p className="rx-kicker text-teal-200">Trusted online pharmacy</p>
+            <p className="rx-kicker text-teal-200">Trusted Pharma Store</p>
             <h2 className="rx-display mt-4 max-w-2xl text-4xl leading-none text-white sm:text-5xl">
-              Order from the comfort of your own home.
+              More Convenience.{' '}
+              <span className="bg-gradient-to-r from-teal-200 to-cyan-200 bg-clip-text text-transparent">
+                Better Health.
+              </span>
             </h2>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
-              Browse quality medicines, manage your cart, and place orders with secure checkout.
+              Order quality medicines from the comfort of your home. Fast delivery, genuine products.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link href="/products" className="rx-btn-primary">
-                Browse the catalog
+                Browse Products
               </Link>
               <Link href="/about-us" className="rx-btn-ghost">
-                Read the story
+                Learn More
               </Link>
             </div>
             <div className="mt-6 flex flex-wrap gap-2">
@@ -55,7 +58,7 @@ export function ImageSlider() {
             </div>
           </div>
           <div className="mx-auto max-w-[240px]">
-            <img src="/doctor-hero.svg" alt="Doctor illustration" className="rx-floating w-full drop-shadow-2xl" />
+            <img src="/doctor-hero.svg" alt="Professional doctor" className="rx-floating w-full drop-shadow-2xl" />
           </div>
         </div>
       </section>
@@ -115,19 +118,22 @@ export function ImageSlider() {
           </div>
 
           <div className="max-w-xl">
-            <p className="rx-kicker text-teal-200">{brand.name}</p>
+            <p className="rx-kicker text-teal-200">Trusted Pharma Store</p>
             <h2 className="rx-display mt-4 text-4xl leading-none text-white sm:text-5xl">
-              {currentImage.titleText?.trim() || 'Quality medicines delivered with care.'}
+              More Convenience.{' '}
+              <span className="bg-gradient-to-r from-teal-200 to-cyan-200 bg-clip-text text-transparent">
+                Better Health.
+              </span>
             </h2>
             <p className="mt-4 text-sm leading-7 text-slate-300 sm:text-base">
-              {currentImage.altText?.trim() || 'Browse products, manage your cart, and place your order with ease.'}
+              Order quality medicines from the comfort of your home. Fast delivery, genuine products.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link href="/products" className="rx-btn-primary">
-                Shop now
+                Browse Products
               </Link>
-              <Link href="/contact-us" className="rx-btn-ghost">
-                Contact support
+              <Link href="/about-us" className="rx-btn-ghost">
+                Learn More
               </Link>
             </div>
           </div>
