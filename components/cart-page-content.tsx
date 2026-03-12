@@ -102,9 +102,7 @@ export function CartPageContent() {
                             {item.dosage ? (
                               <p className="mt-3 text-xs uppercase tracking-[0.22em] text-teal-700">
                                 {item.dosage}
-                                {item.pillCount
-                                  ? ` · ${item.pillCount} ${item.unit}${item.pillCount > 1 ? 's' : ''}`
-                                  : ''}
+                                {item.pillCount ? ` · ${item.unit}` : ''}
                               </p>
                             ) : null}
                           </div>
