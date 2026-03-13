@@ -500,6 +500,19 @@ export const listAllOrders = query({
   },
 })
 
+export const listOrdersForUser = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const admin = await getAdminUser(ctx)
+    if (!admin) return null
+    return await ctx.db
+      .query('orders')
+      .withIndex('by_user_id_and_created_at', (q) => q.eq('userId', args.userId))
+      .order('desc')
+      .collect()
+  },
+})
+
 export const updateOrderStatus = mutation({
   args: {
     id: v.id('orders'),

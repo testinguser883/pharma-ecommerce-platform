@@ -1640,10 +1640,28 @@ function CategoriesTab() {
 }
 
 function UsersTab() {
-  const users = useQuery(api.admin.listUsers)
+  type UserAccessRecord = {
+    id: string
+    name: string | null
+    email: string
+    emailVerified: boolean
+    createdAt: number
+    updatedAt: number
+    role: 'user' | 'admin' | 'super_admin'
+    isSuperAdmin: boolean
+  }
+
+  const users = useQuery(api.admin.listUsers) as Array<UserAccessRecord> | null | undefined
+  const updateStatus = useMutation(api.admin.updateOrderStatus)
+  const updateTracking = useMutation(api.admin.updateOrderTracking)
   const setUserRole = useMutation(api.admin.setUserRole)
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null)
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null)
+  const [trackingOrderId, setTrackingOrderId] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState('')
+  const [viewingUser, setViewingUser] = useState<UserAccessRecord | null>(null)
+  const userOrders = useQuery(api.admin.listOrdersForUser, viewingUser ? { userId: viewingUser.id } : 'skip')
+  const [viewingOrder, setViewingOrder] = useState<Doc<'orders'> | null>(null)
 
   const handleRoleChange = async (userId: string, role: 'user' | 'admin') => {
     setUpdatingUserId(userId)
@@ -1655,6 +1673,44 @@ function UsersTab() {
       setErrorMessage(message)
     } finally {
       setUpdatingUserId(null)
+    }
+  }
+
+  const handleOrderStatusChange = async (id: Doc<'orders'>['_id'], status: Doc<'orders'>['status']) => {
+    setUpdatingOrderId(id)
+    try {
+      await updateStatus({ id, status })
+      if (viewingOrder?._id === id) {
+        setViewingOrder((prev) => (prev ? { ...prev, status } : null))
+      }
+    } finally {
+      setUpdatingOrderId(null)
+    }
+  }
+
+  const handleTrackingSave = async (id: Doc<'orders'>['_id'], trackingWebsite: string, trackingNumber: string) => {
+    setTrackingOrderId(id)
+    const normalizedTrackingWebsite = trackingWebsite.trim()
+    const normalizedTrackingNumber = trackingNumber.trim()
+    try {
+      await updateTracking({
+        id,
+        trackingWebsite: normalizedTrackingWebsite || undefined,
+        trackingNumber: normalizedTrackingNumber || undefined,
+      })
+      if (viewingOrder?._id === id) {
+        setViewingOrder((prev) =>
+          prev
+            ? {
+                ...prev,
+                trackingWebsite: normalizedTrackingWebsite || undefined,
+                trackingNumber: normalizedTrackingNumber || undefined,
+              }
+            : null,
+        )
+      }
+    } finally {
+      setTrackingOrderId(null)
     }
   }
 
@@ -1744,28 +1800,38 @@ function UsersTab() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        {isPrimaryAdmin ? (
-                          <span className="text-xs font-medium text-slate-400">Managed via `ADMIN_EMAIL`</span>
-                        ) : (
+                        <div className="inline-flex items-center gap-2">
                           <button
                             type="button"
-                            onClick={() => void handleRoleChange(user.id, isDelegatedAdmin ? 'user' : 'admin')}
-                            disabled={isUpdating}
-                            className={`inline-flex min-w-28 items-center justify-center rounded-full px-3 py-2 text-xs font-semibold transition-colors disabled:opacity-60 ${
-                              isDelegatedAdmin
-                                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                                : 'bg-teal-600 text-white hover:bg-teal-700'
-                            }`}
+                            onClick={() => setViewingUser(user)}
+                            className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700"
                           >
-                            {isUpdating ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : isDelegatedAdmin ? (
-                              'Set as User'
-                            ) : (
-                              'Make Admin'
-                            )}
+                            <ExternalLink className="h-3 w-3" />
+                            Orders
                           </button>
-                        )}
+                          {isPrimaryAdmin ? (
+                            <span className="text-xs font-medium text-slate-400">Managed via `ADMIN_EMAIL`</span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => void handleRoleChange(user.id, isDelegatedAdmin ? 'user' : 'admin')}
+                              disabled={isUpdating}
+                              className={`inline-flex min-w-28 items-center justify-center rounded-full px-3 py-2 text-xs font-semibold transition-colors disabled:opacity-60 ${
+                                isDelegatedAdmin
+                                  ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                  : 'bg-teal-600 text-white hover:bg-teal-700'
+                              }`}
+                            >
+                              {isUpdating ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : isDelegatedAdmin ? (
+                                'Set as User'
+                              ) : (
+                                'Make Admin'
+                              )}
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   )
@@ -1775,7 +1841,186 @@ function UsersTab() {
           </table>
         )}
       </div>
+
+      {viewingUser && (
+        <UserOrdersModal
+          user={viewingUser}
+          orders={userOrders}
+          onClose={() => {
+            setViewingUser(null)
+            setViewingOrder(null)
+          }}
+          onViewOrder={(order) => setViewingOrder(order)}
+        />
+      )}
+
+      {viewingOrder && (
+        <OrderDetailModal
+          order={viewingOrder}
+          onClose={() => setViewingOrder(null)}
+          onStatusChange={(status) => void handleOrderStatusChange(viewingOrder._id, status)}
+          onTrackingSave={(trackingWebsite, trackingNumber) =>
+            void handleTrackingSave(viewingOrder._id, trackingWebsite, trackingNumber)
+          }
+          updating={updatingOrderId === viewingOrder._id}
+          trackingSaving={trackingOrderId === viewingOrder._id}
+        />
+      )}
     </>
+  )
+}
+
+function UserOrdersModal({
+  user,
+  orders,
+  onClose,
+  onViewOrder,
+}: {
+  user: {
+    id: string
+    name: string | null
+    email: string
+    emailVerified: boolean
+    createdAt: number
+    updatedAt: number
+    role: 'user' | 'admin' | 'super_admin'
+    isSuperAdmin: boolean
+  }
+  orders: Array<Doc<'orders'>> | null | undefined
+  onClose: () => void
+  onViewOrder: (order: Doc<'orders'>) => void
+}) {
+  const totalSpent = orders?.reduce((sum, order) => sum + order.total, 0) ?? 0
+
+  function formatDate(ts: number) {
+    return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(ts)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+      <div className="relative flex max-h-[90vh] w-full max-w-5xl flex-col rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-start justify-between border-b border-slate-100 px-6 py-4">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">{user.name || user.email}</h2>
+            <p className="text-sm text-slate-500">{user.email}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="grid gap-3 border-b border-slate-100 px-6 py-4 md:grid-cols-4">
+          <div className="rounded-xl bg-slate-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">User ID</p>
+            <p className="mt-1 break-all text-sm font-medium text-slate-800">{user.id}</p>
+          </div>
+          <div className="rounded-xl bg-slate-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Role</p>
+            <p className="mt-1 text-sm font-medium text-slate-800">
+              {user.role === 'super_admin' ? 'Primary Admin' : user.role === 'admin' ? 'Admin' : 'User'}
+            </p>
+          </div>
+          <div className="rounded-xl bg-slate-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Joined</p>
+            <p className="mt-1 text-sm font-medium text-slate-800">
+              {user.createdAt ? formatDate(user.createdAt) : '—'}
+            </p>
+          </div>
+          <div className="rounded-xl bg-slate-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Order Value</p>
+            <p className="mt-1 text-sm font-medium text-slate-800">{formatPrice(totalSpent)}</p>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-6 py-5">
+          <div className="mb-4">
+            <h3 className="text-base font-bold text-slate-900">Orders</h3>
+            <p className="text-sm text-slate-500">Full order history with payment details and current status.</p>
+          </div>
+
+          {orders === undefined ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="h-6 w-6 animate-spin text-teal-500" />
+            </div>
+          ) : orders === null ? (
+            <div className="py-16 text-center text-sm text-slate-400">You do not have access to this user.</div>
+          ) : orders.length === 0 ? (
+            <div className="py-16 text-center text-slate-400">This user has no orders yet.</div>
+          ) : (
+            <div className="overflow-x-auto rounded-2xl border border-slate-200">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <th className="px-4 py-3">Order</th>
+                    <th className="px-4 py-3">Items</th>
+                    <th className="px-4 py-3">Total</th>
+                    <th className="px-4 py-3">Payment</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">Payment Ref</th>
+                    <th className="px-4 py-3 text-right">Details</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {orders.map((order) => {
+                    const status = getStatusDisplay(order.status)
+                    return (
+                      <tr key={order._id} className="hover:bg-slate-50">
+                        <td className="px-4 py-3">
+                          <p className="font-semibold text-slate-900">#{order._id.slice(-8).toUpperCase()}</p>
+                          <p className="text-xs text-slate-500">{formatDate(order.createdAt)}</p>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-slate-600">
+                          {order.items.slice(0, 2).map((item) => (
+                            <div key={`${order._id}-${item.productId}`}>
+                              {item.name} ×{item.quantity}
+                            </div>
+                          ))}
+                          {order.items.length > 2 ? (
+                            <div className="text-slate-400">+{order.items.length - 2} more</div>
+                          ) : null}
+                        </td>
+                        <td className="px-4 py-3 font-semibold text-slate-900">{formatPrice(order.total)}</td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                              order.paymentMethod === 'crypto'
+                                ? 'bg-violet-100 text-violet-700'
+                                : 'bg-slate-100 text-slate-600'
+                            }`}
+                          >
+                            {order.paymentMethod === 'crypto' ? 'Crypto' : 'Standard'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${status.color}`}>
+                            {status.label}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-slate-500">{order.nowPaymentsId ?? '—'}</td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() => onViewOrder(order)}
+                            className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600 hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700"
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                            View
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }
 
