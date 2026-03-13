@@ -141,4 +141,10 @@ export default defineSchema({
   unitTypes: defineTable({
     name: v.string(),
   }),
+
+  adminRoles: defineTable({
+    userId: v.string(),
+    updatedAt: v.number(),
+    updatedByUserId: v.string(),
+  }).index('by_user_id', ['userId']),
 })

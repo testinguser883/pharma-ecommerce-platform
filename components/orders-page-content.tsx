@@ -54,9 +54,7 @@ function OrderStatusTracker({ status }: { status: string }) {
         return (
           <div key={step} className="flex flex-1 flex-col items-center">
             <div className="relative flex w-full items-center">
-              {i > 0 && (
-                <div className={`h-0.5 flex-1 transition-colors ${done ? 'bg-teal-500' : 'bg-slate-200'}`} />
-              )}
+              {i > 0 && <div className={`h-0.5 flex-1 transition-colors ${done ? 'bg-teal-500' : 'bg-slate-200'}`} />}
               <div
                 className={`h-5 w-5 shrink-0 rounded-full transition-all ${
                   active
@@ -67,13 +65,21 @@ function OrderStatusTracker({ status }: { status: string }) {
                 }`}
               >
                 {done && !active && (
-                  <svg className="h-full w-full p-0.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                  <svg
+                    className="h-full w-full p-0.5 text-white"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                  >
                     <path d="M20 6 9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 )}
               </div>
               {i < STATUS_STEPS.length - 1 && (
-                <div className={`h-0.5 flex-1 transition-colors ${done && currentIdx > i ? 'bg-teal-500' : 'bg-slate-200'}`} />
+                <div
+                  className={`h-0.5 flex-1 transition-colors ${done && currentIdx > i ? 'bg-teal-500' : 'bg-slate-200'}`}
+                />
               )}
             </div>
             <span
@@ -124,9 +130,7 @@ export function OrdersPageContent() {
                 {/* Order header */}
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/50 px-5 py-3">
                   <div>
-                    <p className="text-sm font-bold text-slate-900">
-                      Order #{order._id.slice(-8).toUpperCase()}
-                    </p>
+                    <p className="text-sm font-bold text-slate-900">Order #{order._id.slice(-8).toUpperCase()}</p>
                     <p className="text-xs text-slate-400">{formatDate(order.createdAt)}</p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -150,8 +154,7 @@ export function OrdersPageContent() {
                     {order.items.map((item) => (
                       <li key={item.productId} className="flex items-center justify-between py-2 text-sm">
                         <span className="text-slate-600">
-                          {item.name}{' '}
-                          <span className="font-semibold text-slate-800">× {item.quantity}</span>
+                          {item.name} <span className="font-semibold text-slate-800">× {item.quantity}</span>
                         </span>
                         <span className="font-semibold text-slate-900">{formatPrice(item.lineTotal)}</span>
                       </li>
@@ -189,8 +192,7 @@ export function OrdersPageContent() {
                       )}
                       {order.trackingNumber && (
                         <p className="mt-1 text-slate-600">
-                          Tracking #:{' '}
-                          <span className="font-semibold text-slate-800">{order.trackingNumber}</span>
+                          Tracking #: <span className="font-semibold text-slate-800">{order.trackingNumber}</span>
                         </p>
                       )}
                     </div>

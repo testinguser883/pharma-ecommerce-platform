@@ -4,24 +4,67 @@ import type { Id } from './_generated/dataModel'
 import { authComponent } from './auth'
 import { DEFAULT_UNIT_TYPES } from './constants'
 
-// Checks that the current user's email matches the ADMIN_EMAIL env var set in Convex dashboard.
+function normalizeEmail(email: string | null | undefined) {
+  return email?.trim().toLowerCase() ?? null
+}
+
+function getConfiguredAdminEmail() {
+  return normalizeEmail(process.env.ADMIN_EMAIL)
+}
+
+async function getAssignedAdminRole(ctx: { db: { query: (table: 'adminRoles') => any } }, userId: string | undefined) {
+  if (!userId) return null
+  return await ctx.db
+    .query('adminRoles')
+    .withIndex('by_user_id', (q: any) => q.eq('userId', userId))
+    .unique()
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function getAdminState(ctx: any) {
+  const user = await authComponent.safeGetAuthUser(ctx)
+  if (!user) {
+    return {
+      user: null,
+      isAdmin: false,
+      isSuperAdmin: false,
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const email = normalizeEmail((user as any).email as string | undefined)
+  const configuredAdminEmail = getConfiguredAdminEmail()
+  const isSuperAdmin = Boolean(configuredAdminEmail && email === configuredAdminEmail)
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const assignedAdminRole = await getAssignedAdminRole(ctx, String((user as any)._id ?? ''))
+
+  return {
+    user,
+    isAdmin: isSuperAdmin || assignedAdminRole !== null,
+    isSuperAdmin,
+  }
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function getAdminUser(ctx: any) {
-  const user = await authComponent.safeGetAuthUser(ctx)
-  if (!user) return null
-  const adminEmail = process.env.ADMIN_EMAIL
-  if (!adminEmail) return null
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const email = (user as any).email as string | undefined
-  if (!email || email !== adminEmail) return null
-  return user
+  const state = await getAdminState(ctx)
+  return state.isAdmin ? state.user : null
 }
 
 export const isAdmin = query({
   args: {},
   handler: async (ctx) => {
-    const user = await getAdminUser(ctx)
-    return user !== null
+    const state = await getAdminState(ctx)
+    return state.isAdmin
+  },
+})
+
+export const isSuperAdmin = query({
+  args: {},
+  handler: async (ctx) => {
+    const state = await getAdminState(ctx)
+    return state.isSuperAdmin
   },
 })
 
@@ -38,6 +81,122 @@ export const listAllProducts = query({
         .take(100)
     }
     return ctx.db.query('products').order('desc').collect()
+  },
+})
+
+type AuthUserRecord = {
+  _id?: string
+  id?: string
+  name?: string | null
+  email?: string | null
+  emailVerified?: boolean
+  createdAt?: number
+  updatedAt?: number
+}
+
+function getAuthUserRecordId(user: AuthUserRecord) {
+  return String(user.id ?? user._id ?? '')
+}
+
+function normalizeTimestamp(value: unknown) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value
+  }
+  if (value instanceof Date) {
+    return value.getTime()
+  }
+  if (typeof value === 'string') {
+    const parsed = Date.parse(value)
+    return Number.isNaN(parsed) ? 0 : parsed
+  }
+  return 0
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function listAuthUsers(ctx: any) {
+  const adapter = authComponent.adapter(ctx)({})
+  return (await adapter.findMany({
+    model: 'user',
+    limit: 500,
+    sortBy: { field: 'createdAt', direction: 'desc' },
+  })) as Array<AuthUserRecord>
+}
+
+export const listUsers = query({
+  args: {},
+  handler: async (ctx) => {
+    const state = await getAdminState(ctx)
+    if (!state.isSuperAdmin) return null
+
+    const [users, adminRoles] = await Promise.all([listAuthUsers(ctx), ctx.db.query('adminRoles').collect()])
+    const assignedAdminUserIds = new Set(adminRoles.map((role) => role.userId))
+    const configuredAdminEmail = getConfiguredAdminEmail()
+
+    return users
+      .filter((user) => Boolean(user.email))
+      .map((user) => {
+        const userId = getAuthUserRecordId(user)
+        const normalizedEmail = normalizeEmail(user.email)
+        const isSuperAdmin = Boolean(configuredAdminEmail && normalizedEmail === configuredAdminEmail)
+        const role = isSuperAdmin ? 'super_admin' : assignedAdminUserIds.has(userId) ? 'admin' : 'user'
+
+        return {
+          id: userId,
+          name: user.name?.trim() || null,
+          email: user.email ?? '',
+          emailVerified: Boolean(user.emailVerified),
+          createdAt: normalizeTimestamp(user.createdAt),
+          updatedAt: normalizeTimestamp(user.updatedAt),
+          role,
+          isSuperAdmin,
+        }
+      })
+  },
+})
+
+export const setUserRole = mutation({
+  args: {
+    userId: v.string(),
+    role: v.union(v.literal('user'), v.literal('admin')),
+  },
+  handler: async (ctx, args) => {
+    const state = await getAdminState(ctx)
+    if (!state.isSuperAdmin || !state.user) {
+      throw new Error('Not authorized')
+    }
+
+    const users = await listAuthUsers(ctx)
+    const targetUser = users.find((user) => getAuthUserRecordId(user) === args.userId)
+    if (!targetUser) {
+      throw new Error('User not found')
+    }
+
+    if (normalizeEmail(targetUser.email) === getConfiguredAdminEmail()) {
+      throw new Error('The primary admin role is managed by ADMIN_EMAIL and cannot be changed here.')
+    }
+
+    const existingRole = await getAssignedAdminRole(ctx, args.userId)
+    if (args.role === 'admin') {
+      if (existingRole) {
+        await ctx.db.patch(existingRole._id, {
+          updatedAt: Date.now(),
+          updatedByUserId: String(state.user._id),
+        })
+      } else {
+        await ctx.db.insert('adminRoles', {
+          userId: args.userId,
+          updatedAt: Date.now(),
+          updatedByUserId: String(state.user._id),
+        })
+      }
+      return { success: true }
+    }
+
+    if (existingRole) {
+      await ctx.db.delete(existingRole._id)
+    }
+
+    return { success: true }
   },
 })
 

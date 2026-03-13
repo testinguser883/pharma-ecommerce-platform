@@ -66,9 +66,7 @@ export function CartPageContent() {
                       />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-bold text-slate-900">{item.name}</p>
-                        {item.genericName && (
-                          <p className="text-xs text-slate-400">{item.genericName}</p>
-                        )}
+                        {item.genericName && <p className="text-xs text-slate-400">{item.genericName}</p>}
                         {item.dosage && (
                           <p className="mt-0.5 text-xs font-semibold text-teal-600">
                             {item.dosage}

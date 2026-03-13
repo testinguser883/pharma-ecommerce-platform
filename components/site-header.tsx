@@ -60,9 +60,7 @@ export function SiteHeader() {
       <header
         className={cn(
           'sticky top-0 z-40 transition-all duration-300',
-          isScrolled
-            ? 'bg-slate-950/95 backdrop-blur-md shadow-lg shadow-black/20'
-            : 'bg-slate-950',
+          isScrolled ? 'bg-slate-950/95 backdrop-blur-md shadow-lg shadow-black/20' : 'bg-slate-950',
         )}
       >
         {/* Top accent line */}

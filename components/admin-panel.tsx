@@ -28,13 +28,14 @@ import {
   Mail,
   Calendar,
   User,
+  Users,
 } from 'lucide-react'
 import { api } from '@/convex/_generated/api'
 import type { Doc } from '@/convex/_generated/dataModel'
 import { AdminProductForm, type ProductFormData } from './admin-product-form'
 import { formatPrice } from '@/lib/utils'
 
-type Tab = 'products' | 'orders' | 'slider' | 'categories'
+type Tab = 'products' | 'orders' | 'slider' | 'categories' | 'users'
 
 const ORDER_STATUSES = [
   { value: 'pending_payment', label: 'Pending Payment', color: 'bg-yellow-100 text-yellow-800' },
@@ -56,9 +57,10 @@ function normalizeTrackingWebsite(url: string) {
 
 export function AdminPanel() {
   const isAdmin = useQuery(api.admin.isAdmin)
+  const isSuperAdmin = useQuery(api.admin.isSuperAdmin)
   const [tab, setTab] = useState<Tab>('products')
 
-  if (isAdmin === undefined) {
+  if (isAdmin === undefined || isSuperAdmin === undefined) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
@@ -86,6 +88,14 @@ export function AdminPanel() {
     )
   }
 
+  const tabs = [
+    { id: 'products', icon: Package, label: 'Medicines' },
+    { id: 'orders', icon: ClipboardList, label: 'Orders' },
+    { id: 'slider', icon: ImageIcon, label: 'Slider' },
+    { id: 'categories', icon: Tag, label: 'Categories' },
+    ...(isSuperAdmin ? ([{ id: 'users', icon: Users, label: 'Users' }] as const) : []),
+  ] as const
+
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="border-b border-slate-200 bg-white">
@@ -102,14 +112,7 @@ export function AdminPanel() {
           </div>
 
           <div className="flex flex-wrap gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
-            {(
-              [
-                { id: 'products', icon: Package, label: 'Medicines' },
-                { id: 'orders', icon: ClipboardList, label: 'Orders' },
-                { id: 'slider', icon: ImageIcon, label: 'Slider' },
-                { id: 'categories', icon: Tag, label: 'Categories' },
-              ] as const
-            ).map(({ id, icon: Icon, label }) => (
+            {tabs.map(({ id, icon: Icon, label }) => (
               <button
                 key={id}
                 type="button"
@@ -129,6 +132,7 @@ export function AdminPanel() {
         {tab === 'orders' && <OrdersTab />}
         {tab === 'slider' && <SliderTab />}
         {tab === 'categories' && <CategoriesTab />}
+        {tab === 'users' && isSuperAdmin && <UsersTab />}
       </div>
     </div>
   )
@@ -1631,6 +1635,146 @@ function CategoriesTab() {
       {productModalCategory && (
         <CategoryProductsModal category={productModalCategory} onClose={() => setProductModalCategory(null)} />
       )}
+    </>
+  )
+}
+
+function UsersTab() {
+  const users = useQuery(api.admin.listUsers)
+  const setUserRole = useMutation(api.admin.setUserRole)
+  const [updatingUserId, setUpdatingUserId] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState('')
+
+  const handleRoleChange = async (userId: string, role: 'user' | 'admin') => {
+    setUpdatingUserId(userId)
+    setErrorMessage('')
+    try {
+      await setUserRole({ userId, role })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update user role.'
+      setErrorMessage(message)
+    } finally {
+      setUpdatingUserId(null)
+    }
+  }
+
+  const totalUsers = users?.length ?? 0
+  const adminUsers = users?.filter((user) => user.role !== 'user').length ?? 0
+
+  return (
+    <>
+      <div className="mb-6 grid grid-cols-2 gap-3">
+        <StatCard icon={<Users className="h-7 w-7 text-sky-500" />} value={totalUsers} label="Users" />
+        <StatCard icon={<User className="h-7 w-7 text-teal-500" />} value={adminUsers} label="Admins" />
+      </div>
+
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-bold text-slate-900">User Access</h2>
+          <p className="text-sm text-slate-500">Primary admin only. Promote or revoke delegated admin access.</p>
+        </div>
+      </div>
+
+      {errorMessage ? <p className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{errorMessage}</p> : null}
+
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        {users === undefined ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-6 w-6 animate-spin text-teal-500" />
+          </div>
+        ) : users === null ? (
+          <div className="py-16 text-center text-sm text-slate-400">Only the primary admin can manage user roles.</div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-100 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <th className="px-4 py-3">User</th>
+                <th className="px-4 py-3">Email</th>
+                <th className="px-4 py-3 text-center">Verified</th>
+                <th className="px-4 py-3">Joined</th>
+                <th className="px-4 py-3">Role</th>
+                <th className="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {users.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-16 text-center text-slate-400">
+                    No users found.
+                  </td>
+                </tr>
+              ) : (
+                users.map((user) => {
+                  const isUpdating = updatingUserId === user.id
+                  const isDelegatedAdmin = user.role === 'admin'
+                  const isPrimaryAdmin = user.role === 'super_admin'
+
+                  return (
+                    <tr key={user.id} className="hover:bg-slate-50">
+                      <td className="px-4 py-3">
+                        <div className="font-semibold text-slate-800">{user.name || 'Unnamed user'}</div>
+                        <div className="text-xs text-slate-400">{user.id}</div>
+                      </td>
+                      <td className="px-4 py-3 text-slate-600">{user.email}</td>
+                      <td className="px-4 py-3 text-center">
+                        {user.emailVerified ? (
+                          <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                            Verified
+                          </span>
+                        ) : (
+                          <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500">
+                            Unverified
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-slate-600">
+                        {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '—'}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
+                            isPrimaryAdmin
+                              ? 'bg-amber-50 text-amber-700'
+                              : isDelegatedAdmin
+                                ? 'bg-teal-50 text-teal-700'
+                                : 'bg-slate-100 text-slate-600'
+                          }`}
+                        >
+                          {isPrimaryAdmin ? 'Primary Admin' : isDelegatedAdmin ? 'Admin' : 'User'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {isPrimaryAdmin ? (
+                          <span className="text-xs font-medium text-slate-400">Managed via `ADMIN_EMAIL`</span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => void handleRoleChange(user.id, isDelegatedAdmin ? 'user' : 'admin')}
+                            disabled={isUpdating}
+                            className={`inline-flex min-w-28 items-center justify-center rounded-full px-3 py-2 text-xs font-semibold transition-colors disabled:opacity-60 ${
+                              isDelegatedAdmin
+                                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                : 'bg-teal-600 text-white hover:bg-teal-700'
+                            }`}
+                          >
+                            {isUpdating ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : isDelegatedAdmin ? (
+                              'Set as User'
+                            ) : (
+                              'Make Admin'
+                            )}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        )}
+      </div>
     </>
   )
 }
