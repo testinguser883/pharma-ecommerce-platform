@@ -1,11 +1,12 @@
 import { action, internalMutation, internalQuery, mutation, query } from './_generated/server'
 import { v } from 'convex/values'
-import type { MutationCtx, QueryCtx } from './_generated/server'
+import type { ActionCtx, MutationCtx, QueryCtx } from './_generated/server'
 import { internal } from './_generated/api'
+import { resolveProductSelection } from './pricing'
 
-type ConvexCtx = QueryCtx | MutationCtx
+type AuthenticatedCtx = QueryCtx | MutationCtx | ActionCtx
 
-const getAuthenticatedUserId = async (ctx: ConvexCtx) => {
+const getAuthenticatedUserId = async (ctx: AuthenticatedCtx) => {
   const identity = await ctx.auth.getUserIdentity()
   if (!identity) {
     throw new Error('Not authenticated')
@@ -15,7 +16,8 @@ const getAuthenticatedUserId = async (ctx: ConvexCtx) => {
 
 function isIndiaCountry(country: string | undefined) {
   if (!country) return false
-  return country.toLowerCase().includes('india')
+  const normalizedCountry = country.trim().toLowerCase()
+  return normalizedCountry === 'india' || normalizedCountry === 'in'
 }
 
 const buildOrderItemsFromCart = async (ctx: MutationCtx, userId: string) => {
@@ -46,14 +48,20 @@ const buildOrderItemsFromCart = async (ctx: MutationCtx, userId: string) => {
     if (!product || !product.inStock) {
       continue
     }
-    const unitPrice = cartItem.unitPrice ?? product.price
+    let selection: ReturnType<typeof resolveProductSelection>
+    try {
+      selection = resolveProductSelection(product, cartItem)
+    } catch {
+      continue
+    }
+    const unitPrice = selection.unitPrice
     const lineTotal = Number((unitPrice * cartItem.quantity).toFixed(2))
     orderItems.push({
       productId: product._id,
       name: product.name,
       genericName: product.genericName,
-      dosage: cartItem.dosage,
-      pillCount: cartItem.pillCount,
+      dosage: selection.dosage,
+      pillCount: selection.pillCount,
       quantity: cartItem.quantity,
       unitPrice,
       unit: cartItem.pillCount ? `package (${cartItem.pillCount} ${product.unit}s)` : product.unit,
@@ -180,13 +188,6 @@ export const createPendingCryptoOrder = mutation({
       billingAddress: args.billingAddress,
       shippingAddress: args.shippingAddress,
     })
-
-    await ctx.db.patch(cart._id, {
-      items: [],
-      total: 0,
-      updatedAt: Date.now(),
-    })
-
     return { orderId, total }
   },
 })
@@ -194,9 +195,22 @@ export const createPendingCryptoOrder = mutation({
 export const createNowPaymentsInvoice = action({
   args: {
     orderId: v.id('orders'),
-    total: v.number(),
   },
-  handler: async (_ctx, args) => {
+  handler: async (ctx, args) => {
+    const userId = await getAuthenticatedUserId(ctx)
+    const order = await ctx.runQuery(internal.orders.getOrderById, {
+      orderId: args.orderId,
+    })
+    if (!order || order.userId !== userId) {
+      throw new Error('Order not found')
+    }
+    if (order.paymentMethod !== 'crypto') {
+      throw new Error('Invalid payment method')
+    }
+    if (order.status !== 'pending_payment') {
+      throw new Error('Order is not awaiting payment')
+    }
+
     const apiKey = process.env.NOWPAYMENTS_API_KEY
     if (!apiKey) {
       throw new Error('Payment provider not configured')
@@ -212,10 +226,10 @@ export const createNowPaymentsInvoice = action({
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        price_amount: args.total,
+        price_amount: Number(order.total.toFixed(2)),
         price_currency: 'USD',
-        order_id: args.orderId,
-        order_description: `Pharma order ${args.orderId}`,
+        order_id: order._id,
+        order_description: `Pharma order ${order._id}`,
         success_url: `${siteUrl}/orders`,
         cancel_url: `${siteUrl}/checkout`,
         ipn_callback_url: convexSiteUrl ? `${convexSiteUrl}/nowpayments-ipn` : undefined,
@@ -229,6 +243,7 @@ export const createNowPaymentsInvoice = action({
     }
 
     const data = (await response.json()) as { invoice_url: string }
+    await ctx.runMutation(internal.cart.clearCartForUser, { userId })
     return { invoiceUrl: data.invoice_url }
   },
 })
@@ -240,7 +255,9 @@ export const confirmCryptoPayment = internalMutation({
   },
   handler: async (ctx, args) => {
     const order = await ctx.db.get(args.orderId)
-    if (!order) return
+    if (!order || order.paymentMethod !== 'crypto') return
+    if (order.status === 'paid' && order.nowPaymentsId === args.nowPaymentsId) return
+    if (order.status !== 'pending_payment') return
     await ctx.db.patch(args.orderId, {
       status: 'paid',
       nowPaymentsId: args.nowPaymentsId,

@@ -973,6 +973,7 @@ function OrderDetailModal({
 
 function SliderTab() {
   const images = useQuery(api.admin.listSliderImages)
+  const sliderImages = images ?? []
   const addSliderImage = useMutation(api.admin.addSliderImage)
   const updateSliderImage = useMutation(api.admin.updateSliderImage)
   const deleteSliderImage = useMutation(api.admin.deleteSliderImage)
@@ -1137,12 +1138,12 @@ function SliderTab() {
           <div className="flex items-center justify-center py-16">
             <Loader2 className="h-6 w-6 animate-spin text-teal-500" />
           </div>
-        ) : images.length === 0 ? (
+        ) : sliderImages.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-16 text-center text-slate-400">
             No slider images yet. Add your first one above.
           </div>
         ) : (
-          images.map((img, i) => (
+          sliderImages.map((img, i) => (
             <SliderImageRow
               key={img._id}
               img={img}

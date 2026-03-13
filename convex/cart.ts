@@ -1,7 +1,8 @@
-import { mutation, query } from './_generated/server'
+import { internalMutation, mutation, query } from './_generated/server'
 import { v } from 'convex/values'
 import type { Doc, Id } from './_generated/dataModel'
 import type { MutationCtx, QueryCtx } from './_generated/server'
+import { resolveProductSelection } from './pricing'
 
 type CartItem = Doc<'carts'>['items'][number]
 type ConvexCtx = QueryCtx | MutationCtx
@@ -17,12 +18,13 @@ const getAuthenticatedUserId = async (ctx: ConvexCtx) => {
 const calculateCartTotal = async (ctx: MutationCtx, items: Array<CartItem>) => {
   let total = 0
   for (const item of items) {
-    if (item.unitPrice !== undefined) {
-      total += item.unitPrice * item.quantity
-    } else {
-      const product = await ctx.db.get(item.productId)
-      if (!product) continue
-      total += product.price * (1 - (product.discount ?? 0) / 100) * item.quantity
+    const product = await ctx.db.get(item.productId)
+    if (!product) continue
+    try {
+      const selection = resolveProductSelection(product, item)
+      total += selection.unitPrice * item.quantity
+    } catch {
+      continue
     }
   }
   return Number(total.toFixed(2))
@@ -73,7 +75,12 @@ export const getMyCart = query({
       if (!product) {
         continue
       }
-      const price = item.unitPrice ?? product.price
+      let price: number
+      try {
+        price = resolveProductSelection(product, item).unitPrice
+      } catch {
+        continue
+      }
       const unit = item.pillCount ? `package (${item.pillCount} ${product.unit}s)` : product.unit
       hydratedItems.push({
         productId: product._id,
@@ -110,7 +117,19 @@ export const getItemCount = query({
     if (!cart) {
       return 0
     }
-    return cart.items.reduce((acc, item) => acc + item.quantity, 0)
+
+    let itemCount = 0
+    for (const item of cart.items) {
+      const product = await ctx.db.get(item.productId)
+      if (!product) continue
+      try {
+        resolveProductSelection(product, item)
+        itemCount += item.quantity
+      } catch {
+        continue
+      }
+    }
+    return itemCount
   },
 })
 
@@ -120,7 +139,6 @@ export const addItem = mutation({
     quantity: v.optional(v.number()),
     dosage: v.optional(v.string()),
     pillCount: v.optional(v.number()),
-    unitPrice: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthenticatedUserId(ctx)
@@ -130,24 +148,26 @@ export const addItem = mutation({
     if (!product || !product.inStock) {
       throw new Error('Product is not available')
     }
+    const selection = resolveProductSelection(product, args)
 
     const cart = await getCartForUser(ctx, userId)
     const items = [...(cart?.items ?? [])]
 
-    const existingItemIdx = findCartItemIndex(items, args.productId, args.dosage, args.pillCount)
+    const existingItemIdx = findCartItemIndex(items, args.productId, selection.dosage, selection.pillCount)
     if (existingItemIdx >= 0) {
       const existingItem = items[existingItemIdx]
       items[existingItemIdx] = {
         ...existingItem,
         quantity: Math.min(existingItem.quantity + quantity, 99),
+        unitPrice: selection.unitPrice,
       }
     } else {
       items.push({
         productId: args.productId,
         quantity,
-        dosage: args.dosage,
-        pillCount: args.pillCount,
-        unitPrice: args.unitPrice,
+        dosage: selection.dosage,
+        pillCount: selection.pillCount,
+        unitPrice: selection.unitPrice,
       })
     }
 
@@ -232,6 +252,22 @@ export const clearCart = mutation({
   handler: async (ctx) => {
     const userId = await getAuthenticatedUserId(ctx)
     const cart = await getCartForUser(ctx, userId)
+    if (!cart) {
+      return { success: true }
+    }
+    await ctx.db.patch(cart._id, {
+      items: [],
+      total: 0,
+      updatedAt: Date.now(),
+    })
+    return { success: true }
+  },
+})
+
+export const clearCartForUser = internalMutation({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const cart = await getCartForUser(ctx, args.userId)
     if (!cart) {
       return { success: true }
     }

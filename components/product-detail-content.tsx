@@ -23,7 +23,7 @@ type PackageRowProps = {
   image: string
   imageAlt?: string
   inStock: boolean
-  onAddToCart: (dosage: string, pillCount: number, price: number) => void
+  onAddToCart: (dosage: string, pillCount: number) => void
   adding: boolean
   justAdded: boolean
 }
@@ -61,17 +61,13 @@ function PackageRow({
           <p className="text-xs text-slate-500">
             {pillCount} {unit}s
           </p>
-          {formattedExpiryDate && (
-            <p className="text-xs text-slate-400">Exp: {formattedExpiryDate}</p>
-          )}
+          {formattedExpiryDate && <p className="text-xs text-slate-400">Exp: {formattedExpiryDate}</p>}
         </div>
       </div>
 
       {/* Price */}
       <div className="hidden md:block">
-        {originalPrice > price && (
-          <p className="text-xs text-slate-400 line-through">{formatPrice(originalPrice)}</p>
-        )}
+        {originalPrice > price && <p className="text-xs text-slate-400 line-through">{formatPrice(originalPrice)}</p>}
         <p className="text-lg font-extrabold text-slate-900">{formatPrice(price)}</p>
         <p className="text-xs text-slate-500">
           {formatPrice(perUnit)} / {unit}
@@ -97,18 +93,14 @@ function PackageRow({
       <div className="flex flex-col items-end gap-1">
         {/* Price on mobile */}
         <div className="mb-1 text-right md:hidden">
-          {originalPrice > price && (
-            <p className="text-xs text-slate-400 line-through">{formatPrice(originalPrice)}</p>
-          )}
+          {originalPrice > price && <p className="text-xs text-slate-400 line-through">{formatPrice(originalPrice)}</p>}
           <p className="text-base font-extrabold text-slate-900">{formatPrice(price)}</p>
-          {savings > 0 && (
-            <p className="text-xs font-semibold text-red-500">Save {formatPrice(savings)}</p>
-          )}
+          {savings > 0 && <p className="text-xs font-semibold text-red-500">Save {formatPrice(savings)}</p>}
         </div>
         <button
           type="button"
           disabled={adding || !inStock}
-          onClick={() => onAddToCart(dosage, pillCount, price)}
+          onClick={() => onAddToCart(dosage, pillCount)}
           className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
             justAdded
               ? 'bg-teal-50 border border-teal-300 text-teal-700'
@@ -146,11 +138,17 @@ function ProductDescriptionAccordion({ content }: { content: string }) {
         className="flex w-full items-center justify-between px-5 py-4 text-left hover:bg-slate-50 transition-colors"
       >
         <h2 className="text-base font-bold text-slate-900">Product Description</h2>
-        <span className={`flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-all ${open ? 'bg-teal-50 border-teal-200 text-teal-600' : ''}`}>
+        <span
+          className={`flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-all ${open ? 'bg-teal-50 border-teal-200 text-teal-600' : ''}`}
+        >
           {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </span>
       </button>
-      {open && <div className="border-t border-slate-100 px-5 py-5 prose prose-sm max-w-none">{renderMarkdownContent(content)}</div>}
+      {open && (
+        <div className="border-t border-slate-100 px-5 py-5 prose prose-sm max-w-none">
+          {renderMarkdownContent(content)}
+        </div>
+      )}
     </section>
   )
 }
@@ -183,7 +181,7 @@ export function ProductDetailContent({ productId }: { productId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product])
 
-  const handleAddToCart = async (dosage?: string, pillCount?: number, unitPrice?: number) => {
+  const handleAddToCart = async (dosage?: string, pillCount?: number) => {
     if (!product) return
     if (!session?.user) {
       router.push(`/auth/login?next=/${product.slug ?? product._id}`)
@@ -192,7 +190,7 @@ export function ProductDetailContent({ productId }: { productId: string }) {
     const key = dosage ? `${dosage}-${pillCount ?? ''}` : 'simple'
     try {
       setAddingKey(key)
-      await addItem({ productId: product._id, quantity: 1, dosage, pillCount, unitPrice })
+      await addItem({ productId: product._id, quantity: 1, dosage, pillCount })
       setJustAddedKey(key)
       setTimeout(() => setJustAddedKey(null), 2000)
       if (!dosage) router.push('/cart')
@@ -270,12 +268,8 @@ export function ProductDetailContent({ productId }: { productId: string }) {
               )}
             </div>
 
-            <h1 className="mt-2 text-xl font-extrabold text-slate-900 md:text-2xl lg:text-3xl">
-              {product.name}
-            </h1>
-            {product.genericName && (
-              <p className="mt-0.5 text-sm text-slate-400">Generic: {product.genericName}</p>
-            )}
+            <h1 className="mt-2 text-xl font-extrabold text-slate-900 md:text-2xl lg:text-3xl">{product.name}</h1>
+            {product.genericName && <p className="mt-0.5 text-sm text-slate-400">Generic: {product.genericName}</p>}
 
             {product.description && (
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600">{product.description}</p>
@@ -290,9 +284,7 @@ export function ProductDetailContent({ productId }: { productId: string }) {
                 </p>
                 <button
                   type="button"
-                  onClick={() =>
-                    void handleAddToCart(undefined, undefined, product.price * (1 - product.discount / 100))
-                  }
+                  onClick={() => void handleAddToCart()}
                   disabled={addingKey !== null || !product.inStock}
                   className="rx-btn-primary mt-4"
                 >
@@ -346,7 +338,7 @@ export function ProductDetailContent({ productId }: { productId: string }) {
                     image={product.image}
                     imageAlt={product.imageAlt}
                     inStock={product.inStock}
-                    onAddToCart={(d, pc, p) => void handleAddToCart(d, pc, p)}
+                    onAddToCart={(d, pc) => void handleAddToCart(d, pc)}
                     adding={addingKey === key}
                     justAdded={justAddedKey === key}
                   />
@@ -360,18 +352,14 @@ export function ProductDetailContent({ productId }: { productId: string }) {
                     <span className="ml-1.5 text-sm font-normal text-slate-400">per {product.unit}</span>
                   </p>
                   {selectedDosage && (
-                    <p className="mt-1 text-sm text-slate-500">Dosage: <strong>{selectedDosage}</strong></p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Dosage: <strong>{selectedDosage}</strong>
+                    </p>
                   )}
                 </div>
                 <button
                   type="button"
-                  onClick={() =>
-                    void handleAddToCart(
-                      selectedDosage ?? undefined,
-                      undefined,
-                      product.price * (1 - product.discount / 100),
-                    )
-                  }
+                  onClick={() => void handleAddToCart(selectedDosage ?? undefined)}
                   disabled={addingKey !== null || !product.inStock}
                   className="rx-btn-primary"
                 >

@@ -386,6 +386,8 @@ export const updateOrderTracking = mutation({
 export const listSliderImages = query({
   args: {},
   handler: async (ctx) => {
+    const admin = await getAdminUser(ctx)
+    if (!admin) return null
     return ctx.db.query('sliderImages').order('asc').collect()
   },
 })
