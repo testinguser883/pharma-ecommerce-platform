@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { ChevronLeft, ShoppingCart, ChevronDown, ChevronUp, Check } from 'lucide-react'
+import { ChevronLeft, ShoppingCart, ChevronDown, ChevronUp, Minus, Plus, Loader2 } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { api } from '@/convex/_generated/api'
 import { authClient } from '@/lib/auth-client'
@@ -24,8 +24,10 @@ type PackageRowProps = {
   imageAlt?: string
   inStock: boolean
   onAddToCart: (dosage: string, pillCount: number) => void
-  adding: boolean
-  justAdded: boolean
+  onIncreaseQuantity: (dosage: string, pillCount: number, quantity: number) => void
+  onDecreaseQuantity: (dosage: string, pillCount: number, quantity: number) => void
+  quantity: number
+  updating: boolean
 }
 
 function PackageRow({
@@ -40,8 +42,10 @@ function PackageRow({
   imageAlt,
   inStock,
   onAddToCart,
-  adding,
-  justAdded,
+  onIncreaseQuantity,
+  onDecreaseQuantity,
+  quantity,
+  updating,
 }: PackageRowProps) {
   const perUnit = price / pillCount
   const savings = originalPrice - price
@@ -97,30 +101,50 @@ function PackageRow({
           <p className="text-base font-extrabold text-slate-900">{formatPrice(price)}</p>
           {savings > 0 && <p className="text-xs font-semibold text-red-500">Save {formatPrice(savings)}</p>}
         </div>
-        <button
-          type="button"
-          disabled={adding || !inStock}
-          onClick={() => onAddToCart(dosage, pillCount)}
-          className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
-            justAdded
-              ? 'bg-teal-50 border border-teal-300 text-teal-700'
-              : 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white hover:from-teal-500 hover:to-cyan-500 shadow-sm'
-          }`}
-        >
-          {justAdded ? (
-            <>
-              <Check className="h-4 w-4" />
-              Added
-            </>
-          ) : adding ? (
-            'Adding...'
-          ) : (
-            <>
-              <ShoppingCart className="h-4 w-4" />
-              Add
-            </>
-          )}
-        </button>
+        {quantity > 0 ? (
+          <div className="inline-flex items-center rounded-full border border-slate-200 bg-white shadow-sm">
+            <button
+              type="button"
+              disabled={updating || !inStock}
+              onClick={() => onDecreaseQuantity(dosage, pillCount, quantity)}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-l-full text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="Decrease quantity"
+            >
+              <Minus className="h-4 w-4" />
+            </button>
+            <span className="flex min-w-10 items-center justify-center text-sm font-bold text-slate-900">
+              {updating ? <Loader2 className="h-4 w-4 animate-spin text-teal-600" /> : quantity}
+            </span>
+            <button
+              type="button"
+              disabled={updating || !inStock}
+              onClick={() => onIncreaseQuantity(dosage, pillCount, quantity)}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-r-full text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="Increase quantity"
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            disabled={updating || !inStock}
+            onClick={() => onAddToCart(dosage, pillCount)}
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-600 to-cyan-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:from-teal-500 hover:to-cyan-500 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {updating ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Adding...
+              </>
+            ) : (
+              <>
+                <ShoppingCart className="h-4 w-4" />
+                Add
+              </>
+            )}
+          </button>
+        )}
       </div>
     </div>
   )
@@ -159,13 +183,14 @@ export function ProductDetailContent({ productId }: { productId: string }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { data: session } = authClient.useSession()
+  const cart = useQuery(api.cart.getMyCart)
   const addItem = useMutation(api.cart.addItem)
+  const updateItemQuantity = useMutation(api.cart.updateItemQuantity)
 
   const product = useQuery(api.products.getBySlugOrId, productId ? { identifier: productId } : 'skip')
 
   const [selectedDosage, setSelectedDosage] = useState<string | null>(null)
-  const [addingKey, setAddingKey] = useState<string | null>(null)
-  const [justAddedKey, setJustAddedKey] = useState<string | null>(null)
+  const [updatingKey, setUpdatingKey] = useState<string | null>(null)
 
   const dosages = product?.pricingMatrix?.map((d) => d.dosage) ?? product?.dosageOptions ?? []
   const hasPricingMatrix = !!(product?.pricingMatrix && product.pricingMatrix.length > 0)
@@ -181,22 +206,45 @@ export function ProductDetailContent({ productId }: { productId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product])
 
+  const getSelectionKey = (dosage?: string, pillCount?: number) => `${dosage ?? 'simple'}-${pillCount ?? ''}`
+  const getSelectionQuantity = (dosage?: string, pillCount?: number) =>
+    cart?.items.find(
+      (item) => item.productId === product?._id && item.dosage === dosage && item.pillCount === pillCount,
+    )?.quantity ?? 0
+
   const handleAddToCart = async (dosage?: string, pillCount?: number) => {
     if (!product) return
     if (!session?.user) {
       router.push(`/auth/login?next=/${product.slug ?? product._id}`)
       return
     }
-    const key = dosage ? `${dosage}-${pillCount ?? ''}` : 'simple'
+    const key = getSelectionKey(dosage, pillCount)
     try {
-      setAddingKey(key)
+      setUpdatingKey(key)
       await addItem({ productId: product._id, quantity: 1, dosage, pillCount })
-      setJustAddedKey(key)
-      setTimeout(() => setJustAddedKey(null), 2000)
-      if (!dosage) router.push('/cart')
     } finally {
-      setAddingKey(null)
+      setUpdatingKey(null)
     }
+  }
+
+  const handleDecreaseQuantity = async (dosage?: string, pillCount?: number, quantity?: number) => {
+    if (!product || !quantity) return
+    const key = getSelectionKey(dosage, pillCount)
+    try {
+      setUpdatingKey(key)
+      await updateItemQuantity({
+        productId: product._id,
+        quantity: quantity - 1,
+        dosage,
+        pillCount,
+      })
+    } finally {
+      setUpdatingKey(null)
+    }
+  }
+
+  const handleIncreaseQuantity = async (dosage?: string, pillCount?: number) => {
+    await handleAddToCart(dosage, pillCount)
   }
 
   if (product === undefined) {
@@ -282,15 +330,49 @@ export function ProductDetailContent({ productId }: { productId: string }) {
                   {formatPrice(product.price)}
                   <span className="ml-1.5 text-sm font-normal text-slate-400">per {product.unit}</span>
                 </p>
-                <button
-                  type="button"
-                  onClick={() => void handleAddToCart()}
-                  disabled={addingKey !== null || !product.inStock}
-                  className="rx-btn-primary mt-4"
-                >
-                  <ShoppingCart className="h-4 w-4" />
-                  {addingKey !== null ? 'Adding...' : 'Add to Cart'}
-                </button>
+                {getSelectionQuantity() > 0 ? (
+                  <div className="mt-4 inline-flex items-center rounded-full border border-slate-200 bg-white shadow-sm">
+                    <button
+                      type="button"
+                      disabled={updatingKey === getSelectionKey() || !product.inStock}
+                      onClick={() => void handleDecreaseQuantity(undefined, undefined, getSelectionQuantity())}
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-l-full text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-label="Decrease quantity"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </button>
+                    <span className="flex min-w-10 items-center justify-center text-sm font-bold text-slate-900">
+                      {updatingKey === getSelectionKey() ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-teal-600" />
+                      ) : (
+                        getSelectionQuantity()
+                      )}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={updatingKey === getSelectionKey() || !product.inStock}
+                      onClick={() => void handleIncreaseQuantity()}
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-r-full text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-label="Increase quantity"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => void handleAddToCart()}
+                    disabled={updatingKey !== null || !product.inStock}
+                    className="rx-btn-primary mt-4"
+                  >
+                    {updatingKey === getSelectionKey() ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ShoppingCart className="h-4 w-4" />
+                    )}
+                    {updatingKey === getSelectionKey() ? 'Adding...' : 'Add to Cart'}
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -324,7 +406,7 @@ export function ProductDetailContent({ productId }: { productId: string }) {
           <div className="space-y-2 p-4">
             {hasPricingMatrix && selectedDosageData ? (
               selectedDosageData.packages.map((pkg) => {
-                const key = `${selectedDosage}-${pkg.pillCount}`
+                const key = getSelectionKey(selectedDosage ?? undefined, pkg.pillCount)
                 return (
                   <PackageRow
                     key={key}
@@ -339,8 +421,10 @@ export function ProductDetailContent({ productId }: { productId: string }) {
                     imageAlt={product.imageAlt}
                     inStock={product.inStock}
                     onAddToCart={(d, pc) => void handleAddToCart(d, pc)}
-                    adding={addingKey === key}
-                    justAdded={justAddedKey === key}
+                    onIncreaseQuantity={(d, pc) => void handleIncreaseQuantity(d, pc)}
+                    onDecreaseQuantity={(d, pc, quantity) => void handleDecreaseQuantity(d, pc, quantity)}
+                    quantity={getSelectionQuantity(selectedDosage ?? undefined, pkg.pillCount)}
+                    updating={updatingKey === key}
                   />
                 )
               })
@@ -357,15 +441,55 @@ export function ProductDetailContent({ productId }: { productId: string }) {
                     </p>
                   )}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => void handleAddToCart(selectedDosage ?? undefined)}
-                  disabled={addingKey !== null || !product.inStock}
-                  className="rx-btn-primary"
-                >
-                  <ShoppingCart className="h-4 w-4" />
-                  {addingKey !== null ? 'Adding...' : 'Add to Cart'}
-                </button>
+                {getSelectionQuantity(selectedDosage ?? undefined) > 0 ? (
+                  <div className="inline-flex items-center rounded-full border border-slate-200 bg-white shadow-sm">
+                    <button
+                      type="button"
+                      disabled={updatingKey === getSelectionKey(selectedDosage ?? undefined) || !product.inStock}
+                      onClick={() =>
+                        void handleDecreaseQuantity(
+                          selectedDosage ?? undefined,
+                          undefined,
+                          getSelectionQuantity(selectedDosage ?? undefined),
+                        )
+                      }
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-l-full text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-label="Decrease quantity"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </button>
+                    <span className="flex min-w-10 items-center justify-center text-sm font-bold text-slate-900">
+                      {updatingKey === getSelectionKey(selectedDosage ?? undefined) ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-teal-600" />
+                      ) : (
+                        getSelectionQuantity(selectedDosage ?? undefined)
+                      )}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={updatingKey === getSelectionKey(selectedDosage ?? undefined) || !product.inStock}
+                      onClick={() => void handleIncreaseQuantity(selectedDosage ?? undefined)}
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-r-full text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-label="Increase quantity"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => void handleAddToCart(selectedDosage ?? undefined)}
+                    disabled={updatingKey !== null || !product.inStock}
+                    className="rx-btn-primary"
+                  >
+                    {updatingKey === getSelectionKey(selectedDosage ?? undefined) ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ShoppingCart className="h-4 w-4" />
+                    )}
+                    {updatingKey === getSelectionKey(selectedDosage ?? undefined) ? 'Adding...' : 'Add to Cart'}
+                  </button>
+                )}
               </div>
             )}
           </div>
