@@ -17,6 +17,7 @@ import type * as cryptoWebhook from "../cryptoWebhook.js";
 import type * as emails from "../emails.js";
 import type * as http from "../http.js";
 import type * as orders from "../orders.js";
+import type * as pricing from "../pricing.js";
 import type * as products from "../products.js";
 import type * as sampleData from "../sampleData.js";
 import type * as seed from "../seed.js";
@@ -37,6 +38,7 @@ declare const fullApi: ApiFromModules<{
   emails: typeof emails;
   http: typeof http;
   orders: typeof orders;
+  pricing: typeof pricing;
   products: typeof products;
   sampleData: typeof sampleData;
   seed: typeof seed;

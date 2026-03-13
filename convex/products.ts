@@ -2,6 +2,10 @@ import { query } from './_generated/server'
 import { v } from 'convex/values'
 import type { Doc, Id } from './_generated/dataModel'
 
+function isVisibleInStorefront(product: Doc<'products'> | null | undefined) {
+  return Boolean(product && product.isVisible !== false)
+}
+
 function normalizeSearchValue(value: string) {
   return value.trim().toLowerCase()
 }
@@ -57,7 +61,7 @@ export const listRecommended = query({
   args: {},
   handler: async (ctx) => {
     const products = await ctx.db.query('products').order('desc').collect()
-    return products.filter((p) => p.isVisible !== false && p.isRecommended === true)
+    return products.filter((p) => isVisibleInStorefront(p) && p.isRecommended === true)
   },
 })
 
@@ -66,7 +70,8 @@ export const getById = query({
     productId: v.id('products'),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.productId)
+    const product = await ctx.db.get(args.productId)
+    return isVisibleInStorefront(product) ? product : null
   },
 })
 
@@ -77,9 +82,10 @@ export const getBySlugOrId = query({
       .query('products')
       .withIndex('by_slug', (q) => q.eq('slug', args.identifier))
       .first()
-    if (bySlug) return bySlug
+    if (bySlug) return isVisibleInStorefront(bySlug) ? bySlug : null
     try {
-      return await ctx.db.get(args.identifier as Id<'products'>)
+      const product = await ctx.db.get(args.identifier as Id<'products'>)
+      return isVisibleInStorefront(product) ? product : null
     } catch {
       return null
     }
@@ -93,7 +99,7 @@ export const related = query({
   },
   handler: async (ctx, args) => {
     const product = await ctx.db.get(args.productId)
-    if (!product) {
+    if (!product || product.isVisible === false) {
       return []
     }
 
@@ -103,6 +109,8 @@ export const related = query({
       .withIndex('by_category_and_name', (q) => q.eq('category', product.category))
       .take(relatedLimit + 1)
 
-    return relatedProducts.filter((item) => item._id !== product._id && item.isVisible !== false).slice(0, relatedLimit)
+    return relatedProducts
+      .filter((item) => item._id !== product._id && isVisibleInStorefront(item))
+      .slice(0, relatedLimit)
   },
 })

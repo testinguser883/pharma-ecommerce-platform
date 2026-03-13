@@ -13,3 +13,10 @@ export function formatPrice(amount: number) {
     maximumFractionDigits: 2,
   }).format(amount)
 }
+
+export function sanitizeNextPath(path: string | null | undefined) {
+  if (!path) return '/'
+  if (!path.startsWith('/')) return '/'
+  if (path.startsWith('//')) return '/'
+  return path
+}

@@ -3,10 +3,12 @@
 @tailwind utilities;
 
 :root {
-  --brand-blue: #2b8fd4;
-  --brand-teal: #1aa196;
-  --brand-green: #29b584;
-  --brand-red: #ef4c43;
+  --brand-teal: #0d9488;
+  --brand-cyan: #0891b2;
+  --brand-green: #059669;
+  --brand-red: #ef4444;
+  --brand-dark: #0f172a;
+  --brand-violet: #7c3aed;
 }
 
 body {
@@ -21,12 +23,71 @@ body {
     Arial,
     'Apple Color Emoji',
     'Segoe UI Emoji';
+  background-color: #f1f5f9;
 }
 
+/* ── Card ─────────────────────────────────────────────────── */
+.rx-card {
+  @apply rounded-2xl bg-white shadow-sm border border-slate-100;
+}
+
+/* Legacy alias kept so nothing breaks */
 .pharma-card {
-  @apply rounded-3xl bg-white shadow-sm ring-1 ring-slate-200;
+  @apply rx-card;
 }
 
+/* ── Gradient backgrounds ─────────────────────────────────── */
 .pharma-gradient {
-  background: linear-gradient(120deg, #2e8fd2 0%, #1f7dbf 35%, #1ea6a3 100%);
+  background: linear-gradient(135deg, #0d9488 0%, #0891b2 50%, #0e7490 100%);
+}
+
+.rx-gradient-hero {
+  background: linear-gradient(135deg, #0f172a 0%, #0d2d3d 50%, #0f2027 100%);
+}
+
+.rx-gradient-card {
+  background: linear-gradient(135deg, #0d9488 0%, #0891b2 100%);
+}
+
+/* ── Buttons ──────────────────────────────────────────────── */
+.rx-btn-primary {
+  @apply inline-flex items-center justify-center gap-2 rounded-full
+         bg-gradient-to-r from-teal-600 to-cyan-600
+         px-5 py-2.5 text-sm font-semibold text-white shadow-sm
+         hover:from-teal-700 hover:to-cyan-700
+         active:scale-[0.98] transition-all duration-150
+         disabled:cursor-not-allowed disabled:opacity-60;
+}
+
+.rx-btn-ghost {
+  @apply inline-flex items-center justify-center gap-2 rounded-full
+         border border-slate-200 px-5 py-2.5 text-sm font-semibold
+         text-slate-700 hover:bg-slate-50 hover:border-slate-300
+         transition-all duration-150;
+}
+
+.rx-btn-danger {
+  @apply inline-flex items-center justify-center gap-2 rounded-full
+         border border-red-200 px-5 py-2.5 text-sm font-semibold
+         text-red-600 hover:bg-red-50
+         transition-all duration-150;
+}
+
+/* ── Form inputs ──────────────────────────────────────────── */
+.rx-input {
+  @apply w-full rounded-xl border border-slate-200 bg-white
+         px-4 py-2.5 text-sm text-slate-800 outline-none
+         ring-teal-200 placeholder:text-slate-400
+         focus:border-teal-400 focus:ring-2
+         transition-all duration-150;
+}
+
+/* ── Section label ────────────────────────────────────────── */
+.rx-label {
+  @apply text-xs font-semibold uppercase tracking-widest text-slate-400;
+}
+
+/* ── Badge ────────────────────────────────────────────────── */
+.rx-badge {
+  @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
 }

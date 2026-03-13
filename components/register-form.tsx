@@ -41,61 +41,84 @@ export function RegisterForm() {
   }
 
   return (
-    <section className="mx-auto w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h1 className="text-2xl font-bold text-slate-900">Create account</h1>
-      <p className="mt-1 text-sm text-slate-500">Register to manage prescriptions and checkout securely.</p>
+    <div className="mx-auto w-full max-w-md">
+      <div className="rounded-2xl border border-slate-100 bg-white shadow-lg overflow-hidden">
+        {/* Top accent */}
+        <div className="h-1 bg-gradient-to-r from-teal-500 to-cyan-500" />
 
-      <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-        <label className="block space-y-1 text-sm">
-          <span className="font-medium text-slate-700">Full name</span>
-          <input
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            required
-            className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none ring-sky-200 focus:border-sky-300 focus:ring-2"
-          />
-        </label>
+        <div className="p-7">
+          {/* Logo mark */}
+          <div className="mb-5 flex flex-col items-center text-center">
+            <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500 to-cyan-600 text-white shadow-lg shadow-teal-200 mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-6 w-6">
+                <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" />
+                <path d="m8.5 8.5 7 7" />
+              </svg>
+            </div>
+            <h1 className="text-xl font-extrabold text-slate-900">Create account</h1>
+            <p className="mt-0.5 text-sm text-slate-400">Join PharmaCare and order with ease.</p>
+          </div>
 
-        <label className="block space-y-1 text-sm">
-          <span className="font-medium text-slate-700">Email</span>
-          <input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            required
-            className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none ring-sky-200 focus:border-sky-300 focus:ring-2"
-          />
-        </label>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Full name</label>
+              <input
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                required
+                placeholder="John Doe"
+                className="rx-input"
+              />
+            </div>
 
-        <label className="block space-y-1 text-sm">
-          <span className="font-medium text-slate-700">Password</span>
-          <input
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            required
-            minLength={8}
-            className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none ring-sky-200 focus:border-sky-300 focus:ring-2"
-          />
-        </label>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
+                placeholder="you@example.com"
+                className="rx-input"
+              />
+            </div>
 
-        {errorMessage && <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{errorMessage}</p>}
+            <div className="space-y-1">
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+                minLength={8}
+                placeholder="Min. 8 characters"
+                className="rx-input"
+              />
+            </div>
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full rounded-full bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isSubmitting ? 'Creating account...' : 'Register'}
-        </button>
-      </form>
+            {errorMessage && (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+                {errorMessage}
+              </div>
+            )}
 
-      <p className="mt-4 text-center text-sm text-slate-600">
-        Already have an account?{' '}
-        <Link href="/auth/login" className="font-semibold text-sky-700 hover:underline">
-          Login
-        </Link>
-      </p>
-    </section>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full rounded-full bg-gradient-to-r from-teal-600 to-cyan-600 px-4 py-3 text-sm font-bold text-white shadow-sm hover:from-teal-500 hover:to-cyan-500 disabled:cursor-not-allowed disabled:opacity-60 transition-all"
+            >
+              {isSubmitting ? 'Creating account...' : 'Create account'}
+            </button>
+          </form>
+
+          <p className="mt-5 text-center text-sm text-slate-500">
+            Already have an account?{' '}
+            <Link href="/auth/login" className="font-semibold text-teal-600 hover:text-teal-500 hover:underline">
+              Login
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
   )
 }

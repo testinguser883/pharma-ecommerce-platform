@@ -1,15 +1,20 @@
 'use client'
 
-import { useState } from 'react'
+import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { useQuery } from 'convex/react'
 import { api } from '@/convex/_generated/api'
 import { CATEGORY_LIST } from '@/lib/category-list'
 import { CategorySidebar } from './category-sidebar'
 import { ImageSlider } from './image-slider'
 import { ProductGrid } from './product-grid'
+import type { Route } from 'next'
 
 export function HomePageContent() {
-  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined)
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
+  const selectedCategory = searchParams.get('category') ?? undefined
+
   const fetchedCategories = useQuery(api.categories.list)
   const recommendedProducts = useQuery(api.products.listRecommended)
   const categoryProducts = useQuery(
@@ -29,13 +34,24 @@ export function HomePageContent() {
       ? 'No recommended products yet. Ask your admin to mark some products as recommended.'
       : undefined
 
+  const handleSelectCategory = (cat: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (cat === selectedCategory) {
+      params.delete('category')
+    } else {
+      params.set('category', cat)
+    }
+    const query = params.toString()
+    router.push((query ? `${pathname}?${query}` : pathname) as Route)
+  }
+
   return (
     <div className="mx-auto grid max-w-7xl gap-4 px-4 py-5 lg:grid-cols-[260px_1fr] lg:px-6">
       <div className="order-2 lg:order-1">
         <CategorySidebar
           categories={categories}
           selectedCategory={selectedCategory}
-          onSelectCategory={(cat) => setSelectedCategory(cat === selectedCategory ? undefined : cat)}
+          onSelectCategory={handleSelectCategory}
         />
       </div>
       <div className="order-1 space-y-4 lg:order-2">

@@ -198,11 +198,11 @@ export function CheckoutPageContent() {
     }
     try {
       setIsCryptoSubmitting(true)
-      const { orderId, total } = await createPendingCryptoOrder({
+      const { orderId } = await createPendingCryptoOrder({
         billingAddress: buildBillingAddress(),
         shippingAddress: buildShippingAddress(),
       })
-      const { invoiceUrl } = await createNowPaymentsInvoice({ orderId, total })
+      const { invoiceUrl } = await createNowPaymentsInvoice({ orderId })
       window.location.href = invoiceUrl
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Failed to initiate crypto payment.')

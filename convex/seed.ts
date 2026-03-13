@@ -1,4 +1,4 @@
-import { mutation, query } from './_generated/server'
+import { internalMutation, query } from './_generated/server'
 import { CATEGORY_NAMES, SEED_PRODUCTS } from './sampleData'
 import { DEFAULT_UNIT_TYPES } from './constants'
 
@@ -15,7 +15,7 @@ export const getSeedStatus = query({
   },
 })
 
-export const seedDatabase = mutation({
+export const seedDatabase = internalMutation({
   args: {},
   handler: async (ctx) => {
     const existingCategories = await ctx.db.query('categories').take(1)

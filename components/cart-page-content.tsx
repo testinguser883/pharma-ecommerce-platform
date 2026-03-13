@@ -14,22 +14,23 @@ export function CartPageContent() {
 
   if (cart === undefined) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-6 lg:px-6">
-        <p className="text-sm text-slate-500">Loading your cart...</p>
+      <div className="mx-auto max-w-7xl px-4 py-8 lg:px-6">
+        <div className="flex items-center gap-2 text-sm text-slate-400">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
+          Loading your cart...
+        </div>
       </div>
     )
   }
 
   if (cart === null) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-10 lg:px-6">
-        <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-center">
-          <h1 className="text-2xl font-bold text-slate-900">Please sign in to access your cart</h1>
-          <p className="mt-2 text-sm text-slate-500">Your cart is persisted per authenticated account.</p>
-          <Link
-            href="/auth/login?next=/cart"
-            className="mt-5 inline-flex rounded-full bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-sky-700"
-          >
+      <div className="mx-auto max-w-3xl px-4 py-12 lg:px-6">
+        <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center">
+          <ShoppingCart className="mx-auto h-12 w-12 text-slate-300" />
+          <h1 className="mt-4 text-xl font-bold text-slate-900">Sign in to access your cart</h1>
+          <p className="mt-1 text-sm text-slate-400">Your cart is saved to your account.</p>
+          <Link href="/auth/login?next=/cart" className="rx-btn-primary mt-5">
             Login
           </Link>
         </div>
@@ -38,44 +39,47 @@ export function CartPageContent() {
   }
 
   return (
-    <div className="mx-auto grid max-w-7xl gap-5 px-4 py-6 lg:grid-cols-[1fr_320px] lg:px-6">
-      <section className="space-y-4">
-        <h1 className="text-3xl font-bold text-slate-900 md:text-2xl">Shopping Cart</h1>
+    <div className="mx-auto grid max-w-7xl gap-5 px-4 py-6 lg:grid-cols-[1fr_300px] lg:px-6">
+      <section className="space-y-3">
+        <h1 className="text-2xl font-extrabold text-slate-900">Shopping Cart</h1>
 
         {cart.items.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center">
             <ShoppingCart className="mx-auto h-10 w-10 text-slate-300" />
-            <p className="mt-3 text-slate-600">Your cart is empty.</p>
-            <Link
-              href="/products"
-              className="mt-3 inline-flex rounded-full bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700"
-            >
+            <p className="mt-3 text-slate-500">Your cart is empty.</p>
+            <Link href="/products" className="rx-btn-primary mt-4">
               Continue shopping
             </Link>
           </div>
         ) : (
           <>
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               {cart.items.map((item) => {
                 const itemKey = `${item.productId}-${item.dosage ?? ''}-${item.pillCount ?? ''}`
                 return (
-                  <li key={itemKey} className="pharma-card p-4">
-                    <div className="flex gap-3">
-                      <img src={item.image} alt={item.name} className="h-20 w-20 rounded-2xl bg-slate-50 p-2" />
+                  <li key={itemKey} className="rx-card p-4">
+                    <div className="flex gap-4">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="h-18 w-18 shrink-0 rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 p-2 h-[72px] w-[72px] object-contain"
+                      />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-slate-900">{item.name}</p>
-                        <p className="text-xs text-slate-500">{item.genericName}</p>
+                        <p className="truncate text-sm font-bold text-slate-900">{item.name}</p>
+                        {item.genericName && (
+                          <p className="text-xs text-slate-400">{item.genericName}</p>
+                        )}
                         {item.dosage && (
-                          <p className="mt-0.5 text-xs font-medium text-teal-700">
+                          <p className="mt-0.5 text-xs font-semibold text-teal-600">
                             {item.dosage}
                             {item.pillCount ? ` · ${item.pillCount} ${item.unit.split(' ')[0]}s` : ''}
                           </p>
                         )}
-                        <p className="mt-1 text-xs font-medium text-slate-600">
-                          {formatPrice(item.price)} per {item.unit}
+                        <p className="mt-0.5 text-xs text-slate-400">
+                          {formatPrice(item.price)} / {item.unit}
                         </p>
                         <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                          <div className="inline-flex items-center rounded-full border border-slate-200">
+                          <div className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50">
                             <button
                               type="button"
                               disabled={item.quantity <= 1}
@@ -87,12 +91,12 @@ export function CartPageContent() {
                                   pillCount: item.pillCount,
                                 })
                               }
-                              className="p-2 text-slate-600 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed"
+                              className="p-2 text-slate-500 hover:text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed"
                               aria-label="Decrease quantity"
                             >
-                              <Minus className="h-4 w-4" />
+                              <Minus className="h-3.5 w-3.5" />
                             </button>
-                            <span className="px-3 text-sm font-semibold">{item.quantity}</span>
+                            <span className="px-3 text-sm font-bold text-slate-800">{item.quantity}</span>
                             <button
                               type="button"
                               onClick={() =>
@@ -103,15 +107,15 @@ export function CartPageContent() {
                                   pillCount: item.pillCount,
                                 })
                               }
-                              className="p-2 text-slate-600 hover:text-slate-900"
+                              className="p-2 text-slate-500 hover:text-slate-800"
                               aria-label="Increase quantity"
                             >
-                              <Plus className="h-4 w-4" />
+                              <Plus className="h-3.5 w-3.5" />
                             </button>
                           </div>
 
                           <div className="flex items-center gap-3">
-                            <span className="text-sm font-semibold text-slate-900">{formatPrice(item.lineTotal)}</span>
+                            <span className="text-sm font-extrabold text-slate-900">{formatPrice(item.lineTotal)}</span>
                             <button
                               type="button"
                               onClick={() =>
@@ -121,7 +125,7 @@ export function CartPageContent() {
                                   pillCount: item.pillCount,
                                 })
                               }
-                              className="text-slate-400 hover:text-red-500"
+                              className="text-slate-300 hover:text-red-400 transition-colors"
                               aria-label="Remove item"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -138,39 +142,46 @@ export function CartPageContent() {
             <button
               type="button"
               onClick={() => void clearCart({})}
-              className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+              className="text-xs font-medium text-slate-400 hover:text-red-500 transition-colors"
             >
-              Clear cart
+              Clear all items
             </button>
           </>
         )}
       </section>
 
-      <aside className="pharma-card h-fit p-5">
-        <h2 className="text-lg font-bold text-slate-900">Cart Summary</h2>
-        <div className="mt-4 space-y-2 text-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-slate-600">Items</span>
-            <span className="font-medium text-slate-900">
-              {cart.items.reduce((sum, item) => sum + item.quantity, 0)}
-            </span>
+      {/* Summary sidebar */}
+      <aside className="h-fit">
+        <div className="rx-card overflow-hidden">
+          <div className="border-b border-slate-100 bg-gradient-to-r from-teal-600 to-cyan-600 px-5 py-4">
+            <h2 className="text-sm font-bold text-white">Order Summary</h2>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-slate-600">Subtotal</span>
-            <span className="font-semibold text-slate-900">{formatPrice(cart.total)}</span>
-          </div>
-          <div className="flex items-center justify-between border-t border-slate-200 pt-2">
-            <span className="font-semibold text-slate-900">Total</span>
-            <span className="text-lg font-bold text-slate-900">{formatPrice(cart.total)}</span>
+          <div className="p-5">
+            <div className="space-y-2.5 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">Items</span>
+                <span className="font-semibold text-slate-900">
+                  {cart.items.reduce((sum, item) => sum + item.quantity, 0)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">Subtotal</span>
+                <span className="font-semibold text-slate-900">{formatPrice(cart.total)}</span>
+              </div>
+              <div className="flex items-center justify-between border-t border-slate-100 pt-2.5">
+                <span className="font-bold text-slate-900">Total</span>
+                <span className="text-xl font-extrabold text-slate-900">{formatPrice(cart.total)}</span>
+              </div>
+            </div>
+
+            <Link
+              href="/checkout"
+              className="mt-5 flex w-full items-center justify-center rounded-full bg-gradient-to-r from-teal-600 to-cyan-600 px-4 py-3 text-sm font-bold text-white hover:from-teal-500 hover:to-cyan-500 transition-all shadow-sm"
+            >
+              Proceed to Checkout
+            </Link>
           </div>
         </div>
-
-        <Link
-          href="/checkout"
-          className="mt-5 inline-flex w-full justify-center rounded-full bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
-        >
-          Proceed to checkout
-        </Link>
       </aside>
     </div>
   )
