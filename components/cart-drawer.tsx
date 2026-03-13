@@ -55,11 +55,7 @@ export function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClose: () =
             <div className="mt-4 rounded-xl border border-dashed border-slate-200 p-6 text-center">
               <ShoppingBag className="mx-auto h-8 w-8 text-slate-300" />
               <p className="mt-2 text-sm font-medium text-slate-600">Sign in to access your cart</p>
-              <Link
-                href="/auth/login"
-                onClick={onClose}
-                className="rx-btn-primary mt-4"
-              >
+              <Link href="/auth/login" onClick={onClose} className="rx-btn-primary mt-4">
                 Login
               </Link>
             </div>
@@ -67,11 +63,7 @@ export function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClose: () =
             <div className="py-10 text-center">
               <ShoppingBag className="mx-auto h-10 w-10 text-slate-200" />
               <p className="mt-3 text-sm font-medium text-slate-500">Your cart is empty</p>
-              <Link
-                href="/products"
-                onClick={onClose}
-                className="rx-btn-primary mt-4"
-              >
+              <Link href="/products" onClick={onClose} className="rx-btn-primary mt-4">
                 Browse medicines
               </Link>
             </div>
@@ -131,9 +123,7 @@ export function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClose: () =
                             </button>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold text-slate-900">
-                              {formatPrice(item.lineTotal)}
-                            </span>
+                            <span className="text-sm font-bold text-slate-900">{formatPrice(item.lineTotal)}</span>
                             <button
                               type="button"
                               onClick={() =>

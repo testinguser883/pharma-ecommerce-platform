@@ -106,17 +106,15 @@ export function SiteFooter() {
         {/* Divider */}
         <div className="mt-10 border-t border-slate-800 pt-6">
           <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:justify-between sm:text-left">
-            <p className="text-xs text-slate-500">
-              © {new Date().getFullYear()} PharmaCare. All rights reserved.
-            </p>
+            <p className="text-xs text-slate-500">© {new Date().getFullYear()} PharmaCare. All rights reserved.</p>
             <div className="flex items-center gap-1.5 text-xs text-slate-600">
               <Shield className="h-3 w-3 text-teal-600" />
               Secure & encrypted transactions
             </div>
           </div>
           <p className="mt-3 text-xs text-slate-600 text-center max-w-2xl mx-auto">
-            Please note: after contacting us you will receive an automatic confirmation. Our support team will reply ASAP.
-            If you did not receive a confirmation, your message may not have reached us — please try again.
+            Please note: after contacting us you will receive an automatic confirmation. Our support team will reply
+            ASAP. If you did not receive a confirmation, your message may not have reached us — please try again.
           </p>
         </div>
       </div>

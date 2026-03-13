@@ -51,7 +51,9 @@ export function ProductCard({ product }: { product: Doc<'products'> }) {
 
           {/* Info — fixed height so name/price area is uniform */}
           <div className="px-4 pt-3 pb-2">
-            <h3 className="text-sm font-bold text-slate-900 leading-tight line-clamp-2 min-h-[2.5rem]">{product.name}</h3>
+            <h3 className="text-sm font-bold text-slate-900 leading-tight line-clamp-2 min-h-[2.5rem]">
+              {product.name}
+            </h3>
             <p className="mt-0.5 text-xs text-slate-400 truncate">{product.genericName ?? '\u00A0'}</p>
             <p className="mt-2 text-base font-extrabold text-slate-900">
               {formatPrice(fromPrice.price)}

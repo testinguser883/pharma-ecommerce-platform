@@ -42,18 +42,14 @@ export function CategorySidebar({
           <span className="text-sm font-medium text-slate-700">{selectedLabel}</span>
         </div>
         <ChevronDown
-          className={cn('h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200', mobileOpen && 'rotate-180')}
+          className={cn(
+            'h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200',
+            mobileOpen && 'rotate-180',
+          )}
         />
       </button>
 
-      <ul
-        id="category-sidebar-list"
-        className={cn(
-          'py-2',
-          mobileOpen ? 'block' : 'hidden',
-          'lg:block',
-        )}
-      >
+      <ul id="category-sidebar-list" className={cn('py-2', mobileOpen ? 'block' : 'hidden', 'lg:block')}>
         {categories.map((category) => {
           const isActive = selectedCategory === category.name
           return (
