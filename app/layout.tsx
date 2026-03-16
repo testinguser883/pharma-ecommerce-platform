@@ -5,7 +5,7 @@ import './globals.css'
 import { api } from '@/convex/_generated/api'
 import { ConvexClientProvider } from './convex-client-provider'
 import { getToken } from '@/lib/auth-server'
-import { buildHomeSchemas } from '@/lib/home-schema'
+import { buildProductSchemas, buildSiteSchemas } from '@/lib/home-schema'
 import { siteInputs } from '@/lib/site-inputs'
 
 export const dynamic = 'force-dynamic'
@@ -28,13 +28,13 @@ export default async function RootLayout({
   const pathname = (await headers()).get('x-pathname') ?? ''
   const isHomePage = pathname === '/'
   const googleTagId = isHomePage ? siteInputs.home.googleTagId.trim() : ''
-  let schemas: unknown[] = []
+  let schemas: unknown[] = buildSiteSchemas()
 
   if (isHomePage) {
     const recommendedProducts = await fetchQuery(api.products.listRecommended)
     const fallbackProducts =
       recommendedProducts.length > 0 ? recommendedProducts : await fetchQuery(api.products.list, { limit: 8 })
-    schemas = buildHomeSchemas(fallbackProducts)
+    schemas = [...schemas, ...buildProductSchemas(fallbackProducts)]
   }
 
   return (

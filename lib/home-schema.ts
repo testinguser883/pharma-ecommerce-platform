@@ -40,7 +40,7 @@ function getProductOfferPrice(product: HomeProduct) {
   return Number((product.price * (1 - product.discount / 100)).toFixed(2))
 }
 
-export function buildHomeSchemas(products: HomeProduct[]) {
+export function buildSiteSchemas() {
   const schema = siteInputs.home.schema
   if (!schema.enabled) return []
 
@@ -92,34 +92,43 @@ export function buildHomeSchemas(products: HomeProduct[]) {
       }
     : null
 
-  const productSchemas = schema.products.enabled
-    ? products.slice(0, schema.products.maxItems).map((product) => {
-        const identifier = product.slug ?? product._id
-        const offerPrice = getProductOfferPrice(product)
+  return [organization, breadcrumbList, localBusiness].filter(Boolean)
+}
 
-        return {
-          '@context': 'https://schema.org/',
-          '@type': 'Product',
-          'name': product.name,
-          'image': toAbsoluteUrl(product.image, siteUrl),
-          'description': product.seoDescription || product.description,
-          'brand': {
-            '@type': 'Brand',
-            'name': schema.organization.name,
-          },
-          'offers': {
-            '@type': 'Offer',
-            'priceCurrency': schema.products.currency,
-            'price': offerPrice.toFixed(2),
-            'availability': product.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-            'priceValidUntil': schema.products.priceValidUntil,
-            'url': toAbsoluteUrl(`/${identifier}`, siteUrl),
-          },
-        }
-      })
-    : []
+export function buildProductSchemas(products: HomeProduct[]) {
+  const schema = siteInputs.home.schema
+  if (!schema.enabled || !schema.products.enabled) return []
 
-  return [organization, breadcrumbList, localBusiness, ...(productSchemas.length > 0 ? [productSchemas] : [])].filter(
-    Boolean,
-  )
+  const siteUrl = schema.organization.url
+
+  const productSchemas = products.slice(0, schema.products.maxItems).map((product) => {
+    const identifier = product.slug ?? product._id
+    const offerPrice = getProductOfferPrice(product)
+
+    return {
+      '@context': 'https://schema.org/',
+      '@type': 'Product',
+      'name': product.name,
+      'image': toAbsoluteUrl(product.image, siteUrl),
+      'description': product.seoDescription || product.description,
+      'brand': {
+        '@type': 'Brand',
+        'name': schema.organization.name,
+      },
+      'offers': {
+        '@type': 'Offer',
+        'priceCurrency': schema.products.currency,
+        'price': offerPrice.toFixed(2),
+        'availability': product.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        'priceValidUntil': schema.products.priceValidUntil,
+        'url': toAbsoluteUrl(`/${identifier}`, siteUrl),
+      },
+    }
+  })
+
+  return productSchemas.length > 0 ? [productSchemas] : []
+}
+
+export function buildHomeSchemas(products: HomeProduct[]) {
+  return [...buildSiteSchemas(), ...buildProductSchemas(products)]
 }
