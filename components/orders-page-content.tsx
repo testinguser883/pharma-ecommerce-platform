@@ -149,6 +149,62 @@ export function OrdersPageContent() {
                   {/* Status tracker */}
                   <OrderStatusTracker status={order.status} />
 
+                  {/* Crypto payment breakdown */}
+                  {order.paymentMethod === 'crypto' && order.payAmount != null && order.payCurrency && (
+                    <div className="mt-4 rounded-xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm">
+                      <p className="mb-2 font-semibold text-violet-800">Crypto Payment Details</p>
+                      <div className="space-y-1 text-xs text-slate-600">
+                        <div className="flex justify-between">
+                          <span>Required</span>
+                          <span className="font-semibold text-slate-800">{order.payAmount} {order.payCurrency.toUpperCase()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Received</span>
+                          <span className="font-semibold text-slate-800">{order.amountPaid ?? 0} {order.payCurrency.toUpperCase()}</span>
+                        </div>
+                        {/* Progress bar */}
+                        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-violet-200">
+                          <div
+                            className="h-full rounded-full bg-violet-500 transition-all"
+                            style={{ width: `${Math.min(100, (((order.amountPaid ?? 0) / order.payAmount) * 100))}%` }}
+                          />
+                        </div>
+                        {(order.amountPaid ?? 0) < order.payAmount && (
+                          <div className="flex justify-between text-red-600">
+                            <span>Remaining</span>
+                            <span className="font-semibold">{(order.payAmount - (order.amountPaid ?? 0)).toFixed(8)} {order.payCurrency.toUpperCase()}</span>
+                          </div>
+                        )}
+                      </div>
+                      {order.status === 'pending_payment' && order.invoiceUrl && (
+                        <a
+                          href={order.invoiceUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-3 flex items-center justify-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-700"
+                        >
+                          Complete Payment →
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Pending crypto payment with no IPN yet — show Complete Payment button */}
+                  {order.paymentMethod === 'crypto' && order.status === 'pending_payment' && order.payAmount == null && order.invoiceUrl && (
+                    <div className="mt-4 rounded-xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm">
+                      <p className="mb-2 font-semibold text-violet-800">Payment Pending</p>
+                      <p className="mb-3 text-xs text-slate-500">Your payment has not been received yet.</p>
+                      <a
+                        href={order.invoiceUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-700"
+                      >
+                        Go to Payment Page →
+                      </a>
+                    </div>
+                  )}
+
                   {/* Items */}
                   <ul className="mt-5 divide-y divide-slate-100">
                     {order.items.map((item) => (

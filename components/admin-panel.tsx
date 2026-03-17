@@ -954,6 +954,23 @@ function OrderDetailModal({
                   <dd className="font-mono text-slate-700">{order.nowPaymentsId}</dd>
                 </div>
               )}
+              {order.payAmount != null && order.payCurrency && (
+                <>
+                  <div>
+                    <dt className="text-slate-400">Expected</dt>
+                    <dd className="font-semibold text-slate-700">{order.payAmount} {order.payCurrency.toUpperCase()}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-slate-400">Received</dt>
+                    <dd className={`font-semibold ${(order.amountPaid ?? 0) < order.payAmount ? 'text-red-600' : 'text-green-600'}`}>
+                      {order.amountPaid ?? 0} {order.payCurrency.toUpperCase()}
+                      {(order.amountPaid ?? 0) < order.payAmount && (
+                        <span className="ml-1 text-red-400">(short by {(order.payAmount - (order.amountPaid ?? 0)).toFixed(8)})</span>
+                      )}
+                    </dd>
+                  </div>
+                </>
+              )}
             </dl>
           </div>
         </div>

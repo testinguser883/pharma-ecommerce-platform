@@ -235,6 +235,8 @@ export const createNowPaymentsInvoice = action({
         success_url: `${siteUrl}/orders`,
         cancel_url: `${siteUrl}/checkout`,
         ipn_callback_url: convexSiteUrl ? `${convexSiteUrl}/nowpayments-ipn` : undefined,
+        is_fee_paid_by_user: false,
+        expiration_estimate_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       }),
     })
 
@@ -245,8 +247,19 @@ export const createNowPaymentsInvoice = action({
     }
 
     const data = (await response.json()) as { invoice_url: string }
+    await ctx.runMutation(internal.orders.saveInvoiceUrl, {
+      orderId: args.orderId,
+      invoiceUrl: data.invoice_url,
+    })
     await ctx.runMutation(internal.cart.clearCartForUser, { userId })
     return { invoiceUrl: data.invoice_url }
+  },
+})
+
+export const saveInvoiceUrl = internalMutation({
+  args: { orderId: v.id('orders'), invoiceUrl: v.string() },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.orderId, { invoiceUrl: args.invoiceUrl })
   },
 })
 
@@ -254,6 +267,9 @@ export const confirmCryptoPayment = internalMutation({
   args: {
     orderId: v.id('orders'),
     nowPaymentsId: v.string(),
+    amountPaid: v.optional(v.number()),
+    payAmount: v.optional(v.number()),
+    payCurrency: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const order = await ctx.db.get(args.orderId)
@@ -263,9 +279,33 @@ export const confirmCryptoPayment = internalMutation({
     await ctx.db.patch(args.orderId, {
       status: 'paid',
       nowPaymentsId: args.nowPaymentsId,
+      ...(args.amountPaid !== undefined && { amountPaid: args.amountPaid }),
+      ...(args.payAmount !== undefined && { payAmount: args.payAmount }),
+      ...(args.payCurrency !== undefined && { payCurrency: args.payCurrency }),
     })
     await ctx.scheduler.runAfter(0, internal.emails.sendOrderConfirmationEmails, {
       orderId: args.orderId,
+    })
+  },
+})
+
+export const updatePartialCryptoPayment = internalMutation({
+  args: {
+    orderId: v.id('orders'),
+    nowPaymentsId: v.string(),
+    amountPaid: v.number(),
+    payAmount: v.number(),
+    payCurrency: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const order = await ctx.db.get(args.orderId)
+    if (!order || order.paymentMethod !== 'crypto') return
+    if (order.status !== 'pending_payment') return
+    await ctx.db.patch(args.orderId, {
+      nowPaymentsId: args.nowPaymentsId,
+      amountPaid: args.amountPaid,
+      payAmount: args.payAmount,
+      payCurrency: args.payCurrency,
     })
   },
 })

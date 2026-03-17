@@ -46,12 +46,29 @@ export const handleIPN = httpAction(async (ctx, request) => {
     payment_status: string
     order_id: string
     payment_id: number
+    actually_paid?: number
+    pay_amount?: number
+    pay_currency?: string
   }
+
+  const orderId = payload.order_id as Id<'orders'>
+  const nowPaymentsId = String(payload.payment_id)
 
   if (payload.payment_status === 'finished') {
     await ctx.runMutation(internal.orders.confirmCryptoPayment, {
-      orderId: payload.order_id as Id<'orders'>,
-      nowPaymentsId: String(payload.payment_id),
+      orderId,
+      nowPaymentsId,
+      amountPaid: payload.actually_paid,
+      payAmount: payload.pay_amount,
+      payCurrency: payload.pay_currency,
+    })
+  } else if (payload.payment_status === 'partially_paid') {
+    await ctx.runMutation(internal.orders.updatePartialCryptoPayment, {
+      orderId,
+      nowPaymentsId,
+      amountPaid: payload.actually_paid ?? 0,
+      payAmount: payload.pay_amount ?? 0,
+      payCurrency: payload.pay_currency ?? '',
     })
   }
 
