@@ -521,6 +521,11 @@ export function CheckoutPageContent() {
           </div>
         </div>
 
+        {/* Withdrawal fee warning */}
+        <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          ⚠️ If your exchange charges a withdrawal fee, add that fee <strong>on top of</strong> the shown amount when sending. Sending less than required will result in a partial payment and your order will not be confirmed automatically.
+        </p>
+
         {/* Action button */}
         <div className="flex flex-wrap items-center gap-3">
           <button

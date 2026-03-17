@@ -176,6 +176,11 @@ export function OrdersPageContent() {
                           </div>
                         )}
                       </div>
+                      {order.status === 'pending_payment' && (order.amountPaid ?? 0) < (order.payAmount ?? 0) && (
+                        <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                          ⚠️ Your exchange may have deducted a withdrawal fee from the sent amount. When sending the remaining balance, add your exchange&apos;s withdrawal fee on top to avoid this happening again.
+                        </p>
+                      )}
                       {order.status === 'pending_payment' && order.invoiceUrl && (
                         <a
                           href={order.invoiceUrl}
@@ -193,7 +198,10 @@ export function OrdersPageContent() {
                   {order.paymentMethod === 'crypto' && order.status === 'pending_payment' && order.payAmount == null && order.invoiceUrl && (
                     <div className="mt-4 rounded-xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm">
                       <p className="mb-2 font-semibold text-violet-800">Payment Pending</p>
-                      <p className="mb-3 text-xs text-slate-500">Your payment has not been received yet.</p>
+                      <p className="mb-2 text-xs text-slate-500">Your payment has not been received yet.</p>
+                      <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                        ⚠️ If your exchange shows a withdrawal fee, you must send that fee <strong>on top of</strong> the required amount — otherwise your exchange will deduct it from what NowPayments receives, causing a partial payment.
+                      </p>
                       <a
                         href={order.invoiceUrl}
                         target="_blank"
