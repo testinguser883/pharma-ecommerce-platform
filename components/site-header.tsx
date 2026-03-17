@@ -110,7 +110,7 @@ export function SiteHeader() {
                 href="/admin"
                 className="px-3 py-2 text-sm font-semibold text-teal-400 hover:text-teal-300 hover:bg-teal-950/50 rounded-lg transition-all duration-150"
               >
-                Admin
+                Admin Console
               </Link>
             )}
           </nav>

@@ -108,7 +108,7 @@ export function AdminPanel() {
               <ArrowLeft className="h-4 w-4" />
               Shop
             </Link>
-            <h1 className="text-xl font-bold text-slate-900">Admin Panel</h1>
+            <h1 className="text-xl font-bold text-slate-900">Admin Console</h1>
           </div>
 
           <div className="flex flex-wrap gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
