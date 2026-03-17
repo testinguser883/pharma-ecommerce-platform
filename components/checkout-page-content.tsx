@@ -34,9 +34,9 @@ type ShippingForm = {
 
 const CRYPTO_COINS = [
   { value: 'btc', label: 'Bitcoin', symbol: 'BTC', color: 'text-orange-500' },
-  // { value: 'eth', label: 'Ethereum', symbol: 'ETH', color: 'text-violet-500' },
-  // { value: 'shib', label: 'Shiba Inu', symbol: 'SHIB', color: 'text-red-500' },
   { value: 'doge', label: 'Dogecoin', symbol: 'DOGE', color: 'text-yellow-500' },
+  { value: 'ltc', label: 'Litecoin', symbol: 'LTC', color: 'text-slate-400' },
+  { value: 'usdttrc20', label: 'USDT (Tron)', symbol: 'USDT', color: 'text-green-500' },
 ] as const
 
 const MONTHS = [
