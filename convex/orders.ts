@@ -236,7 +236,6 @@ export const createNowPaymentsInvoice = action({
         cancel_url: `${siteUrl}/checkout`,
         ipn_callback_url: convexSiteUrl ? `${convexSiteUrl}/nowpayments-ipn` : undefined,
         is_fee_paid_by_user: false,
-        expiration_estimate_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       }),
     })
 
