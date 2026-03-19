@@ -415,67 +415,9 @@ export function ProductDetailContent({ productId }: { productId: string }) {
                 })}
               </>
             ) : (
-              <div className="flex items-center justify-between rounded-xl bg-slate-50 p-5">
-                <div>
-                  <p className="text-2xl font-extrabold text-slate-900">
-                    {formatPrice(product.price * (1 - product.discount / 100))}
-                    <span className="ml-1.5 text-sm font-normal text-slate-400">per {product.unit}</span>
-                  </p>
-                  {selectedDosage && (
-                    <p className="mt-1 text-sm text-slate-500">
-                      Dosage: <strong>{selectedDosage}</strong>
-                    </p>
-                  )}
-                </div>
-                {getSelectionQuantity(selectedDosage ?? undefined) > 0 ? (
-                  <div className="inline-flex items-center rounded-full border border-slate-200 bg-white shadow-sm">
-                    <button
-                      type="button"
-                      disabled={updatingKey === getSelectionKey(selectedDosage ?? undefined) || !product.inStock}
-                      onClick={() =>
-                        void handleDecreaseQuantity(
-                          selectedDosage ?? undefined,
-                          undefined,
-                          getSelectionQuantity(selectedDosage ?? undefined),
-                        )
-                      }
-                      className="inline-flex h-11 w-11 items-center justify-center rounded-l-full text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
-                      aria-label="Decrease quantity"
-                    >
-                      <Minus className="h-4 w-4" />
-                    </button>
-                    <span className="flex min-w-10 items-center justify-center text-sm font-bold text-slate-900">
-                      {updatingKey === getSelectionKey(selectedDosage ?? undefined) ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-teal-600" />
-                      ) : (
-                        getSelectionQuantity(selectedDosage ?? undefined)
-                      )}
-                    </span>
-                    <button
-                      type="button"
-                      disabled={updatingKey === getSelectionKey(selectedDosage ?? undefined) || !product.inStock}
-                      onClick={() => void handleIncreaseQuantity(selectedDosage ?? undefined)}
-                      className="inline-flex h-11 w-11 items-center justify-center rounded-r-full text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
-                      aria-label="Increase quantity"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => void handleAddToCart(selectedDosage ?? undefined)}
-                    disabled={updatingKey !== null || !product.inStock}
-                    className="rx-btn-primary"
-                  >
-                    {updatingKey === getSelectionKey(selectedDosage ?? undefined) ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <ShoppingCart className="h-4 w-4" />
-                    )}
-                    {updatingKey === getSelectionKey(selectedDosage ?? undefined) ? 'Adding...' : 'Add to Cart'}
-                  </button>
-                )}
+              <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center">
+                <p className="text-sm font-semibold text-slate-500">Pricing not available for this dosage.</p>
+                <p className="mt-1 text-xs text-slate-400">Please check back later or contact us for pricing.</p>
               </div>
             )}
           </div>
