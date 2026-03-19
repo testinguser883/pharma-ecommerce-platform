@@ -258,23 +258,10 @@ export const generateUploadUrlInternal = internalMutation({
   },
 })
 
-// Public: verifies Cloudflare Turnstile, then generates the upload URL
+// Public: generates the upload URL (Cloudflare Turnstile is verified at the Next.js API layer)
 export const generatePaymentProofUploadUrl = action({
   args: { orderId: v.id('orders'), turnstileToken: v.string() },
   handler: async (ctx, args): Promise<string> => {
-    const captchaEnabled = process.env.CAPTCHA_ENABLED !== 'false'
-    if (captchaEnabled) {
-      const secretKey = process.env.TURNSTILE_SECRET_KEY
-      if (!secretKey) throw new Error('CAPTCHA not configured on the server.')
-      const res = await fetch('https://challenges.cloudflare.com/turnstile/v1/siteverify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ secret: secretKey, response: args.turnstileToken }),
-      })
-      if (!res.ok) throw new Error(`CAPTCHA service error: ${res.status}`)
-      const result = (await res.json()) as { success: boolean }
-      if (!result.success) throw new Error('CAPTCHA verification failed. Please try again.')
-    }
     return await ctx.runMutation(internal.orders.generateUploadUrlInternal, { orderId: args.orderId })
   },
 })
