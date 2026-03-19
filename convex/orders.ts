@@ -270,7 +270,7 @@ export const generatePaymentProofUploadUrl = action({
     const res = await fetch('https://challenges.cloudflare.com/turnstile/v1/siteverify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: params,
+      body: params.toString(),
     })
     const result = (await res.json()) as { success: boolean }
     if (!result.success) throw new Error('CAPTCHA verification failed. Please try again.')
