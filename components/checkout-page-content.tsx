@@ -103,10 +103,42 @@ const BTC_PRICE_REFRESH_MS = 20 * 60 * 1000 // 20 minutes
 
 
 async function fetchBtcPriceUsd(): Promise<number> {
-  const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT')
-  if (!res.ok) throw new Error('Failed to fetch BTC price')
-  const data = (await res.json()) as { price: string }
-  return parseFloat(data.price)
+  const sources: Array<() => Promise<number>> = [
+    async () => {
+      const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT')
+      if (!res.ok) throw new Error('Binance failed')
+      const data = (await res.json()) as { price: string }
+      return parseFloat(data.price)
+    },
+    async () => {
+      const res = await fetch('https://api.kraken.com/0/public/Ticker?pair=XBTUSD')
+      if (!res.ok) throw new Error('Kraken failed')
+      const data = (await res.json()) as { result: { XXBTZUSD: { c: [string] } } }
+      return parseFloat(data.result.XXBTZUSD.c[0])
+    },
+    async () => {
+      const res = await fetch('https://api.coinbase.com/v2/prices/BTC-USD/spot')
+      if (!res.ok) throw new Error('Coinbase failed')
+      const data = (await res.json()) as { data: { amount: string } }
+      return parseFloat(data.data.amount)
+    },
+    async () => {
+      const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd')
+      if (!res.ok) throw new Error('CoinGecko failed')
+      const data = (await res.json()) as { bitcoin: { usd: number } }
+      return data.bitcoin.usd
+    },
+  ]
+
+  for (const source of sources) {
+    try {
+      const price = await source()
+      if (price > 0) return price
+    } catch {
+      // try next source
+    }
+  }
+  throw new Error('Failed to fetch BTC price from all sources')
 }
 
 function BtcPaymentPanel({

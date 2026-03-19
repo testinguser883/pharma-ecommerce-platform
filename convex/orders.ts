@@ -198,9 +198,6 @@ export const createBtcOrder = mutation({
       shippingAddress: args.shippingAddress,
     })
 
-    // Clear cart
-    await ctx.db.patch(cart._id, { items: [], total: 0, updatedAt: Date.now() })
-
     return { orderId, total }
   },
 })
@@ -331,6 +328,15 @@ export const savePaymentProof = mutation({
       paymentProofUploadedAt: Date.now(),
       status: 'payment_review',
     })
+
+    // Clear the cart now that payment proof is submitted
+    const cart = await ctx.db
+      .query('carts')
+      .withIndex('by_user_id', (q) => q.eq('userId', userId))
+      .unique()
+    if (cart) {
+      await ctx.db.patch(cart._id, { items: [], total: 0, updatedAt: Date.now() })
+    }
   },
 })
 
