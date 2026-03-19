@@ -168,7 +168,8 @@ function BtcPaymentPanel({
   const refreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Turnstile + honeypot
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+  const captchaEnabled = process.env.NEXT_PUBLIC_CAPTCHA_ENABLED !== 'false'
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(captchaEnabled ? null : 'bypass')
   const turnstileRef = useRef<TurnstileInstance>(null)
   const [honeypot, setHoneypot] = useState('')
 
@@ -344,7 +345,7 @@ function BtcPaymentPanel({
         </div>
 
         {/* Cloudflare Turnstile */}
-        {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+        {captchaEnabled && process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
           <div className="mb-3">
             <Turnstile
               ref={turnstileRef}
@@ -390,7 +391,7 @@ function BtcPaymentPanel({
             </>
           )}
         </button>
-        {!turnstileToken && !uploading && (
+        {captchaEnabled && !turnstileToken && !uploading && (
           <p className="mt-2 text-xs text-slate-400">Complete the verification above to enable upload.</p>
         )}
         {uploadError && <p className="mt-2 text-xs text-red-600">{uploadError}</p>}

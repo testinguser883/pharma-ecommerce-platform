@@ -262,18 +262,21 @@ export const generateUploadUrlInternal = internalMutation({
 export const generatePaymentProofUploadUrl = action({
   args: { orderId: v.id('orders'), turnstileToken: v.string() },
   handler: async (ctx, args): Promise<string> => {
-    const secretKey = process.env.TURNSTILE_SECRET_KEY
-    if (!secretKey) throw new Error('CAPTCHA not configured on the server.')
-    const params = new URLSearchParams()
-    params.append('secret', secretKey)
-    params.append('response', args.turnstileToken)
-    const res = await fetch('https://challenges.cloudflare.com/turnstile/v1/siteverify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: params.toString(),
-    })
-    const result = (await res.json()) as { success: boolean }
-    if (!result.success) throw new Error('CAPTCHA verification failed. Please try again.')
+    const captchaEnabled = process.env.CAPTCHA_ENABLED !== 'false'
+    if (captchaEnabled) {
+      const secretKey = process.env.TURNSTILE_SECRET_KEY
+      if (!secretKey) throw new Error('CAPTCHA not configured on the server.')
+      const params = new URLSearchParams()
+      params.append('secret', secretKey)
+      params.append('response', args.turnstileToken)
+      const res = await fetch('https://challenges.cloudflare.com/turnstile/v1/siteverify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString(),
+      })
+      const result = (await res.json()) as { success: boolean }
+      if (!result.success) throw new Error('CAPTCHA verification failed. Please try again.')
+    }
     return await ctx.runMutation(internal.orders.generateUploadUrlInternal, { orderId: args.orderId })
   },
 })

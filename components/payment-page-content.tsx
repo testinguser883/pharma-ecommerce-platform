@@ -47,7 +47,8 @@ export function PaymentPage({ orderId }: { orderId: string }) {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Turnstile
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+  const captchaEnabled = process.env.NEXT_PUBLIC_CAPTCHA_ENABLED !== 'false'
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(captchaEnabled ? null : 'bypass')
   const turnstileRef = useRef<TurnstileInstance>(null)
 
   // Honeypot
@@ -268,7 +269,7 @@ export function PaymentPage({ orderId }: { orderId: string }) {
             </div>
 
             {/* Turnstile widget */}
-            {siteKey && (
+            {captchaEnabled && siteKey && (
               <Turnstile
                 ref={turnstileRef}
                 siteKey={siteKey}
@@ -295,7 +296,7 @@ export function PaymentPage({ orderId }: { orderId: string }) {
               )}
             </button>
 
-            {!turnstileToken && !uploading && (
+            {captchaEnabled && !turnstileToken && !uploading && (
               <p className="text-xs text-slate-400">Complete the verification above to enable upload.</p>
             )}
             {uploadError && <p className="text-xs text-red-600">{uploadError}</p>}
