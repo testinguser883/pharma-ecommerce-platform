@@ -1,6 +1,7 @@
 'use client'
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { useMutation, useQuery } from 'convex/react'
 import { api } from '@/convex/_generated/api'
 import type { Id } from '@/convex/_generated/dataModel'
@@ -326,9 +327,9 @@ function BtcPaymentPanel({
         {uploadError && <p className="mt-2 text-xs text-red-600">{uploadError}</p>}
         <p className="mt-3 text-xs text-slate-400">
           You can also upload proof later from your{' '}
-          <a href="/orders" className="font-medium text-sky-600 underline underline-offset-2">
+          <Link href="/orders" className="font-medium text-sky-600 underline underline-offset-2">
             Orders page
-          </a>
+          </Link>
           .
         </p>
       </div>
@@ -477,9 +478,9 @@ export function CheckoutPageContent() {
           <div className="mx-auto max-w-lg rounded-2xl border border-green-200 bg-green-50 p-8 text-center shadow-sm">
             <p className="text-lg font-bold text-green-800">Payment Proof Submitted!</p>
             <p className="mt-2 text-sm text-green-700">We'll verify and confirm your order shortly.</p>
-            <a href="/orders" className="mt-5 inline-block rounded-full bg-green-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-green-700">
+            <Link href="/orders" className="mt-5 inline-block rounded-full bg-green-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-green-700">
               View My Orders
-            </a>
+            </Link>
           </div>
         )}
       </div>

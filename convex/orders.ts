@@ -328,7 +328,9 @@ export const adminMarkPartialPayment = internalMutation({
   handler: async (ctx, args) => {
     const order = await ctx.db.get(args.orderId)
     if (!order) return
-    const amountPending = Number((order.total - args.amountReceived).toFixed(2))
+    // Accumulate previously received amounts so repeated partial payments are tracked correctly
+    const totalReceived = Number(((order.partialAmountReceived ?? 0) + args.amountReceived).toFixed(2))
+    const amountPending = Number((order.total - totalReceived).toFixed(2))
     const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000
     const historyEntry =
       order.paymentProofStorageId
@@ -342,7 +344,7 @@ export const adminMarkPartialPayment = internalMutation({
         : null
     await ctx.db.patch(args.orderId, {
       status: 'partial_payment',
-      partialAmountReceived: args.amountReceived,
+      partialAmountReceived: totalReceived,
       partialAmountPending: amountPending,
       partialPaymentDueAt: Date.now() + thirtyDaysMs,
       adminNote: args.adminNote,

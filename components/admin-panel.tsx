@@ -31,7 +31,7 @@ import {
   Users,
 } from 'lucide-react'
 import { api } from '@/convex/_generated/api'
-import type { Doc } from '@/convex/_generated/dataModel'
+import type { Doc, Id } from '@/convex/_generated/dataModel'
 import { AdminProductForm, type ProductFormData } from './admin-product-form'
 import { formatPrice } from '@/lib/utils'
 
@@ -451,51 +451,101 @@ function ProductRow({ product, onEdit, onDelete, onToggleStock, onToggleVisibili
   )
 }
 
+// ── Payment proof thumbnail (only shown for payment_review orders) ────────────
+
+function PaymentProofThumb({ orderId }: { orderId: Id<'orders'> }) {
+  const url = useQuery(api.admin.getOrderPaymentProofUrl, { id: orderId })
+  if (!url) return <div className="h-14 w-14 animate-pulse rounded-lg bg-slate-200" />
+  return (
+    <a href={url} target="_blank" rel="noreferrer" className="block shrink-0">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={url}
+        alt="Payment proof"
+        className="h-14 w-14 rounded-lg border border-slate-200 object-cover shadow-sm hover:opacity-80 transition-opacity"
+      />
+    </a>
+  )
+}
+
 // ── Orders tab ────────────────────────────────────────────────────────────────
 
 function OrdersTab() {
   const orders = useQuery(api.admin.listAllOrders)
   const updateStatus = useMutation(api.admin.updateOrderStatus)
   const updateTracking = useMutation(api.admin.updateOrderTracking)
+  const confirmPayment = useMutation(api.admin.adminConfirmPayment)
+  const markPartial = useMutation(api.admin.adminMarkPartialPayment)
+  const rejectPayment = useMutation(api.admin.adminRejectPayment)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [savingTrackingId, setSavingTrackingId] = useState<string | null>(null)
-  const [viewingOrder, setViewingOrder] = useState<Doc<'orders'> | null>(null)
+  const [viewingOrderId, setViewingOrderId] = useState<Doc<'orders'>['_id'] | null>(null)
+  const [reviewActionId, setReviewActionId] = useState<string | null>(null)
+  const [reviewMode, setReviewMode] = useState<'none' | 'partial' | 'reject'>('none')
+  const [reviewPartialAmount, setReviewPartialAmount] = useState('')
+  const [reviewNote, setReviewNote] = useState('')
+  const [reviewLoading, setReviewLoading] = useState(false)
+  // Derive viewing order from the live reactive query so the modal always reflects
+  // the latest DB state without needing manual state sync after mutations.
+  const viewingOrder = orders?.find((o) => o._id === viewingOrderId) ?? null
 
   const handleStatusChange = async (id: Doc<'orders'>['_id'], status: Doc<'orders'>['status']) => {
     setUpdatingId(id)
     try {
       await updateStatus({ id, status })
-      // keep modal in sync if it's open for this order
-      if (viewingOrder?._id === id) {
-        setViewingOrder((prev) => (prev ? { ...prev, status } : null))
-      }
     } finally {
       setUpdatingId(null)
     }
   }
 
+  const openReview = (id: string) => {
+    setReviewActionId(id)
+    setReviewMode('none')
+    setReviewPartialAmount('')
+    setReviewNote('')
+  }
+
+  const handleReviewConfirmPaid = async (order: Doc<'orders'>) => {
+    setReviewLoading(true)
+    try {
+      await confirmPayment({ id: order._id })
+    } finally {
+      setReviewLoading(false)
+      setReviewActionId(null)
+    }
+  }
+
+  const handleReviewPartial = async (order: Doc<'orders'>) => {
+    const remaining = order.partialAmountPending ?? order.total
+    const received = parseFloat(reviewPartialAmount)
+    if (isNaN(received) || received <= 0 || received >= remaining) return
+    setReviewLoading(true)
+    try {
+      await markPartial({ id: order._id, amountReceived: received, adminNote: reviewNote || undefined })
+    } finally {
+      setReviewLoading(false)
+      setReviewActionId(null)
+    }
+  }
+
+  const handleReviewReject = async (order: Doc<'orders'>) => {
+    setReviewLoading(true)
+    try {
+      await rejectPayment({ id: order._id, adminNote: reviewNote || undefined })
+    } finally {
+      setReviewLoading(false)
+      setReviewActionId(null)
+    }
+  }
+
   const handleTrackingSave = async (id: Doc<'orders'>['_id'], trackingWebsite: string, trackingNumber: string) => {
     setSavingTrackingId(id)
-    const normalizedTrackingWebsite = trackingWebsite.trim()
-    const normalizedTrackingNumber = trackingNumber.trim()
-
     try {
       await updateTracking({
         id,
-        trackingWebsite: normalizedTrackingWebsite || undefined,
-        trackingNumber: normalizedTrackingNumber || undefined,
+        trackingWebsite: trackingWebsite.trim() || undefined,
+        trackingNumber: trackingNumber.trim() || undefined,
       })
-      if (viewingOrder?._id === id) {
-        setViewingOrder((prev) =>
-          prev
-            ? {
-                ...prev,
-                trackingWebsite: normalizedTrackingWebsite || undefined,
-                trackingNumber: normalizedTrackingNumber || undefined,
-              }
-            : null,
-        )
-      }
     } finally {
       setSavingTrackingId(null)
     }
@@ -541,6 +591,11 @@ function OrdersTab() {
                       <td className="px-4 py-3">
                         <p className="font-semibold text-slate-900">#{order._id.slice(-8).toUpperCase()}</p>
                         <p className="text-xs text-slate-500">{formatDate(order.createdAt)}</p>
+                        {order.status === 'payment_review' && order.paymentProofStorageId && (
+                          <div className="mt-2">
+                            <PaymentProofThumb orderId={order._id} />
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-xs text-slate-700">
                         {order.billingAddress ? (
@@ -575,34 +630,147 @@ function OrdersTab() {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${sd.color}`}>
-                            {sd.label}
-                          </span>
-                          <div className="relative">
-                            <select
-                              value={order.status}
-                              onChange={(e) =>
-                                void handleStatusChange(order._id, e.target.value as Doc<'orders'>['status'])
-                              }
-                              disabled={updatingId === order._id}
-                              className="appearance-none rounded-lg border border-slate-200 bg-white py-1 pl-2 pr-6 text-xs text-slate-700 outline-none focus:border-sky-300 focus:ring-2 focus:ring-sky-200 disabled:opacity-50"
-                            >
-                              {ORDER_STATUSES.map((s) => (
-                                <option key={s.value} value={s.value}>
-                                  {s.label}
-                                </option>
-                              ))}
-                            </select>
-                            <ChevronDown className="pointer-events-none absolute right-1.5 top-1.5 h-3 w-3 text-slate-400" />
+                        {order.status === 'payment_review' ? (
+                          <div className="space-y-2">
+                            <span className="inline-block rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-800">
+                              Payment Review Pending
+                            </span>
+                            {reviewActionId === order._id ? (
+                              <div className="space-y-1.5">
+                                {reviewMode === 'none' && (
+                                  <div className="flex flex-wrap gap-1">
+                                    <button
+                                      type="button"
+                                      disabled={reviewLoading}
+                                      onClick={() => void handleReviewConfirmPaid(order)}
+                                      className="rounded-full bg-green-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+                                    >
+                                      ✓ Paid
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={reviewLoading}
+                                      onClick={() => { setReviewMode('partial'); setReviewPartialAmount(''); setReviewNote('') }}
+                                      className="rounded-full bg-amber-500 px-2.5 py-1 text-xs font-semibold text-white hover:bg-amber-600 disabled:opacity-50"
+                                    >
+                                      ⚠ Partial
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={reviewLoading}
+                                      onClick={() => { setReviewMode('reject'); setReviewNote('') }}
+                                      className="rounded-full bg-red-500 px-2.5 py-1 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-50"
+                                    >
+                                      ✕ Reject
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setReviewActionId(null)}
+                                      className="rounded-full border border-slate-200 px-2.5 py-1 text-xs text-slate-500 hover:bg-slate-100"
+                                    >
+                                      Cancel
+                                    </button>
+                                    {reviewLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-teal-500" />}
+                                  </div>
+                                )}
+                                {reviewMode === 'partial' && (
+                                  <div className="space-y-1.5 rounded-lg border border-amber-200 bg-amber-50 p-2">
+                                    <p className="text-xs font-semibold text-amber-800">
+                                      Remaining: {formatPrice(order.partialAmountPending ?? order.total)}
+                                    </p>
+                                    <input
+                                      type="number"
+                                      min="0.01"
+                                      step="0.01"
+                                      max={(order.partialAmountPending ?? order.total) - 0.01}
+                                      value={reviewPartialAmount}
+                                      onChange={(e) => setReviewPartialAmount(e.target.value)}
+                                      placeholder="New amount received"
+                                      className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs outline-none focus:border-amber-400"
+                                    />
+                                    <input
+                                      type="text"
+                                      value={reviewNote}
+                                      onChange={(e) => setReviewNote(e.target.value)}
+                                      placeholder="Note (optional)"
+                                      className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs outline-none focus:border-amber-400"
+                                    />
+                                    <div className="flex gap-1">
+                                      <button
+                                        type="button"
+                                        disabled={reviewLoading}
+                                        onClick={() => void handleReviewPartial(order)}
+                                        className="rounded-full bg-amber-500 px-2.5 py-1 text-xs font-semibold text-white hover:bg-amber-600 disabled:opacity-50"
+                                      >
+                                        {reviewLoading ? 'Saving…' : 'Confirm'}
+                                      </button>
+                                      <button type="button" onClick={() => setReviewMode('none')} className="rounded-full border border-slate-200 px-2.5 py-1 text-xs text-slate-500 hover:bg-slate-100">Back</button>
+                                    </div>
+                                  </div>
+                                )}
+                                {reviewMode === 'reject' && (
+                                  <div className="space-y-1.5 rounded-lg border border-red-200 bg-red-50 p-2">
+                                    <input
+                                      type="text"
+                                      value={reviewNote}
+                                      onChange={(e) => setReviewNote(e.target.value)}
+                                      placeholder="Rejection reason (optional)"
+                                      className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs outline-none focus:border-red-400"
+                                    />
+                                    <div className="flex gap-1">
+                                      <button
+                                        type="button"
+                                        disabled={reviewLoading}
+                                        onClick={() => void handleReviewReject(order)}
+                                        className="rounded-full bg-red-500 px-2.5 py-1 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-50"
+                                      >
+                                        {reviewLoading ? 'Rejecting…' : 'Confirm'}
+                                      </button>
+                                      <button type="button" onClick={() => setReviewMode('none')} className="rounded-full border border-slate-200 px-2.5 py-1 text-xs text-slate-500 hover:bg-slate-100">Back</button>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => openReview(order._id)}
+                                className="inline-flex items-center gap-1 rounded-full bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-blue-700"
+                              >
+                                Review
+                              </button>
+                            )}
                           </div>
-                          {updatingId === order._id && <Loader2 className="h-3.5 w-3.5 animate-spin text-teal-500" />}
-                        </div>
+                        ) : (
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${sd.color}`}>
+                              {sd.label}
+                            </span>
+                            <div className="relative">
+                              <select
+                                value={order.status}
+                                onChange={(e) =>
+                                  void handleStatusChange(order._id, e.target.value as Doc<'orders'>['status'])
+                                }
+                                disabled={updatingId === order._id}
+                                className="appearance-none rounded-lg border border-slate-200 bg-white py-1 pl-2 pr-6 text-xs text-slate-700 outline-none focus:border-sky-300 focus:ring-2 focus:ring-sky-200 disabled:opacity-50"
+                              >
+                                {ORDER_STATUSES.map((s) => (
+                                  <option key={s.value} value={s.value}>
+                                    {s.label}
+                                  </option>
+                                ))}
+                              </select>
+                              <ChevronDown className="pointer-events-none absolute right-1.5 top-1.5 h-3 w-3 text-slate-400" />
+                            </div>
+                            {updatingId === order._id && <Loader2 className="h-3.5 w-3.5 animate-spin text-teal-500" />}
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <button
                           type="button"
-                          onClick={() => setViewingOrder(order)}
+                          onClick={() => setViewingOrderId(order._id)}
                           className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600 hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700"
                         >
                           <ExternalLink className="h-3 w-3" />
@@ -621,7 +789,7 @@ function OrdersTab() {
       {viewingOrder && (
         <OrderDetailModal
           order={viewingOrder}
-          onClose={() => setViewingOrder(null)}
+          onClose={() => setViewingOrderId(null)}
           onStatusChange={(status) => void handleStatusChange(viewingOrder._id, status)}
           onTrackingSave={(trackingWebsite, trackingNumber) =>
             void handleTrackingSave(viewingOrder._id, trackingWebsite, trackingNumber)
@@ -656,21 +824,55 @@ function OrderDetailModal({
   const [trackingWebsite, setTrackingWebsite] = useState(order.trackingWebsite ?? '')
   const [trackingNumber, setTrackingNumber] = useState(order.trackingNumber ?? '')
 
-  // Payment review actions
-  const confirmPayment = useMutation(api.admin.adminConfirmPayment)
-  const markPartial = useMutation(api.admin.adminMarkPartialPayment)
-  const rejectPayment = useMutation(api.admin.adminRejectPayment)
   const paymentProofUrl = useQuery(
     api.admin.getOrderPaymentProofUrl,
     order.paymentProofStorageId ? { id: order._id } : 'skip',
   )
   const proofHistory = useQuery(api.admin.getPaymentProofHistory, { id: order._id })
 
-  const [paymentAction, setPaymentAction] = useState<'none' | 'partial' | 'reject'>('none')
-  const [partialAmount, setPartialAmount] = useState('')
-  const [adminNote, setAdminNote] = useState('')
-  const [paymentActionLoading, setPaymentActionLoading] = useState(false)
-  const [paymentActionError, setPaymentActionError] = useState<string | null>(null)
+  const confirmPayment = useMutation(api.admin.adminConfirmPayment)
+  const markPartial = useMutation(api.admin.adminMarkPartialPayment)
+  const rejectPayment = useMutation(api.admin.adminRejectPayment)
+  const [reviewMode, setReviewMode] = useState<'none' | 'partial' | 'reject'>('none')
+  const [reviewPartialAmount, setReviewPartialAmount] = useState('')
+  const [reviewNote, setReviewNote] = useState('')
+  const [reviewLoading, setReviewLoading] = useState(false)
+
+  const remainingAmount = order.partialAmountPending ?? order.total
+
+  const handleConfirmPaid = async () => {
+    setReviewLoading(true)
+    try {
+      await confirmPayment({ id: order._id })
+    } finally {
+      setReviewLoading(false)
+    }
+  }
+
+  const handlePartial = async () => {
+    const received = parseFloat(reviewPartialAmount)
+    if (isNaN(received) || received <= 0 || received >= remainingAmount) return
+    setReviewLoading(true)
+    try {
+      await markPartial({ id: order._id, amountReceived: received, adminNote: reviewNote || undefined })
+      setReviewMode('none')
+      setReviewPartialAmount('')
+      setReviewNote('')
+    } finally {
+      setReviewLoading(false)
+    }
+  }
+
+  const handleReject = async () => {
+    setReviewLoading(true)
+    try {
+      await rejectPayment({ id: order._id, adminNote: reviewNote || undefined })
+      setReviewMode('none')
+      setReviewNote('')
+    } finally {
+      setReviewLoading(false)
+    }
+  }
 
   const shippingAddr = (() => {
     if (!order.shippingAddress) return null
@@ -696,57 +898,6 @@ function OrderDetailModal({
     setTrackingNumber(order.trackingNumber ?? '')
   }, [order._id, order.trackingNumber, order.trackingWebsite])
 
-  const handleConfirmPayment = async () => {
-    setPaymentActionLoading(true)
-    setPaymentActionError(null)
-    try {
-      await confirmPayment({ id: order._id })
-      onStatusChange('paid')
-    } catch (e) {
-      setPaymentActionError(e instanceof Error ? e.message : 'Failed')
-    } finally {
-      setPaymentActionLoading(false)
-    }
-  }
-
-  const handleMarkPartial = async () => {
-    const received = parseFloat(partialAmount)
-    if (isNaN(received) || received <= 0 || received >= order.total) {
-      setPaymentActionError('Enter a valid amount less than the order total.')
-      return
-    }
-    setPaymentActionLoading(true)
-    setPaymentActionError(null)
-    try {
-      await markPartial({ id: order._id, amountReceived: received, adminNote: adminNote || undefined })
-      onStatusChange('partial_payment')
-      setPaymentAction('none')
-    } catch (e) {
-      setPaymentActionError(e instanceof Error ? e.message : 'Failed')
-    } finally {
-      setPaymentActionLoading(false)
-    }
-  }
-
-  const handleReject = async () => {
-    setPaymentActionLoading(true)
-    setPaymentActionError(null)
-    try {
-      await rejectPayment({ id: order._id, adminNote: adminNote || undefined })
-      onStatusChange('pending_payment')
-      setPaymentAction('none')
-    } catch (e) {
-      setPaymentActionError(e instanceof Error ? e.message : 'Failed')
-    } finally {
-      setPaymentActionLoading(false)
-    }
-  }
-
-  const pendingAmount = (() => {
-    const received = parseFloat(partialAmount)
-    if (isNaN(received) || received <= 0) return null
-    return Math.max(0, order.total - received)
-  })()
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
@@ -846,154 +997,142 @@ function OrderDetailModal({
             </div>
           )}
 
-          {/* ── Payment Proof Review ── */}
-          {order.paymentProofStorageId && (
-            <div className={`rounded-xl border px-4 py-4 ${order.status === 'pending_payment' && order.adminNote ? 'border-red-200 bg-red-50' : 'border-blue-200 bg-blue-50'}`}>
-              <div className="mb-3 flex items-center gap-2">
-                <p className={`text-sm font-semibold ${order.status === 'pending_payment' && order.adminNote ? 'text-red-800' : 'text-blue-800'}`}>
-                  Payment Proof {order.status === 'pending_payment' && order.adminNote ? '(Previously Rejected)' : 'Submitted'}
+          {/* ── Current Payment Proof ── */}
+          {order.paymentProofStorageId && order.paymentProofUploadedAt && (
+            <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm">
+              <div className="flex items-center justify-between gap-2">
+                <p className="font-semibold text-blue-800">
+                  Payment Proof Submitted
+                  {order.status === 'pending_payment' && order.adminNote && (
+                    <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">Previously Rejected</span>
+                  )}
                 </p>
-                {order.status === 'pending_payment' && order.adminNote && (
-                  <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">Rejected</span>
+                {paymentProofUrl && order.status !== 'payment_review' && (
+                  <a
+                    href={paymentProofUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs font-semibold text-blue-600 hover:underline"
+                  >
+                    View Proof ↗
+                  </a>
                 )}
               </div>
-              {order.paymentProofUploadedAt && (
-                <p className="mb-3 text-xs text-blue-700">
-                  Uploaded: {formatDate(order.paymentProofUploadedAt)}
-                </p>
-              )}
-              {paymentProofUrl ? (
-                <a href={paymentProofUrl} target="_blank" rel="noreferrer">
-                  <img
-                    src={paymentProofUrl}
-                    alt="Payment proof"
-                    className="mb-3 max-h-64 w-full rounded-lg border border-slate-200 object-contain bg-white"
-                  />
-                </a>
-              ) : (
-                <div className="mb-3 flex h-32 items-center justify-center rounded-lg border border-blue-200 bg-white text-xs text-slate-400">
-                  Loading image...
+              <p className="mt-0.5 text-xs text-blue-700">
+                Uploaded: {formatDate(order.paymentProofUploadedAt)}
+              </p>
+              {order.status === 'payment_review' && (
+                <div className="mt-3">
+                  {paymentProofUrl ? (
+                    <a href={paymentProofUrl} target="_blank" rel="noreferrer">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={paymentProofUrl}
+                        alt="Payment proof"
+                        className="max-h-72 w-full rounded-lg border border-blue-100 object-contain hover:opacity-90 transition-opacity"
+                      />
+                    </a>
+                  ) : (
+                    <div className="h-40 animate-pulse rounded-lg bg-blue-100" />
+                  )}
                 </div>
               )}
+            </div>
+          )}
 
-              {/* 3 action buttons */}
-              {(order.status === 'payment_review' || order.status === 'partial_payment' || order.status === 'pending_payment') && paymentAction === 'none' && (
+          {/* Payment Review Actions */}
+          {order.status === 'payment_review' && (
+            <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-blue-700">Review Payment</p>
+              {reviewMode === 'none' && (
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
-                    disabled={paymentActionLoading}
-                    onClick={handleConfirmPayment}
-                    className="rounded-full bg-green-600 px-4 py-2 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+                    disabled={reviewLoading}
+                    onClick={() => void handleConfirmPaid()}
+                    className="rounded-full bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-50"
                   >
                     ✓ Mark as Paid
                   </button>
                   <button
                     type="button"
-                    disabled={paymentActionLoading}
-                    onClick={() => { setPaymentAction('partial'); setAdminNote(''); setPartialAmount('') }}
-                    className="rounded-full bg-amber-500 px-4 py-2 text-xs font-semibold text-white hover:bg-amber-600 disabled:opacity-50"
+                    disabled={reviewLoading}
+                    onClick={() => { setReviewMode('partial'); setReviewPartialAmount(''); setReviewNote('') }}
+                    className="rounded-full bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-600 disabled:opacity-50"
                   >
                     ⚠ Partial Payment
                   </button>
                   <button
                     type="button"
-                    disabled={paymentActionLoading}
-                    onClick={() => { setPaymentAction('reject'); setAdminNote('') }}
-                    className="rounded-full bg-red-500 px-4 py-2 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-50"
+                    disabled={reviewLoading}
+                    onClick={() => { setReviewMode('reject'); setReviewNote('') }}
+                    className="rounded-full bg-red-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-50"
                   >
                     ✕ Reject
                   </button>
-                  {paymentActionLoading && <Loader2 className="h-4 w-4 animate-spin text-slate-500" />}
+                  {reviewLoading && <Loader2 className="h-4 w-4 animate-spin text-blue-500 self-center" />}
                 </div>
               )}
-
-              {/* Partial payment form */}
-              {paymentAction === 'partial' && (
-                <div className="mt-3 space-y-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
-                  <p className="text-xs font-semibold text-amber-800">Partial Payment Details</p>
-                  <div className="grid grid-cols-2 gap-3 text-xs">
-                    <div>
-                      <span className="text-slate-500">Order Total</span>
-                      <p className="font-semibold text-slate-800">{formatPrice(order.total)}</p>
-                    </div>
-                    {pendingAmount !== null && (
-                      <div>
-                        <span className="text-slate-500">Pending Amount</span>
-                        <p className="font-semibold text-red-600">{formatPrice(pendingAmount)}</p>
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-slate-700">Amount Received (USD)</label>
-                    <input
-                      type="number"
-                      min="0.01"
-                      step="0.01"
-                      max={order.total - 0.01}
-                      value={partialAmount}
-                      onChange={(e) => setPartialAmount(e.target.value)}
-                      placeholder={`0.00 – ${(order.total - 0.01).toFixed(2)}`}
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-200"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-slate-700">Note for customer (optional)</label>
-                    <input
-                      type="text"
-                      value={adminNote}
-                      onChange={(e) => setAdminNote(e.target.value)}
-                      placeholder="e.g. Please send the remaining balance within 30 days"
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-200"
-                    />
-                  </div>
+              {reviewMode === 'partial' && (
+                <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                  <p className="text-xs font-semibold text-amber-800">
+                    Remaining Due: {formatPrice(remainingAmount)}
+                  </p>
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    max={remainingAmount - 0.01}
+                    value={reviewPartialAmount}
+                    onChange={(e) => setReviewPartialAmount(e.target.value)}
+                    placeholder="Amount received (USD)"
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-amber-400"
+                  />
+                  <input
+                    type="text"
+                    value={reviewNote}
+                    onChange={(e) => setReviewNote(e.target.value)}
+                    placeholder="Admin note (optional)"
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-amber-400"
+                  />
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      disabled={paymentActionLoading}
-                      onClick={handleMarkPartial}
-                      className="rounded-full bg-amber-500 px-4 py-2 text-xs font-semibold text-white hover:bg-amber-600 disabled:opacity-50"
+                      disabled={reviewLoading}
+                      onClick={() => void handlePartial()}
+                      className="rounded-full bg-amber-500 px-4 py-1.5 text-xs font-semibold text-white hover:bg-amber-600 disabled:opacity-50"
                     >
-                      {paymentActionLoading ? 'Saving...' : 'Confirm Partial'}
+                      {reviewLoading ? 'Saving…' : 'Confirm Partial'}
                     </button>
-                    <button type="button" onClick={() => setPaymentAction('none')} className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100">
-                      Cancel
+                    <button type="button" onClick={() => setReviewMode('none')} className="rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100">
+                      Back
                     </button>
                   </div>
                 </div>
               )}
-
-              {/* Reject form */}
-              {paymentAction === 'reject' && (
-                <div className="mt-3 space-y-3 rounded-lg border border-red-200 bg-red-50 p-4">
-                  <p className="text-xs font-semibold text-red-800">Reject Payment Proof</p>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-slate-700">Reason for rejection (optional)</label>
-                    <input
-                      type="text"
-                      value={adminNote}
-                      onChange={(e) => setAdminNote(e.target.value)}
-                      placeholder="e.g. Screenshot unclear, amount mismatch"
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-red-400 focus:ring-2 focus:ring-red-200"
-                    />
-                  </div>
+              {reviewMode === 'reject' && (
+                <div className="space-y-2 rounded-lg border border-red-200 bg-red-50 p-3">
+                  <input
+                    type="text"
+                    value={reviewNote}
+                    onChange={(e) => setReviewNote(e.target.value)}
+                    placeholder="Rejection reason (optional)"
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-red-400"
+                  />
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      disabled={paymentActionLoading}
-                      onClick={handleReject}
-                      className="rounded-full bg-red-500 px-4 py-2 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-50"
+                      disabled={reviewLoading}
+                      onClick={() => void handleReject()}
+                      className="rounded-full bg-red-500 px-4 py-1.5 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-50"
                     >
-                      {paymentActionLoading ? 'Rejecting...' : 'Confirm Rejection'}
+                      {reviewLoading ? 'Rejecting…' : 'Confirm Reject'}
                     </button>
-                    <button type="button" onClick={() => setPaymentAction('none')} className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100">
-                      Cancel
+                    <button type="button" onClick={() => setReviewMode('none')} className="rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100">
+                      Back
                     </button>
                   </div>
                 </div>
-              )}
-
-              {paymentActionError && (
-                <p className="mt-2 text-xs text-red-600">{paymentActionError}</p>
               )}
             </div>
           )}
