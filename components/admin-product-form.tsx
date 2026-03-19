@@ -479,40 +479,6 @@ export function AdminProductForm({ initial, onSubmit, onClose }: Props) {
               )}
             </div>
 
-            {/* Price */}
-            <div>
-              <label className={labelClass}>Base Price (USD) *</label>
-              <div className="relative">
-                <span className="pointer-events-none absolute left-3 top-2 text-sm text-slate-400">$</span>
-                <input
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  className={`${inputClass} pl-7`}
-                  placeholder="0.00"
-                  value={form.price || ''}
-                  onChange={(e) => set('price', parseFloat(e.target.value) || 0)}
-                />
-              </div>
-            </div>
-
-            {/* Discount */}
-            <div>
-              <label className={labelClass}>Discount (%)</label>
-              <div className="relative">
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  className={`${inputClass} pr-7`}
-                  placeholder="0"
-                  value={form.discount || ''}
-                  onChange={(e) => set('discount', Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
-                />
-                <span className="pointer-events-none absolute right-3 top-2 text-sm text-slate-400">%</span>
-              </div>
-            </div>
-
             {/* Brief Description */}
             <div className="sm:col-span-2">
               <label className={labelClass}>Brief Description</label>
