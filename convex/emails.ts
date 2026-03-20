@@ -4,7 +4,13 @@ import { internal } from './_generated/api'
 import type { Id } from './_generated/dataModel'
 
 function formatPrice(amount: number) {
-  return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'USD' }).format(amount)
+  const safeAmount = Number.isFinite(amount) ? amount : 0
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(safeAmount)
 }
 
 function itemsTableHtml(

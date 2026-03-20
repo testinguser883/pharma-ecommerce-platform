@@ -124,6 +124,66 @@ function assertIndiaOnlyDelivery(args: {
   }
 }
 
+function getAppUrlFromEnv() {
+  const raw = (process.env.SITE_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? '').trim()
+  if (!raw) {
+    throw new Error('Missing SITE_URL or NEXT_PUBLIC_APP_URL in Convex environment')
+  }
+  return raw.replace(/\/+$/, '')
+}
+
+async function verifyTurnstileTokenViaApi(token: string): Promise<boolean> {
+  const appUrl = getAppUrlFromEnv()
+  const res = await fetch(`${appUrl}/api/verify-captcha`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token }),
+  })
+  if (!res.ok) return false
+  const data = (await res.json().catch(() => null)) as { success?: boolean } | null
+  return Boolean(data?.success)
+}
+
+async function fetchJsonWithTimeout<T>(url: string, timeoutMs = 6000): Promise<T> {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    const res = await fetch(url, { signal: controller.signal })
+    if (!res.ok) throw new Error(`Request failed: ${res.status}`)
+    return (await res.json()) as T
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
+async function fetchBtcPriceUsd(): Promise<number> {
+  const sources: Array<() => Promise<number>> = [
+    async () => {
+      const data = await fetchJsonWithTimeout<{ data?: { amount?: string } }>('https://api.coinbase.com/v2/prices/BTC-USD/spot')
+      const amount = Number.parseFloat(String(data?.data?.amount ?? ''))
+      if (!Number.isFinite(amount) || amount <= 0) throw new Error('Coinbase returned invalid price')
+      return amount
+    },
+    async () => {
+      const data = await fetchJsonWithTimeout<{ bitcoin?: { usd?: number } }>(
+        'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd',
+      )
+      const amount = Number(data?.bitcoin?.usd)
+      if (!Number.isFinite(amount) || amount <= 0) throw new Error('CoinGecko returned invalid price')
+      return amount
+    },
+  ]
+
+  for (const source of sources) {
+    try {
+      return await source()
+    } catch {
+      // try next source
+    }
+  }
+  throw new Error('Unable to fetch BTC price right now. Please try again.')
+}
+
 export const listMyOrders = query({
   args: {},
   handler: async (ctx) => {
@@ -171,7 +231,9 @@ export const createFromCart = mutation({
 
 export const getBtcWalletAddress = query({
   args: {},
-  handler: async () => {
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) return null
     return process.env.BTC_WALLET_ADDRESS ?? null
   },
 })
@@ -198,27 +260,46 @@ export const createBtcOrder = mutation({
       shippingAddress: args.shippingAddress,
     })
 
+    // Prevent duplicate order creation from the same cart by clearing it once an order is created.
+    await ctx.db.patch(cart._id, { items: [], total: 0, updatedAt: Date.now() })
+
     return { orderId, total }
   },
 })
 
-export const saveBtcPaymentDetails = mutation({
+export const saveBtcPaymentDetails = action({
   args: {
     orderId: v.id('orders'),
-    btcAmountDue: v.number(),
-    btcPriceUsd: v.number(),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthenticatedUserId(ctx)
-    const order = await ctx.db.get(args.orderId)
+    const order = await ctx.runQuery(internal.orders.getOrderById, { orderId: args.orderId })
     if (!order || order.userId !== userId) {
       throw new Error('Order not found')
     }
-    await ctx.db.patch(args.orderId, {
-      btcAmountDue: args.btcAmountDue,
-      btcPriceUsd: args.btcPriceUsd,
-      btcPriceUpdatedAt: Date.now(),
+
+    const amountUsd =
+      order.status === 'partial_payment'
+        ? (order.partialAmountPending ?? order.total)
+        : order.total
+    if (!Number.isFinite(amountUsd) || amountUsd <= 0) {
+      throw new Error('Invalid order amount')
+    }
+
+    const btcPriceUsd = await fetchBtcPriceUsd()
+    const btcAmountDue = Number((amountUsd / btcPriceUsd).toFixed(8))
+
+    await ctx.runMutation(internal.orders.setBtcPaymentQuoteInternal, {
+      orderId: args.orderId,
+      btcAmountDue,
+      btcPriceUsd,
     })
+
+    return {
+      btcAmountDue,
+      btcPriceUsd,
+      btcPriceUpdatedAt: Date.now(),
+    }
   },
 })
 
@@ -258,10 +339,32 @@ export const generateUploadUrlInternal = internalMutation({
   },
 })
 
-// Public: generates the upload URL (Cloudflare Turnstile is verified at the Next.js API layer)
+export const setBtcPaymentQuoteInternal = internalMutation({
+  args: {
+    orderId: v.id('orders'),
+    btcAmountDue: v.number(),
+    btcPriceUsd: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthenticatedUserId(ctx)
+    const order = await ctx.db.get(args.orderId)
+    if (!order || order.userId !== userId) {
+      throw new Error('Order not found')
+    }
+    await ctx.db.patch(args.orderId, {
+      btcAmountDue: args.btcAmountDue,
+      btcPriceUsd: args.btcPriceUsd,
+      btcPriceUpdatedAt: Date.now(),
+    })
+  },
+})
+
+// Public: generates the upload URL (Cloudflare Turnstile is verified server-side)
 export const generatePaymentProofUploadUrl = action({
   args: { orderId: v.id('orders'), turnstileToken: v.string() },
   handler: async (ctx, args): Promise<string> => {
+    const verified = await verifyTurnstileTokenViaApi(args.turnstileToken)
+    if (!verified) throw new Error('CAPTCHA verification failed. Please try again.')
     return await ctx.runMutation(internal.orders.generateUploadUrlInternal, { orderId: args.orderId })
   },
 })

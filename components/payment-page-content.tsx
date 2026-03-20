@@ -12,13 +12,6 @@ import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
 const BTC_PRICE_REFRESH_MS = 20 * 60 * 1000
 const MAX_REJECTIONS = 5
 
-async function fetchBtcPriceUsd(): Promise<number> {
-  const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT')
-  if (!res.ok) throw new Error('Failed to fetch BTC price')
-  const data = (await res.json()) as { price: string }
-  return parseFloat(data.price)
-}
-
 function formatCountdown(secs: number): string {
   const m = Math.floor(secs / 60)
   const s = secs % 60
@@ -28,7 +21,7 @@ function formatCountdown(secs: number): string {
 export function PaymentPage({ orderId }: { orderId: string }) {
   const order = useQuery(api.orders.getById, { orderId: orderId as Id<'orders'> })
   const btcAddress = useQuery(api.orders.getBtcWalletAddress)
-  const saveBtcDetails = useMutation(api.orders.saveBtcPaymentDetails)
+  const refreshBtcQuote = useAction(api.orders.saveBtcPaymentDetails)
   const generateUploadUrl = useAction(api.orders.generatePaymentProofUploadUrl)
   const savePaymentProof = useMutation(api.orders.savePaymentProof)
 
@@ -82,16 +75,14 @@ export function PaymentPage({ orderId }: { orderId: string }) {
     if (!order || amountUsd <= 0) return
     try {
       setPriceError(false)
-      const price = await fetchBtcPriceUsd()
-      const amount = Number((amountUsd / price).toFixed(8))
-      setBtcPrice(price)
-      setBtcAmount(amount)
-      setPriceUpdatedAt(new Date())
-      await saveBtcDetails({ orderId: order._id, btcAmountDue: amount, btcPriceUsd: price })
+      const quote = await refreshBtcQuote({ orderId: order._id })
+      setBtcPrice(quote.btcPriceUsd)
+      setBtcAmount(quote.btcAmountDue)
+      setPriceUpdatedAt(new Date(quote.btcPriceUpdatedAt))
     } catch {
       setPriceError(true)
     }
-  }, [order, amountUsd, saveBtcDetails])
+  }, [order, amountUsd, refreshBtcQuote])
 
   useEffect(() => {
     if (!order) return

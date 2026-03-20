@@ -54,7 +54,16 @@ function getStatusDisplay(status: string) {
 }
 
 function normalizeTrackingWebsite(url: string) {
-  return /^https?:\/\//i.test(url) ? url : `https://${url}`
+  const trimmed = url.trim()
+  if (!trimmed) return null
+  const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+  try {
+    const parsed = new URL(candidate)
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null
+    return parsed.toString()
+  } catch {
+    return null
+  }
 }
 
 export function AdminPanel() {
@@ -153,6 +162,7 @@ function ProductsTab() {
   const products = useQuery(api.admin.listAllProducts, { search: debouncedSearch || undefined })
   const backfillSlugs = useMutation(api.admin.backfillSlugs)
   const backfillSearchText = useMutation(api.admin.backfillSearchText)
+  const backfillRanRef = useRef(false)
   const createProduct = useMutation(api.admin.createProduct)
   const updateProduct = useMutation(api.admin.updateProduct)
   const deleteProduct = useMutation(api.admin.deleteProduct)
@@ -160,11 +170,21 @@ function ProductsTab() {
   const toggleVisibility = useMutation(api.admin.toggleVisibility)
   const toggleRecommended = useMutation(api.admin.toggleRecommended)
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    void backfillSlugs()
-    void backfillSearchText()
-  }, [])
+    if (backfillRanRef.current) return
+    if (!products) return
+
+    const needsSlugs = products.some((p) => !p.slug)
+    const needsSearchText = products.some((p) => !p.searchText?.trim())
+    if (!needsSlugs && !needsSearchText) {
+      backfillRanRef.current = true
+      return
+    }
+
+    backfillRanRef.current = true
+    if (needsSlugs) void backfillSlugs()
+    if (needsSearchText) void backfillSearchText()
+  }, [products, backfillSearchText, backfillSlugs])
 
   const handleSearchChange = (value: string) => {
     setSearch(value)
@@ -632,7 +652,7 @@ function OrdersTab() {
                       </td>
                       <td className="px-4 py-3 text-xs text-slate-600">
                         {order.items.slice(0, 2).map((item) => (
-                          <div key={item.productId}>
+                          <div key={`${item.productId}-${item.dosage ?? ''}-${item.pillCount ?? ''}`}>
                             {item.name} ×{item.quantity}
                           </div>
                         ))}
@@ -1240,16 +1260,20 @@ function OrderDetailModal({
                 >
                   {trackingSaving ? 'Saving...' : 'Save Tracking'}
                 </button>
-                {order.trackingWebsite && (
-                  <a
-                    href={normalizeTrackingWebsite(order.trackingWebsite)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-sm font-medium text-sky-700 underline underline-offset-2"
-                  >
-                    Open tracking website
-                  </a>
-                )}
+                {order.trackingWebsite &&
+                  (() => {
+                    const safeHref = normalizeTrackingWebsite(order.trackingWebsite)
+                    return safeHref ? (
+                      <a
+                        href={safeHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium text-sky-700 underline underline-offset-2"
+                      >
+                        Open tracking website
+                      </a>
+                    ) : null
+                  })()}
               </div>
             </form>
           </div>
@@ -1346,7 +1370,7 @@ function OrderDetailModal({
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {order.items.map((item) => (
-                    <tr key={item.productId}>
+                    <tr key={`${item.productId}-${item.dosage ?? ''}-${item.pillCount ?? ''}`}>
                       <td className="px-4 py-2.5">
                         <div className="flex items-center gap-2">
                           {item.image && (

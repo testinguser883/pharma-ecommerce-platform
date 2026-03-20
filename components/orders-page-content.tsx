@@ -16,7 +16,16 @@ function formatDate(timestamp: number) {
 }
 
 function normalizeTrackingWebsite(url: string) {
-  return /^https?:\/\//i.test(url) ? url : `https://${url}`
+  const trimmed = url.trim()
+  if (!trimmed) return null
+  const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+  try {
+    const parsed = new URL(candidate)
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null
+    return parsed.toString()
+  } catch {
+    return null
+  }
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
@@ -31,7 +40,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-700' },
 }
 
-const STATUS_STEPS = ['pending_payment', 'partial_payment', 'paid', 'processing', 'shipped', 'delivered']
+const STATUS_STEPS = ['pending_payment', 'payment_review', 'partial_payment', 'paid', 'processing', 'shipped', 'delivered']
 
 function OrderStatusTracker({ status }: { status: string }) {
   if (status === 'cancelled') {
@@ -45,6 +54,7 @@ function OrderStatusTracker({ status }: { status: string }) {
   const currentIdx = STATUS_STEPS.indexOf(status)
   const labels: Record<string, string> = {
     pending_payment: 'Payment',
+    payment_review: 'Review',
     partial_payment: 'Partial Payment Done',
     paid: 'Paid',
     processing: 'Processing',
@@ -254,7 +264,10 @@ export function OrdersPageContent() {
                   {/* Items */}
                   <ul className="mt-5 divide-y divide-slate-100">
                     {order.items.map((item) => (
-                      <li key={item.productId} className="flex items-center justify-between py-2 text-sm">
+                      <li
+                        key={`${item.productId}-${item.dosage ?? ''}-${item.pillCount ?? ''}`}
+                        className="flex items-center justify-between py-2 text-sm"
+                      >
                         <span className="text-slate-600">
                           {item.name} <span className="font-semibold text-slate-800">× {item.quantity}</span>
                         </span>
@@ -282,14 +295,21 @@ export function OrdersPageContent() {
                       {order.trackingWebsite && (
                         <p className="mt-1 text-slate-600">
                           Website:{' '}
-                          <a
-                            href={normalizeTrackingWebsite(order.trackingWebsite)}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="font-medium text-teal-700 underline underline-offset-2 hover:text-teal-600"
-                          >
-                            {order.trackingWebsite}
-                          </a>
+                          {(() => {
+                            const safeHref = normalizeTrackingWebsite(order.trackingWebsite)
+                            return safeHref ? (
+                              <a
+                                href={safeHref}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="font-medium text-teal-700 underline underline-offset-2 hover:text-teal-600"
+                              >
+                                {order.trackingWebsite}
+                              </a>
+                            ) : (
+                              <span className="font-medium text-slate-700">{order.trackingWebsite}</span>
+                            )
+                          })()}
                         </p>
                       )}
                       {order.trackingNumber && (

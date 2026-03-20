@@ -41,6 +41,18 @@ function normalizeEmail(email: string | null | undefined) {
   return email?.trim().toLowerCase() ?? null
 }
 
+function isSameOriginPost(request: Request) {
+  const origin = request.headers.get('origin') ?? request.headers.get('referer')
+  if (!origin || origin === 'null') {
+    return false
+  }
+  try {
+    return new URL(origin).origin === new URL(request.url).origin
+  } catch {
+    return false
+  }
+}
+
 async function getAppUrl() {
   const headerStore = await headers()
   const proto = headerStore.get('x-forwarded-proto') ?? 'https'
@@ -129,6 +141,10 @@ export const handler: AuthBridge['handler'] = {
       logAuthServerWarning('Auth route requested but auth env is not configured.')
       return new Response('Auth server is not configured.', { status: 503 })
     }
+    // CSRF defense: require same-origin POSTs for auth endpoints that set cookies / mutate auth state.
+    if (!isSameOriginPost(request)) {
+      return new Response('Forbidden', { status: 403 })
+    }
     try {
       return await bridge.handler.POST(request)
     } catch (error) {
@@ -161,22 +177,17 @@ export const isAuthenticated: AuthBridge['isAuthenticated'] = async () => {
 }
 
 export async function isAdminAuthenticated() {
-  const [session, convexJwt] = await Promise.all([getSessionFallback(), getConvexJwtFromCookies()])
-  if (!session && !convexJwt) {
+  const token = await getToken()
+  if (!token || !convexUrl) {
     return false
   }
-
-  if (convexJwt && convexUrl) {
-    try {
-      const client = new ConvexHttpClient(convexUrl, { auth: convexJwt })
-      return await client.query(api.admin.isAdmin, {})
-    } catch (error) {
-      logAuthServerWarning('Admin check via Convex JWT failed.', error)
-    }
+  try {
+    const client = new ConvexHttpClient(convexUrl, { auth: token })
+    return await client.query(api.admin.isAdmin, {})
+  } catch (error) {
+    logAuthServerWarning('Admin check failed.', error)
+    return false
   }
-
-  const configuredAdminEmail = normalizeEmail(process.env.ADMIN_EMAIL)
-  return Boolean(configuredAdminEmail && session?.email === configuredAdminEmail)
 }
 
 async function callAuthMethod(method: AuthMethod, args: unknown[]) {

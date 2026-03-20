@@ -13,6 +13,11 @@ function getConfiguredAdminEmail() {
   return normalizeEmail(process.env.ADMIN_EMAIL)
 }
 
+function getConfiguredAdminUserId() {
+  const raw = process.env.ADMIN_USER_ID?.trim()
+  return raw ? raw : null
+}
+
 async function getAssignedAdminRole(ctx: { db: { query: (table: 'adminRoles') => any } }, userId: string | undefined) {
   if (!userId) return null
   return await ctx.db
@@ -34,11 +39,18 @@ async function getAdminState(ctx: any) {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const email = normalizeEmail((user as any).email as string | undefined)
-  const configuredAdminEmail = getConfiguredAdminEmail()
-  const isSuperAdmin = Boolean(configuredAdminEmail && email === configuredAdminEmail)
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const assignedAdminRole = await getAssignedAdminRole(ctx, String((user as any)._id ?? ''))
+  const emailVerified = Boolean((user as any).emailVerified)
+  const configuredAdminEmail = getConfiguredAdminEmail()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const userId = String((user as any)._id ?? (user as any).id ?? '')
+  const configuredAdminUserId = getConfiguredAdminUserId()
+
+  const isSuperAdminByUserId = Boolean(configuredAdminUserId && userId && userId === configuredAdminUserId)
+  const isSuperAdminByEmail = Boolean(configuredAdminEmail && email === configuredAdminEmail && emailVerified)
+  const isSuperAdmin = isSuperAdminByUserId || isSuperAdminByEmail
+
+  const assignedAdminRole = await getAssignedAdminRole(ctx, userId || undefined)
 
   return {
     user,
@@ -113,6 +125,19 @@ function normalizeTimestamp(value: unknown) {
   return 0
 }
 
+function normalizeHttpUrl(input: string) {
+  const trimmed = input.trim()
+  if (!trimmed) return null
+  const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+  try {
+    const url = new URL(candidate)
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return null
+    return url.toString()
+  } catch {
+    return null
+  }
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function listAuthUsers(ctx: any) {
   const adapter = authComponent.adapter(ctx)({})
@@ -132,13 +157,18 @@ export const listUsers = query({
     const [users, adminRoles] = await Promise.all([listAuthUsers(ctx), ctx.db.query('adminRoles').collect()])
     const assignedAdminUserIds = new Set(adminRoles.map((role) => role.userId))
     const configuredAdminEmail = getConfiguredAdminEmail()
+    const configuredAdminUserId = getConfiguredAdminUserId()
 
     return users
       .filter((user) => Boolean(user.email))
       .map((user) => {
         const userId = getAuthUserRecordId(user)
         const normalizedEmail = normalizeEmail(user.email)
-        const isSuperAdmin = Boolean(configuredAdminEmail && normalizedEmail === configuredAdminEmail)
+        const isSuperAdminByUserId = Boolean(configuredAdminUserId && userId && userId === configuredAdminUserId)
+        const isSuperAdminByEmail = Boolean(
+          configuredAdminEmail && normalizedEmail === configuredAdminEmail && Boolean(user.emailVerified),
+        )
+        const isSuperAdmin = isSuperAdminByUserId || isSuperAdminByEmail
         const role = isSuperAdmin ? 'super_admin' : assignedAdminUserIds.has(userId) ? 'admin' : 'user'
 
         return {
@@ -172,7 +202,11 @@ export const setUserRole = mutation({
       throw new Error('User not found')
     }
 
-    if (normalizeEmail(targetUser.email) === getConfiguredAdminEmail()) {
+    const configuredAdminUserId = getConfiguredAdminUserId()
+    if (
+      (configuredAdminUserId && args.userId === configuredAdminUserId) ||
+      normalizeEmail(targetUser.email) === getConfiguredAdminEmail()
+    ) {
       throw new Error('The primary admin role is managed by ADMIN_EMAIL and cannot be changed here.')
     }
 
@@ -618,7 +652,11 @@ export const updateOrderTracking = mutation({
     const admin = await getAdminUser(ctx)
     if (!admin) throw new Error('Not authorized')
 
-    const trackingWebsite = args.trackingWebsite?.trim()
+    const trackingWebsiteRaw = args.trackingWebsite?.trim()
+    const trackingWebsite = trackingWebsiteRaw ? normalizeHttpUrl(trackingWebsiteRaw) : null
+    if (trackingWebsiteRaw && !trackingWebsite) {
+      throw new Error('Invalid tracking website URL. Please use an http(s) URL.')
+    }
     const trackingNumber = args.trackingNumber?.trim()
 
     await ctx.db.patch(args.id, {

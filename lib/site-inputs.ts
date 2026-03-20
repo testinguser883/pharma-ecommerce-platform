@@ -1,19 +1,28 @@
+const DEFAULT_SITE_URL = 'https://www.gardenerpersonal.click'
+const SITE_URL = (process.env.NEXT_PUBLIC_APP_URL ?? process.env.SITE_URL ?? DEFAULT_SITE_URL).replace(/\/+$/, '')
+
+function normalizeGoogleTagId(value: string | undefined) {
+  const trimmed = (value ?? '').trim()
+  if (!trimmed || trimmed === 'G-XXXXX') return ''
+  return trimmed
+}
+
 export const siteInputs = {
   home: {
     seoTitle: 'Pharma eCommerce Platform',
     seoDescription: 'Trusted online pharmaceutical platform with secure authentication and real-time cart sync.',
     seoKeywords: 'online pharmacy, pharma ecommerce, medicines, healthcare',
-    googleTagId: 'G-XXXXX',
+    googleTagId: normalizeGoogleTagId(process.env.NEXT_PUBLIC_GOOGLE_TAG_ID),
     schema: {
       enabled: true,
       organization: {
         name: 'PharmaCare',
-        url: 'https://pharma-ecommerce-platform-5an9.vercel.app',
+        url: SITE_URL,
         logoPath: '/favicon.ico',
-        telephone: '+91-8454039832',
-        email: 'orderfulfil@tutanota.com',
+        telephone: process.env.NEXT_PUBLIC_SUPPORT_PHONE?.trim() || '+91-8454039832',
+        email: process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || 'orderfulfil@tutanota.com',
         contactType: 'Customer Service',
-        areaServed: 'Worldwide',
+        areaServed: 'IN',
         availableLanguages: ['English'],
         sameAs: [],
       },

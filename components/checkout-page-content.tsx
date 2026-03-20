@@ -47,28 +47,28 @@ const DAYS = Array.from({ length: 31 }, (_, i) => i + 1)
 
 const EMPTY_BILLING: BillingForm = {
   isNewCustomer: true,
-  mobilePhone: '+919876543210',
-  email: 'test@example.com',
-  dobYear: '1990',
-  dobMonth: 'January',
-  dobDay: '1',
-  firstName: 'John',
-  lastName: 'Doe',
-  streetAddress: '123 Main Street',
-  city: 'Mumbai',
+  mobilePhone: '',
+  email: '',
+  dobYear: '',
+  dobMonth: '',
+  dobDay: '',
+  firstName: '',
+  lastName: '',
+  streetAddress: '',
+  city: '',
   country: 'IN',
-  state: 'Maharashtra',
-  zipCode: '400001',
+  state: '',
+  zipCode: '',
 }
 
 const EMPTY_SHIPPING: ShippingForm = {
-  firstName: 'John',
-  lastName: 'Doe',
-  streetAddress: '123 Main Street',
-  city: 'Mumbai',
+  firstName: '',
+  lastName: '',
+  streetAddress: '',
+  city: '',
   country: 'IN',
-  state: 'Maharashtra',
-  zipCode: '400001',
+  state: '',
+  zipCode: '',
 }
 
 const inputClass =
@@ -76,6 +76,8 @@ const inputClass =
 const selectClass =
   'w-full border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-200 bg-white appearance-none'
 const labelClass = 'block text-xs font-semibold uppercase tracking-wide text-slate-700 mb-1'
+
+const DELIVERY_COUNTRIES = COUNTRIES.filter((c) => c.code === 'IN')
 
 function SectionHeader({ number, title }: { number: number; title: string }) {
   return (
@@ -101,46 +103,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 const BTC_PRICE_REFRESH_MS = 20 * 60 * 1000 // 20 minutes
 
-
-async function fetchBtcPriceUsd(): Promise<number> {
-  const sources: Array<() => Promise<number>> = [
-    // async () => {
-    //   const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT')
-    //   if (!res.ok) throw new Error('Binance failed')
-    //   const data = (await res.json()) as { price: string }
-    //   return parseFloat(data.price)
-    // },
-    // async () => {
-    //   const res = await fetch('https://api.kraken.com/0/public/Ticker?pair=XBTUSD')
-    //   if (!res.ok) throw new Error('Kraken failed')
-    //   const data = (await res.json()) as { result: { XXBTZUSD: { c: [string] } } }
-    //   return parseFloat(data.result.XXBTZUSD.c[0])
-    // },
-    async () => {
-      const res = await fetch('https://api.coinbase.com/v2/prices/BTC-USD/spot')
-      if (!res.ok) throw new Error('Coinbase failed')
-      const data = (await res.json()) as { data: { amount: string } }
-      return parseFloat(data.data.amount)
-    },
-    async () => {
-      const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd')
-      if (!res.ok) throw new Error('CoinGecko failed')
-      const data = (await res.json()) as { bitcoin: { usd: number } }
-      return data.bitcoin.usd
-    },
-  ]
-
-  for (const source of sources) {
-    try {
-      const price = await source()
-      if (price > 0) return price
-    } catch {
-      // try next source
-    }
-  }
-  throw new Error('Failed to fetch BTC price from all sources')
-}
-
 function BtcPaymentPanel({
   orderId,
   orderTotal,
@@ -152,7 +114,7 @@ function BtcPaymentPanel({
   btcAddress: string
   onProofUploaded: () => void
 }) {
-  const saveBtcDetails = useMutation(api.orders.saveBtcPaymentDetails)
+  const refreshBtcQuote = useAction(api.orders.saveBtcPaymentDetails)
   const generateUploadUrl = useAction(api.orders.generatePaymentProofUploadUrl)
   const savePaymentProof = useMutation(api.orders.savePaymentProof)
 
@@ -176,16 +138,14 @@ function BtcPaymentPanel({
   const loadAndSaveBtcPrice = useCallback(async () => {
     try {
       setPriceError(false)
-      const price = await fetchBtcPriceUsd()
-      const amount = Number((orderTotal / price).toFixed(8))
-      setBtcPrice(price)
-      setBtcAmount(amount)
-      setPriceUpdatedAt(new Date())
-      await saveBtcDetails({ orderId, btcAmountDue: amount, btcPriceUsd: price })
+      const quote = await refreshBtcQuote({ orderId })
+      setBtcPrice(quote.btcPriceUsd)
+      setBtcAmount(quote.btcAmountDue)
+      setPriceUpdatedAt(new Date(quote.btcPriceUpdatedAt))
     } catch {
       setPriceError(true)
     }
-  }, [orderId, orderTotal, saveBtcDetails])
+  }, [orderId, refreshBtcQuote])
 
   useEffect(() => {
     loadAndSaveBtcPrice()
@@ -676,7 +636,7 @@ export function CheckoutPageContent() {
             <Field label="Country:">
               <div className="relative">
                 <select className={selectClass} value={billing.country} onChange={(e) => setBillingField('country', e.target.value)}>
-                  {COUNTRIES.map((c) => (
+                  {DELIVERY_COUNTRIES.map((c) => (
                     <option key={c.code} value={c.code}>{c.name}</option>
                   ))}
                 </select>
@@ -727,7 +687,7 @@ export function CheckoutPageContent() {
                 <Field label="Country:">
                   <div className="relative">
                     <select className={selectClass} value={shipping.country} onChange={(e) => setShippingField('country', e.target.value)}>
-                      {COUNTRIES.map((c) => (
+                      {DELIVERY_COUNTRIES.map((c) => (
                         <option key={c.code} value={c.code}>{c.name}</option>
                       ))}
                     </select>

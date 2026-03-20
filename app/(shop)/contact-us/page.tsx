@@ -1,4 +1,7 @@
+import { siteInputs } from '@/lib/site-inputs'
+
 export default function ContactUsPage() {
+  const { email, telephone } = siteInputs.home.schema.organization
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 lg:px-6">
       <h1 className="mb-6 text-2xl font-bold text-slate-800">Contact Us</h1>
@@ -15,6 +18,20 @@ export default function ContactUsPage() {
             Our customer support team is available to assist you with order inquiries, product questions, and general
             assistance. Please allow up to 24 hours for a response during business days.
           </p>
+          <ul className="mt-3 space-y-1 text-sm">
+            <li>
+              Email:{' '}
+              <a className="font-medium text-teal-700 underline underline-offset-2" href={`mailto:${email}`}>
+                {email}
+              </a>
+            </li>
+            <li>
+              Phone:{' '}
+              <a className="font-medium text-teal-700 underline underline-offset-2" href={`tel:${telephone}`}>
+                {telephone}
+              </a>
+            </li>
+          </ul>
         </div>
 
         <div>

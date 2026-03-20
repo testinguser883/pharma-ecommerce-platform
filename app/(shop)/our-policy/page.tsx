@@ -1,4 +1,7 @@
+import { siteInputs } from '@/lib/site-inputs'
+
 export default function OurPolicyPage() {
+  const siteHost = new URL(siteInputs.home.schema.organization.url).host
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 lg:px-6">
       <h1 className="mb-6 text-2xl font-bold text-slate-800">Our Policy</h1>
@@ -7,7 +10,7 @@ export default function OurPolicyPage() {
         <div>
           <h2 className="mb-2 font-semibold text-slate-700">Ordering Policy</h2>
           <p>
-            All orders placed on pharma-ecommerce-platform-5an9.vercel.app are subject to availability and confirmation.
+            All orders placed on {siteHost} are subject to availability and confirmation.
             We reserve the right to refuse or cancel any order at our discretion. Customers are responsible for ensuring
             they provide accurate shipping information.
           </p>
@@ -24,9 +27,8 @@ export default function OurPolicyPage() {
         <div>
           <h2 className="mb-2 font-semibold text-slate-700">Shipping Policy</h2>
           <p>
-            We ship worldwide using tracked and discreet packaging. Delivery times vary by destination. We are not
-            responsible for delays caused by customs or postal services. Customers are responsible for understanding the
-            import regulations in their country.
+            We currently deliver within India only using tracked and discreet packaging. Delivery times vary by
+            destination. We are not responsible for delays caused by courier or postal services.
           </p>
         </div>
 

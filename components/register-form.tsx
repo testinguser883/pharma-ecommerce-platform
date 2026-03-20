@@ -5,6 +5,18 @@ import { FormEvent, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { authClient } from '@/lib/auth-client'
 
+function getPasswordPolicyError(password: string) {
+  if (password.length < 8) return 'Password must be at least 8 characters.'
+  if (password.length > 128) return 'Password is too long.'
+  const hasLower = /[a-z]/.test(password)
+  const hasUpper = /[A-Z]/.test(password)
+  const hasNumber = /\d/.test(password)
+  if (!hasLower || !hasUpper || !hasNumber) {
+    return 'Password must include at least 1 uppercase letter, 1 lowercase letter, and 1 number.'
+  }
+  return null
+}
+
 export function RegisterForm() {
   const router = useRouter()
 
@@ -17,6 +29,12 @@ export function RegisterForm() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setErrorMessage(null)
+
+    const passwordError = getPasswordPolicyError(password)
+    if (passwordError) {
+      setErrorMessage(passwordError)
+      return
+    }
 
     await authClient.signUp.email(
       {
@@ -34,7 +52,12 @@ export function RegisterForm() {
         },
         onError: (ctx) => {
           setIsSubmitting(false)
-          setErrorMessage(ctx.error.message)
+          const message = ctx.error.message
+          setErrorMessage(
+            /password/i.test(message)
+              ? message
+              : 'Unable to create account right now. Please try again.',
+          )
         },
       },
     )
@@ -98,7 +121,7 @@ export function RegisterForm() {
                 onChange={(event) => setPassword(event.target.value)}
                 required
                 minLength={8}
-                placeholder="Min. 8 characters"
+                placeholder="8+ chars, upper/lower/number"
                 className="rx-input"
               />
             </div>

@@ -1,11 +1,14 @@
+import { siteInputs } from '@/lib/site-inputs'
+
 export default function TermsConditionsPage() {
+  const siteHost = new URL(siteInputs.home.schema.organization.url).host
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 lg:px-6">
       <h1 className="mb-6 text-2xl font-bold text-slate-800">Terms &amp; Conditions</h1>
 
       <div className="space-y-6 text-slate-600">
         <p>
-          By accessing or using pharma-ecommerce-platform-5an9.vercel.app, you agree to be bound by these Terms &amp;
+          By accessing or using {siteHost}, you agree to be bound by these Terms &amp;
           Conditions. If you do not agree with any part of these terms, please do not use our website.
         </p>
 
@@ -37,9 +40,9 @@ export default function TermsConditionsPage() {
         <div>
           <h2 className="mb-2 font-semibold text-slate-700">4. Intellectual Property</h2>
           <p>
-            All content on this website, including text, images, logos, and graphics, is the property of
-            pharma-ecommerce-platform-5an9.vercel.app and is protected by applicable intellectual property laws.
-            Unauthorized reproduction or use is strictly prohibited.
+            All content on this website, including text, images, logos, and graphics, is the property of {siteHost} and
+            is protected by applicable intellectual property laws. Unauthorized reproduction or use is strictly
+            prohibited.
           </p>
         </div>
 

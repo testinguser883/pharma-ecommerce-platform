@@ -1,10 +1,13 @@
+import { siteInputs } from '@/lib/site-inputs'
+
 export default function TestimonialsPage() {
+  const siteHost = new URL(siteInputs.home.schema.organization.url).host
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 lg:px-6">
       <h1 className="mb-6 text-2xl font-bold text-slate-800">Testimonials</h1>
 
       <p className="mb-8 text-slate-600">
-        Here is what our customers say about their experience with pharma-ecommerce-platform-5an9.vercel.app.
+        Here is what our customers say about their experience with {siteHost}.
       </p>
 
       <div className="space-y-6">

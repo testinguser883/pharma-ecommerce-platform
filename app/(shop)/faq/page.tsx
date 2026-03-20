@@ -16,7 +16,7 @@ export default function FAQPage() {
           <h2 className="mb-2 font-semibold text-slate-700">What payment methods do you accept?</h2>
           <p>
             We currently accept Bitcoin (BTC) as our payment method. This ensures fast and secure transactions for all
-            our customers worldwide.
+            our customers in India.
           </p>
         </div>
 
