@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     if (!success) {
       console.warn('[verify-captcha] Turnstile verification failed.', { status: res.status, errorCodes: result?.['error-codes'] })
     }
-    return NextResponse.json({ success })
+    return NextResponse.json({ success, errorCodes: result?.['error-codes'] ?? [], httpStatus: res.status })
   } catch (err) {
     console.error('[verify-captcha] Turnstile verification error.', err)
     // Fail closed to avoid bot bypasses on network / parsing errors.

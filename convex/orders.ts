@@ -143,9 +143,9 @@ async function verifyTurnstileToken(token: string): Promise<boolean> {
       console.error('[turnstile] verify-captcha HTTP error', res.status)
       return false
     }
-    const data = (await res.json().catch(() => null)) as { success?: boolean } | null
+    const data = (await res.json().catch(() => null)) as { success?: boolean; errorCodes?: string[]; httpStatus?: number } | null
     if (!data?.success) {
-      console.error('[turnstile] verification failed')
+      console.error('[turnstile] verification failed', { errorCodes: data?.errorCodes, httpStatus: data?.httpStatus })
     }
     return Boolean(data?.success)
   } catch (err) {
