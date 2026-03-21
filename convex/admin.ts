@@ -39,15 +39,13 @@ async function getAdminState(ctx: any) {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const email = normalizeEmail((user as any).email as string | undefined)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const emailVerified = Boolean((user as any).emailVerified)
   const configuredAdminEmail = getConfiguredAdminEmail()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const userId = String((user as any)._id ?? (user as any).id ?? '')
   const configuredAdminUserId = getConfiguredAdminUserId()
 
   const isSuperAdminByUserId = Boolean(configuredAdminUserId && userId && userId === configuredAdminUserId)
-  const isSuperAdminByEmail = Boolean(configuredAdminEmail && email === configuredAdminEmail && emailVerified)
+  const isSuperAdminByEmail = Boolean(configuredAdminEmail && email === configuredAdminEmail)
   const isSuperAdmin = isSuperAdminByUserId || isSuperAdminByEmail
 
   const assignedAdminRole = await getAssignedAdminRole(ctx, userId || undefined)
