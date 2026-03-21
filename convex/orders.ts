@@ -1,5 +1,5 @@
 import { action, internalMutation, internalQuery, mutation, query } from './_generated/server'
-import { v } from 'convex/values'
+import { v, ConvexError } from 'convex/values'
 import type { ActionCtx, MutationCtx, QueryCtx } from './_generated/server'
 import { internal } from './_generated/api'
 import { resolveProductSelection } from './pricing'
@@ -239,7 +239,7 @@ export const createBtcOrder = mutation({
       (o) => o.status === 'pending_payment' || o.status === 'partial_payment' || o.status === 'payment_review',
     ).length
     if (pendingCount >= MAX_PENDING_ORDERS_PER_USER) {
-      throw new Error(
+      throw new ConvexError(
         `You already have ${pendingCount} unpaid order(s). Please complete or cancel existing orders before placing a new one.`,
       )
     }
