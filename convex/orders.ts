@@ -465,8 +465,12 @@ export const savePaymentProof = mutation({
       )
     }
 
-    // Delete the previous proof file from storage to prevent orphaned files
-    if (order.paymentProofStorageId) {
+    // Delete the previous proof only if it hasn't been archived in history.
+    // Archived proofs must be kept so admins can view them via the proof history.
+    const isArchived = (order.paymentProofHistory ?? []).some(
+      (h) => h.storageId === order.paymentProofStorageId,
+    )
+    if (order.paymentProofStorageId && !isArchived) {
       await ctx.storage.delete(order.paymentProofStorageId)
     }
 
