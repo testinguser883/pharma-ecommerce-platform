@@ -15,8 +15,8 @@ export async function POST(req: NextRequest) {
   try {
     const res = await fetch('https://challenges.cloudflare.com/turnstile/v1/siteverify', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ secret: secretKey, response: token }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret: secretKey, response: token }),
     })
     const result = (await res.json().catch(() => null)) as { success?: boolean; ['error-codes']?: string[] } | null
     const success = Boolean(res.ok && result?.success)
