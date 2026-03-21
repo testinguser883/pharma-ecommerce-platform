@@ -13,10 +13,14 @@ export async function POST(req: NextRequest) {
   if (!secretKey) return NextResponse.json({ success: false, error: 'CAPTCHA not configured' }, { status: 500 })
 
   try {
-    const res = await fetch('https://challenges.cloudflare.com/turnstile/v1/siteverify', {
+    const formData = new URLSearchParams()
+    formData.append('secret', secretKey)
+    formData.append('response', token)
+
+    const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ secret: secretKey, response: token }),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: formData.toString(),
     })
     const rawText = await res.text()
     console.log('[verify-captcha] raw response', { status: res.status, body: rawText })
