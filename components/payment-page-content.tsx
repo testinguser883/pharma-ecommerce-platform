@@ -124,7 +124,7 @@ export function PaymentPage({ orderId }: { orderId: string }) {
       await savePaymentProof({ orderId: order._id, storageId: storageId as Id<'_storage'> })
       setProofUploaded(true)
     } catch (err) {
-      const raw = err instanceof Error ? err.message : ''
+      const raw = err instanceof Error ? ((err as any).data ?? err.message) : ''
       const knownPhrases = ['wait', 'locked', 'review', 'rejected', 'large', 'not found', 'attempt', 'contact', 'captcha']
       setUploadError(knownPhrases.some((p) => raw.toLowerCase().includes(p)) ? raw : 'Upload failed. Please try again.')
       // Reset Turnstile so a fresh token is required for the next attempt
