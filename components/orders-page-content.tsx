@@ -150,14 +150,25 @@ function MakePaymentButton({ order }: { order: Doc<'orders'> }) {
 
 function PaymentReviewBanner({ order }: { order: Doc<'orders'> }) {
   if (order.status !== 'payment_review') return null
+  const hasPartial = order.partialAmountReceived != null && order.partialAmountReceived > 0
   return (
     <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm">
-      <p className="font-semibold text-blue-800">Payment Proof Under Review</p>
+      {hasPartial && (
+        <div className="mb-2 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2">
+          <svg className="h-4 w-4 shrink-0 text-green-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className="text-xs text-green-800">
+            Partial payment of <span className="font-semibold">{formatPrice(order.partialAmountReceived!)}</span> has been received.
+          </span>
+        </div>
+      )}
+      <p className="font-semibold text-blue-800">
+        {hasPartial ? 'Remaining Payment Proof Under Review' : 'Payment Proof Under Review'}
+      </p>
       <p className="mt-0.5 text-xs text-blue-700">
         Your screenshot was submitted on{' '}
-        {order.paymentProofUploadedAt
-          ? formatDate(order.paymentProofUploadedAt)
-          : 'recently'}
+        {order.paymentProofUploadedAt ? formatDate(order.paymentProofUploadedAt) : 'recently'}
         . We&apos;ll confirm your payment shortly.
       </p>
     </div>
