@@ -129,34 +129,23 @@ async function verifyTurnstileToken(token: string): Promise<boolean> {
   if (process.env.CAPTCHA_ENABLED === 'false' || process.env.NEXT_PUBLIC_CAPTCHA_ENABLED === 'false') {
     return true
   }
-  const secretKey = process.env.TURNSTILE_SECRET_KEY
-  if (!secretKey) throw new Error('CAPTCHA secret key not configured. Please contact support.')
+  // Route verification through the Next.js API route because Cloudflare blocks
+  // siteverify requests from Convex's infrastructure IPs directly (HTTP 405).
+  const siteUrl = process.env.SITE_URL
+  if (!siteUrl) throw new Error('SITE_URL not configured. Please contact support.')
   try {
-    const res = await fetch('https://challenges.cloudflare.com/turnstile/v1/siteverify', {
+    const res = await fetch(`${siteUrl}/api/verify-captcha`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ secret: secretKey, response: token }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
     })
     if (!res.ok) {
-      console.error('[turnstile] siteverify HTTP error', res.status)
+      console.error('[turnstile] verify-captcha HTTP error', res.status)
       return false
     }
-    const ERROR_MESSAGES: Record<string, string> = {
-      'missing-input-secret': 'Secret key was not provided',
-      'invalid-input-secret': 'Secret key is invalid or does not match the site key',
-      'missing-input-response': 'Turnstile token was not submitted',
-      'invalid-input-response': 'Turnstile token is invalid or malformed',
-      'invalid-widget-id': 'Widget ID in the token does not match the site key',
-      'invalid-parsed-secret': 'Secret key could not be parsed',
-      'bad-request': 'Request to Cloudflare was malformed',
-      'timeout-or-duplicate': 'Token has already been used or has expired (max 300s)',
-      'internal-error': 'Cloudflare internal error — try again',
-    }
-    const data = (await res.json().catch(() => null)) as { success?: boolean; 'error-codes'?: string[] } | null
+    const data = (await res.json().catch(() => null)) as { success?: boolean } | null
     if (!data?.success) {
-      const codes = data?.['error-codes'] ?? []
-      const messages = codes.map((c) => `${c}: ${ERROR_MESSAGES[c] ?? 'unknown error'}`)
-      console.error('[turnstile] verification failed', { codes, messages })
+      console.error('[turnstile] verification failed')
     }
     return Boolean(data?.success)
   } catch (err) {
