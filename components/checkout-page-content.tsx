@@ -130,8 +130,7 @@ function BtcPaymentPanel({
   const refreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Turnstile + honeypot
-  const captchaEnabled = process.env.NEXT_PUBLIC_CAPTCHA_ENABLED !== 'false'
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(captchaEnabled ? null : 'bypass')
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const turnstileRef = useRef<TurnstileInstance>(null)
   const [honeypot, setHoneypot] = useState('')
 
@@ -173,16 +172,19 @@ function BtcPaymentPanel({
     setUploadError(null)
     setUploading(true)
     try {
-      if (captchaEnabled && turnstileToken && turnstileToken !== 'bypass') {
-        const verifyRes = await fetch('/api/verify-captcha', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: turnstileToken }),
-        })
-        const { success } = (await verifyRes.json()) as { success: boolean }
-        if (!success) throw new Error('CAPTCHA verification failed. Please try again.')
+      if (!turnstileToken) throw new Error('Please complete the CAPTCHA verification.')
+      const verifyRes = await fetch('/api/verify-captcha', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: turnstileToken }),
+      })
+      const { success, captchaProof, captchaTimestamp } = (await verifyRes.json()) as {
+        success: boolean
+        captchaProof?: string
+        captchaTimestamp?: number
       }
-      const uploadUrl = await generateUploadUrl({ orderId })
+      if (!success || !captchaProof || !captchaTimestamp) throw new Error('CAPTCHA verification failed. Please try again.')
+      const uploadUrl = await generateUploadUrl({ orderId, captchaProof, captchaTimestamp })
       const res = await fetch(uploadUrl, {
         method: 'POST',
         headers: { 'Content-Type': file.type },
@@ -314,7 +316,7 @@ function BtcPaymentPanel({
         </div>
 
         {/* Cloudflare Turnstile */}
-        {captchaEnabled && process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+        {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
           <div className="mb-3">
             <Turnstile
               ref={turnstileRef}
@@ -360,7 +362,7 @@ function BtcPaymentPanel({
             </>
           )}
         </button>
-        {captchaEnabled && !turnstileToken && !uploading && (
+        {!turnstileToken && !uploading && (
           <p className="mt-2 text-xs text-slate-400">Complete the verification above to enable upload.</p>
         )}
         {uploadError && <p className="mt-2 text-xs text-red-600">{uploadError}</p>}

@@ -40,8 +40,7 @@ export function PaymentPage({ orderId }: { orderId: string }) {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Turnstile
-  const captchaEnabled = process.env.NEXT_PUBLIC_CAPTCHA_ENABLED !== 'false'
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(captchaEnabled ? null : 'bypass')
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const turnstileRef = useRef<TurnstileInstance>(null)
 
   // Honeypot
@@ -106,16 +105,19 @@ export function PaymentPage({ orderId }: { orderId: string }) {
     setUploadError(null)
     setUploading(true)
     try {
-      if (captchaEnabled && turnstileToken !== 'bypass') {
-        const verifyRes = await fetch('/api/verify-captcha', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: turnstileToken }),
-        })
-        const { success } = (await verifyRes.json()) as { success: boolean }
-        if (!success) throw new Error('CAPTCHA verification failed. Please try again.')
+      if (!turnstileToken) throw new Error('Please complete the CAPTCHA verification.')
+      const verifyRes = await fetch('/api/verify-captcha', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: turnstileToken }),
+      })
+      const { success, captchaProof, captchaTimestamp } = (await verifyRes.json()) as {
+        success: boolean
+        captchaProof?: string
+        captchaTimestamp?: number
       }
-      const uploadUrl = await generateUploadUrl({ orderId: order._id })
+      if (!success || !captchaProof || !captchaTimestamp) throw new Error('CAPTCHA verification failed. Please try again.')
+      const uploadUrl = await generateUploadUrl({ orderId: order._id, captchaProof, captchaTimestamp })
       const res = await fetch(uploadUrl, { method: 'POST', headers: { 'Content-Type': file.type }, body: file })
       if (!res.ok) throw new Error('Upload failed')
       const { storageId } = (await res.json()) as { storageId: string }
@@ -269,7 +271,7 @@ export function PaymentPage({ orderId }: { orderId: string }) {
             </div>
 
             {/* Turnstile widget */}
-            {captchaEnabled && siteKey && (
+            {siteKey && (
               <Turnstile
                 ref={turnstileRef}
                 siteKey={siteKey}
@@ -296,7 +298,7 @@ export function PaymentPage({ orderId }: { orderId: string }) {
               )}
             </button>
 
-            {captchaEnabled && !turnstileToken && !uploading && (
+            {!turnstileToken && !uploading && (
               <p className="text-xs text-slate-400">Complete the verification above to enable upload.</p>
             )}
             {uploadError && <p className="text-xs text-red-600">{uploadError}</p>}

@@ -338,11 +338,46 @@ export const setBtcPaymentQuoteInternal = internalMutation({
   },
 })
 
-// Public: generates the upload URL — CAPTCHA verified client-side, auth verified here.
+// CAPTCHA proof validity window (5 minutes)
+const CAPTCHA_PROOF_MAX_AGE_MS = 5 * 60 * 1000
+
+// Public: generates the upload URL — CAPTCHA proof + auth verified here.
 export const generatePaymentProofUploadUrl = action({
-  args: { orderId: v.id('orders') },
+  args: {
+    orderId: v.id('orders'),
+    captchaProof: v.string(),
+    captchaTimestamp: v.number(),
+  },
   handler: async (ctx, args): Promise<string> => {
     await getAuthenticatedUserId(ctx)
+
+    // Validate CAPTCHA proof (HMAC signed by /api/verify-captcha after Cloudflare Turnstile passes)
+    const secretKey = process.env.TURNSTILE_SECRET_KEY?.trim()
+    if (!secretKey) throw new Error('CAPTCHA not configured on server')
+
+    const age = Date.now() - args.captchaTimestamp
+    if (age < 0 || age > CAPTCHA_PROOF_MAX_AGE_MS) {
+      throw new Error('CAPTCHA verification expired. Please complete the CAPTCHA again.')
+    }
+
+    // Recompute HMAC using Web Crypto API and compare
+    const encoder = new TextEncoder()
+    const key = await crypto.subtle.importKey(
+      'raw',
+      encoder.encode(secretKey),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign'],
+    )
+    const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(args.captchaTimestamp.toString()))
+    const expectedProof = Array.from(new Uint8Array(sig))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('')
+
+    if (expectedProof !== args.captchaProof) {
+      throw new Error('CAPTCHA verification failed. Please try again.')
+    }
+
     return await ctx.runMutation(internal.orders.generateUploadUrlInternal, { orderId: args.orderId })
   },
 })
