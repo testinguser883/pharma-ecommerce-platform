@@ -182,7 +182,8 @@ export async function isAdminAuthenticated() {
     return false
   }
   try {
-    const client = new ConvexHttpClient(convexUrl, { auth: token })
+    const client = new ConvexHttpClient(convexUrl)
+    client.setAuth(token)
     return await client.query(api.admin.isAdmin, {})
   } catch (error) {
     logAuthServerWarning('Admin check failed.', error)
