@@ -56,7 +56,7 @@ const EMPTY_BILLING: BillingForm = {
   lastName: '',
   streetAddress: '',
   city: '',
-  country: 'IN',
+  country: 'India',
   state: '',
   zipCode: '',
 }
@@ -66,7 +66,7 @@ const EMPTY_SHIPPING: ShippingForm = {
   lastName: '',
   streetAddress: '',
   city: '',
-  country: 'IN',
+  country: 'India',
   state: '',
   zipCode: '',
 }
@@ -77,7 +77,7 @@ const selectClass =
   'w-full border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-200 bg-white appearance-none'
 const labelClass = 'block text-xs font-semibold uppercase tracking-wide text-slate-700 mb-1'
 
-const DELIVERY_COUNTRIES = COUNTRIES.filter((c) => c.code === 'IN')
+const DELIVERY_COUNTRIES = COUNTRIES
 
 function SectionHeader({ number, title }: { number: number; title: string }) {
   return (
@@ -427,7 +427,7 @@ export function CheckoutPageContent() {
       lastName: billing.lastName,
       streetAddress: billing.streetAddress,
       city: billing.city,
-      country: COUNTRIES.find((c) => c.code === billing.country)?.name ?? billing.country,
+      country: billing.country,
       state: billing.state,
       zipCode: billing.zipCode,
     }
@@ -441,7 +441,7 @@ export function CheckoutPageContent() {
       lastName: shipping.lastName,
       streetAddress: shipping.streetAddress,
       city: shipping.city,
-      country: COUNTRIES.find((c) => c.code === shipping.country)?.name ?? shipping.country,
+      country: shipping.country,
       state: shipping.state,
       zipCode: shipping.zipCode,
     }
@@ -648,8 +648,8 @@ export function CheckoutPageContent() {
             <Field label="Country:">
               <div className="relative">
                 <select className={selectClass} value={billing.country} onChange={(e) => setBillingField('country', e.target.value)}>
-                  {DELIVERY_COUNTRIES.map((c) => (
-                    <option key={c.code} value={c.code}>{c.name}</option>
+                  {DELIVERY_COUNTRIES.map((name) => (
+                    <option key={name} value={name}>{name}</option>
                   ))}
                 </select>
                 <span className="pointer-events-none absolute right-3 top-2.5 text-slate-400">▾</span>
