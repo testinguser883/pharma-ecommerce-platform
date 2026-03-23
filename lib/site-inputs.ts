@@ -1,4 +1,4 @@
-const DEFAULT_SITE_URL = 'https://www.gardenerpersonal.click'
+const DEFAULT_SITE_URL = 'https://www.GetUrPill.com'
 const SITE_URL = (process.env.NEXT_PUBLIC_APP_URL ?? process.env.SITE_URL ?? DEFAULT_SITE_URL).replace(/\/+$/, '')
 
 function normalizeGoogleTagId(value: string | undefined) {
