@@ -65,7 +65,7 @@ async function sendWelcomeEmail(email: string, name: string | null | undefined) 
   const displayName = name ?? email.split('@')[0]
   const html = `
     <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;background:#f8fafc;border-radius:12px">
-      <h1 style="color:#0f172a;font-size:24px;margin-bottom:8px">Welcome to PharmaCare, ${displayName}!</h1>
+      <h1 style="color:#0f172a;font-size:24px;margin-bottom:8px">Welcome to GetUrPill, ${displayName}!</h1>
       <p style="color:#475569;font-size:15px;line-height:1.6">
         Your account is ready. Browse our full range of medicines, add items to your cart, and get them delivered to your door.
       </p>
@@ -80,9 +80,9 @@ async function sendWelcomeEmail(email: string, name: string | null | undefined) 
       method: 'POST',
       headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: process.env.EMAIL_FROM ?? 'PharmaCare <onboarding@resend.dev>',
+        from: process.env.EMAIL_FROM ?? 'GetUrPill.com <onboarding@resend.dev>',
         to: email,
-        subject: `Welcome to PharmaCare, ${displayName}!`,
+        subject: `Welcome to GetUrPill.com, ${displayName}!`,
         html,
       }),
     })

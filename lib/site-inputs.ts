@@ -16,7 +16,7 @@ export const siteInputs = {
     schema: {
       enabled: true,
       organization: {
-        name: 'PharmaCare',
+        name: 'GetUrPill.com',
         url: SITE_URL,
         logoPath: '/favicon.ico',
         telephone: process.env.NEXT_PUBLIC_SUPPORT_PHONE?.trim() || '+91-8454039832',

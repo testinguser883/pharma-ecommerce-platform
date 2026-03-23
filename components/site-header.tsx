@@ -73,7 +73,7 @@ export function SiteHeader() {
               <Pill className="h-4.5 w-4.5" />
             </span>
             <span className="text-base font-bold tracking-tight text-white group-hover:text-teal-300 transition-colors">
-              PharmaCare
+              GetUrPill.com
             </span>
           </Link>
 

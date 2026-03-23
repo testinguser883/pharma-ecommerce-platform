@@ -86,7 +86,7 @@ export function RegisterForm() {
               </svg>
             </div>
             <h1 className="text-xl font-extrabold text-slate-900">Create account</h1>
-            <p className="mt-0.5 text-sm text-slate-400">Join PharmaCare and order with ease.</p>
+            <p className="mt-0.5 text-sm text-slate-400">Join GetUrPill.com and order with ease.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">

@@ -87,7 +87,7 @@ function userEmailHtml(opts: {
         <!-- Header -->
         <tr>
           <td style="background:linear-gradient(135deg,#10b981,#0d9488);border-radius:12px 12px 0 0;padding:28px 32px;text-align:center;">
-            <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;">PharmaCare</h1>
+            <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;">GetUrPill.com</h1>
             <p style="margin:6px 0 0;color:#d1fae5;font-size:14px;">Your trusted online pharmacy</p>
           </td>
         </tr>
@@ -149,7 +149,7 @@ function userEmailHtml(opts: {
         <tr>
           <td style="background:#f8fafc;border-radius:0 0 12px 12px;padding:20px 32px;text-align:center;border-top:1px solid #e2e8f0;">
             <p style="margin:0;color:#94a3b8;font-size:12px;">
-              © ${new Date().getFullYear()} PharmaCare. All rights reserved.<br/>
+              © ${new Date().getFullYear()} GetUrPill.com. All rights reserved.<br/>
               If you have questions, reply to this email.
             </p>
           </td>
@@ -180,7 +180,7 @@ function adminEmailHtml(opts: {
       <table width="100%" style="max-width:600px;" cellpadding="0" cellspacing="0">
         <tr>
           <td style="background:#1e293b;border-radius:12px 12px 0 0;padding:20px 32px;">
-            <h1 style="margin:0;color:#ffffff;font-size:18px;">PharmaCare Admin</h1>
+            <h1 style="margin:0;color:#ffffff;font-size:18px;">GetUrPill.com Admin</h1>
             <p style="margin:4px 0 0;color:#94a3b8;font-size:13px;">New Order Notification</p>
           </td>
         </tr>
@@ -225,7 +225,7 @@ function adminEmailHtml(opts: {
         </tr>
         <tr>
           <td style="background:#f8fafc;border-radius:0 0 12px 12px;padding:16px 32px;text-align:center;border-top:1px solid #e2e8f0;">
-            <p style="margin:0;color:#94a3b8;font-size:12px;">PharmaCare Admin Notification</p>
+            <p style="margin:0;color:#94a3b8;font-size:12px;">GetUrPill.com Admin Notification</p>
           </td>
         </tr>
       </table>
@@ -273,7 +273,7 @@ function partialPaymentEmailHtml(opts: {
       <table width="100%" style="max-width:600px;" cellpadding="0" cellspacing="0">
         <tr>
           <td style="background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:12px 12px 0 0;padding:28px 32px;text-align:center;">
-            <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;">PharmaCare</h1>
+            <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;">GetUrPill.com</h1>
             <p style="margin:6px 0 0;color:#fef3c7;font-size:14px;">Partial Payment Received</p>
           </td>
         </tr>
@@ -322,7 +322,7 @@ function partialPaymentEmailHtml(opts: {
         <tr>
           <td style="background:#f8fafc;border-radius:0 0 12px 12px;padding:20px 32px;text-align:center;border-top:1px solid #e2e8f0;">
             <p style="margin:0;color:#94a3b8;font-size:12px;">
-              © ${new Date().getFullYear()} PharmaCare. All rights reserved.
+              © ${new Date().getFullYear()} GetUrPill.com. All rights reserved.
             </p>
           </td>
         </tr>
@@ -353,7 +353,7 @@ export const sendPaymentConfirmedEmail = internalAction({
     if (customerEmail) {
       await sendEmail({
         apiKey: resendKey,
-        from: `PharmaCare <${fromEmail}>`,
+        from: `GetUrPill.com <${fromEmail}>`,
         to: customerEmail,
         subject: `Payment Confirmed – Order #${order._id}`,
         html: userEmailHtml({
@@ -396,7 +396,7 @@ export const sendPartialPaymentEmail = internalAction({
     if (customerEmail) {
       await sendEmail({
         apiKey: resendKey,
-        from: `PharmaCare <${fromEmail}>`,
+        from: `GetUrPill.com <${fromEmail}>`,
         to: customerEmail,
         subject: `Partial Payment Received – Order #${order._id}`,
         html: partialPaymentEmailHtml({
@@ -444,7 +444,7 @@ export const sendOrderConfirmationEmails = internalAction({
     if (customerEmail) {
       await sendEmail({
         apiKey: resendKey,
-        from: `PharmaCare <${fromEmail}>`,
+        from: `GetUrPill.com <${fromEmail}>`,
         to: customerEmail,
         subject: `${subjectSuffix} – Order #${order._id}`,
         html: userEmailHtml({
@@ -462,7 +462,7 @@ export const sendOrderConfirmationEmails = internalAction({
     if (adminEmail) {
       await sendEmail({
         apiKey: resendKey,
-        from: `PharmaCare Orders <${fromEmail}>`,
+        from: `GetUrPill.com Orders <${fromEmail}>`,
         to: adminEmail,
         subject: `[Admin] New Order – ${customerName} – ${subjectSuffix}`,
         html: adminEmailHtml({
