@@ -19,9 +19,8 @@ export default function AboutUsPage() {
         </p>
 
         <p>
-          Since our founding, we have served thousands of satisfied customers across India. We understand that access
-          to healthcare is a fundamental need, and we work hard every day to make that access simpler and more
-          affordable.
+          Since our founding, we have served thousands of satisfied customers across India. We understand that access to
+          healthcare is a fundamental need, and we work hard every day to make that access simpler and more affordable.
         </p>
 
         <h2 className="mt-6 text-lg font-semibold text-slate-700">Our Mission</h2>

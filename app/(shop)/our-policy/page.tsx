@@ -10,9 +10,9 @@ export default function OurPolicyPage() {
         <div>
           <h2 className="mb-2 font-semibold text-slate-700">Ordering Policy</h2>
           <p>
-            All orders placed on {siteHost} are subject to availability and confirmation.
-            We reserve the right to refuse or cancel any order at our discretion. Customers are responsible for ensuring
-            they provide accurate shipping information.
+            All orders placed on {siteHost} are subject to availability and confirmation. We reserve the right to refuse
+            or cancel any order at our discretion. Customers are responsible for ensuring they provide accurate shipping
+            information.
           </p>
         </div>
 

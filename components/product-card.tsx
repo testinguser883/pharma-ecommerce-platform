@@ -4,7 +4,6 @@ import Link from 'next/link'
 import type { Doc } from '@/convex/_generated/dataModel'
 
 export function ProductCard({ product }: { product: Doc<'products'> }) {
-
   return (
     <article className="group rx-card flex flex-col overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
       {/* Discount badge */}

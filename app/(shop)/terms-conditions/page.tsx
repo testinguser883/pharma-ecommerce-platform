@@ -8,8 +8,8 @@ export default function TermsConditionsPage() {
 
       <div className="space-y-6 text-slate-600">
         <p>
-          By accessing or using {siteHost}, you agree to be bound by these Terms &amp;
-          Conditions. If you do not agree with any part of these terms, please do not use our website.
+          By accessing or using {siteHost}, you agree to be bound by these Terms &amp; Conditions. If you do not agree
+          with any part of these terms, please do not use our website.
         </p>
 
         <div>

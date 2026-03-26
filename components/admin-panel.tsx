@@ -691,7 +691,11 @@ function OrdersTab() {
                                     <button
                                       type="button"
                                       disabled={reviewLoading}
-                                      onClick={() => { setReviewMode('partial'); setReviewPartialAmount(''); setReviewNote('') }}
+                                      onClick={() => {
+                                        setReviewMode('partial')
+                                        setReviewPartialAmount('')
+                                        setReviewNote('')
+                                      }}
                                       className="rounded-full bg-amber-500 px-2.5 py-1 text-xs font-semibold text-white hover:bg-amber-600 disabled:opacity-50"
                                     >
                                       ⚠ Partial
@@ -699,7 +703,10 @@ function OrdersTab() {
                                     <button
                                       type="button"
                                       disabled={reviewLoading}
-                                      onClick={() => { setReviewMode('reject'); setReviewNote('') }}
+                                      onClick={() => {
+                                        setReviewMode('reject')
+                                        setReviewNote('')
+                                      }}
                                       className="rounded-full bg-red-500 px-2.5 py-1 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-50"
                                     >
                                       ✕ Reject
@@ -745,7 +752,13 @@ function OrdersTab() {
                                       >
                                         {reviewLoading ? 'Saving…' : 'Confirm'}
                                       </button>
-                                      <button type="button" onClick={() => setReviewMode('none')} className="rounded-full border border-slate-200 px-2.5 py-1 text-xs text-slate-500 hover:bg-slate-100">Back</button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setReviewMode('none')}
+                                        className="rounded-full border border-slate-200 px-2.5 py-1 text-xs text-slate-500 hover:bg-slate-100"
+                                      >
+                                        Back
+                                      </button>
                                     </div>
                                   </div>
                                 )}
@@ -767,7 +780,13 @@ function OrdersTab() {
                                       >
                                         {reviewLoading ? 'Rejecting…' : 'Confirm'}
                                       </button>
-                                      <button type="button" onClick={() => setReviewMode('none')} className="rounded-full border border-slate-200 px-2.5 py-1 text-xs text-slate-500 hover:bg-slate-100">Back</button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setReviewMode('none')}
+                                        className="rounded-full border border-slate-200 px-2.5 py-1 text-xs text-slate-500 hover:bg-slate-100"
+                                      >
+                                        Back
+                                      </button>
                                     </div>
                                   </div>
                                 )}
@@ -939,7 +958,6 @@ function OrderDetailModal({
     setTrackingNumber(order.trackingNumber ?? '')
   }, [order._id, order.trackingNumber, order.trackingWebsite])
 
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
       <div className="relative flex max-h-[90vh] w-full max-w-2xl flex-col rounded-2xl bg-white shadow-2xl">
@@ -994,7 +1012,9 @@ function OrderDetailModal({
                       <tr key={entry.storageId} className="text-slate-600">
                         <td className="py-2 pr-4 font-mono text-slate-400">{i + 1}</td>
                         <td className="py-2 pr-4 whitespace-nowrap">
-                          {new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(entry.uploadedAt)}
+                          {new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(
+                            entry.uploadedAt,
+                          )}
                         </td>
                         <td className="py-2 pr-4">
                           <span
@@ -1045,7 +1065,9 @@ function OrderDetailModal({
                 <p className="font-semibold text-blue-800">
                   Payment Proof Submitted
                   {order.status === 'pending_payment' && order.adminNote && (
-                    <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">Previously Rejected</span>
+                    <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
+                      Previously Rejected
+                    </span>
                   )}
                 </p>
                 {paymentProofUrl && order.status !== 'payment_review' && (
@@ -1059,9 +1081,7 @@ function OrderDetailModal({
                   </a>
                 )}
               </div>
-              <p className="mt-0.5 text-xs text-blue-700">
-                Uploaded: {formatDate(order.paymentProofUploadedAt)}
-              </p>
+              <p className="mt-0.5 text-xs text-blue-700">Uploaded: {formatDate(order.paymentProofUploadedAt)}</p>
               {order.status === 'payment_review' && (
                 <div className="mt-3">
                   {paymentProofUrl ? (
@@ -1098,7 +1118,11 @@ function OrderDetailModal({
                   <button
                     type="button"
                     disabled={reviewLoading}
-                    onClick={() => { setReviewMode('partial'); setReviewPartialAmount(''); setReviewNote('') }}
+                    onClick={() => {
+                      setReviewMode('partial')
+                      setReviewPartialAmount('')
+                      setReviewNote('')
+                    }}
                     className="rounded-full bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-600 disabled:opacity-50"
                   >
                     ⚠ Partial Payment
@@ -1106,7 +1130,10 @@ function OrderDetailModal({
                   <button
                     type="button"
                     disabled={reviewLoading}
-                    onClick={() => { setReviewMode('reject'); setReviewNote('') }}
+                    onClick={() => {
+                      setReviewMode('reject')
+                      setReviewNote('')
+                    }}
                     className="rounded-full bg-red-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-50"
                   >
                     ✕ Reject
@@ -1116,9 +1143,7 @@ function OrderDetailModal({
               )}
               {reviewMode === 'partial' && (
                 <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
-                  <p className="text-xs font-semibold text-amber-800">
-                    Remaining Due: {formatPrice(remainingAmount)}
-                  </p>
+                  <p className="text-xs font-semibold text-amber-800">Remaining Due: {formatPrice(remainingAmount)}</p>
                   <input
                     type="number"
                     min="0.01"
@@ -1145,7 +1170,11 @@ function OrderDetailModal({
                     >
                       {reviewLoading ? 'Saving…' : 'Confirm Partial'}
                     </button>
-                    <button type="button" onClick={() => setReviewMode('none')} className="rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setReviewMode('none')}
+                      className="rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                    >
                       Back
                     </button>
                   </div>
@@ -1169,7 +1198,11 @@ function OrderDetailModal({
                     >
                       {reviewLoading ? 'Rejecting…' : 'Confirm Reject'}
                     </button>
-                    <button type="button" onClick={() => setReviewMode('none')} className="rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setReviewMode('none')}
+                      className="rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                    >
                       Back
                     </button>
                   </div>
@@ -1183,13 +1216,43 @@ function OrderDetailModal({
             <div className="rounded-xl border border-orange-100 bg-orange-50 px-4 py-3 text-xs">
               <p className="mb-2 font-semibold text-orange-800">₿ Bitcoin Payment Details</p>
               <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-slate-600">
-                <div><span className="text-slate-400">BTC Amount Due</span><p className="font-semibold">{order.btcAmountDue} BTC</p></div>
-                {order.btcPriceUsd && <div><span className="text-slate-400">BTC Price Used</span><p className="font-semibold">{formatPrice(order.btcPriceUsd)}</p></div>}
-                {order.partialAmountReceived != null && <div><span className="text-slate-400">Received (USD)</span><p className="font-semibold text-green-700">{formatPrice(order.partialAmountReceived)}</p></div>}
-                {order.partialAmountPending != null && <div><span className="text-slate-400">Pending (USD)</span><p className="font-semibold text-red-600">{formatPrice(order.partialAmountPending)}</p></div>}
-                {order.partialPaymentDueAt && <div className="col-span-2"><span className="text-slate-400">Payment due by </span><span className="font-semibold text-amber-700">{new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(order.partialPaymentDueAt)}</span></div>}
+                <div>
+                  <span className="text-slate-400">BTC Amount Due</span>
+                  <p className="font-semibold">{order.btcAmountDue} BTC</p>
+                </div>
+                {order.btcPriceUsd && (
+                  <div>
+                    <span className="text-slate-400">BTC Price Used</span>
+                    <p className="font-semibold">{formatPrice(order.btcPriceUsd)}</p>
+                  </div>
+                )}
+                {order.partialAmountReceived != null && (
+                  <div>
+                    <span className="text-slate-400">Received (USD)</span>
+                    <p className="font-semibold text-green-700">{formatPrice(order.partialAmountReceived)}</p>
+                  </div>
+                )}
+                {order.partialAmountPending != null && (
+                  <div>
+                    <span className="text-slate-400">Pending (USD)</span>
+                    <p className="font-semibold text-red-600">{formatPrice(order.partialAmountPending)}</p>
+                  </div>
+                )}
+                {order.partialPaymentDueAt && (
+                  <div className="col-span-2">
+                    <span className="text-slate-400">Payment due by </span>
+                    <span className="font-semibold text-amber-700">
+                      {new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(order.partialPaymentDueAt)}
+                    </span>
+                  </div>
+                )}
               </div>
-              {order.adminNote && <p className="mt-2 rounded-md bg-amber-100 px-2 py-1 text-amber-800"><span className="font-semibold">Note: </span>{order.adminNote}</p>}
+              {order.adminNote && (
+                <p className="mt-2 rounded-md bg-amber-100 px-2 py-1 text-amber-800">
+                  <span className="font-semibold">Note: </span>
+                  {order.adminNote}
+                </p>
+              )}
             </div>
           )}
 
@@ -1428,7 +1491,9 @@ function OrderDetailModal({
               </div>
               <div>
                 <dt className="text-slate-400">Payment method</dt>
-                <dd className="capitalize text-slate-700">{order.paymentMethod === 'crypto' ? '₿ Bitcoin' : (order.paymentMethod ?? '—')}</dd>
+                <dd className="capitalize text-slate-700">
+                  {order.paymentMethod === 'crypto' ? '₿ Bitcoin' : (order.paymentMethod ?? '—')}
+                </dd>
               </div>
             </dl>
           </div>

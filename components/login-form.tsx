@@ -36,7 +36,11 @@ export function LoginForm() {
         onError: (ctx) => {
           setIsSubmitting(false)
           // Avoid leaking whether an account exists (account enumeration).
-          setErrorMessage(/network|service|temporarily/i.test(ctx.error.message) ? 'Unable to sign in right now.' : 'Invalid email or password.')
+          setErrorMessage(
+            /network|service|temporarily/i.test(ctx.error.message)
+              ? 'Unable to sign in right now.'
+              : 'Invalid email or password.',
+          )
         },
       },
     )

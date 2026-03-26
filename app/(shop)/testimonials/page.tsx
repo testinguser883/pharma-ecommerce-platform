@@ -6,9 +6,7 @@ export default function TestimonialsPage() {
     <div className="mx-auto max-w-3xl px-4 py-12 lg:px-6">
       <h1 className="mb-6 text-2xl font-bold text-slate-800">Testimonials</h1>
 
-      <p className="mb-8 text-slate-600">
-        Here is what our customers say about their experience with {siteHost}.
-      </p>
+      <p className="mb-8 text-slate-600">Here is what our customers say about their experience with {siteHost}.</p>
 
       <div className="space-y-6">
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-5">

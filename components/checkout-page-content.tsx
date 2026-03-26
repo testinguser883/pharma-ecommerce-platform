@@ -37,8 +37,18 @@ type ShippingForm = {
 }
 
 const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ]
 
 const currentYear = new Date().getFullYear()
@@ -183,7 +193,8 @@ function BtcPaymentPanel({
         captchaProof?: string
         captchaTimestamp?: number
       }
-      if (!success || !captchaProof || !captchaTimestamp) throw new Error('CAPTCHA verification failed. Please try again.')
+      if (!success || !captchaProof || !captchaTimestamp)
+        throw new Error('CAPTCHA verification failed. Please try again.')
       const uploadUrl = await generateUploadUrl({ orderId, captchaProof, captchaTimestamp })
       const res = await fetch(uploadUrl, {
         method: 'POST',
@@ -213,7 +224,13 @@ function BtcPaymentPanel({
       <div className="mx-auto max-w-lg rounded-2xl border border-green-200 bg-green-50 p-8 text-center shadow-sm">
         <div className="mb-3 flex items-center justify-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
-            <svg className="h-7 w-7 text-green-600" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+            <svg
+              className="h-7 w-7 text-green-600"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2.5}
+              viewBox="0 0 24 24"
+            >
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           </div>
@@ -236,11 +253,10 @@ function BtcPaymentPanel({
     <div className="mx-auto max-w-lg space-y-5">
       {/* Header */}
       <div className="rounded-2xl border border-orange-200 bg-orange-50 px-5 py-4">
-        <p className="text-sm font-semibold text-orange-800">
-          ₿ Send Bitcoin to complete your order
-        </p>
+        <p className="text-sm font-semibold text-orange-800">₿ Send Bitcoin to complete your order</p>
         <p className="mt-1 text-xs text-orange-700">
-          Scan the QR code or copy the wallet address below. The BTC amount refreshes every 20 minutes to reflect the current price.
+          Scan the QR code or copy the wallet address below. The BTC amount refreshes every 20 minutes to reflect the
+          current price.
         </p>
       </div>
 
@@ -312,7 +328,14 @@ function BtcPaymentPanel({
 
         {/* Honeypot */}
         <div className="absolute -left-[9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
-          <input type="text" name="company" value={honeypot} onChange={(e) => setHoneypot(e.target.value)} tabIndex={-1} autoComplete="off" />
+          <input
+            type="text"
+            name="company"
+            value={honeypot}
+            onChange={(e) => setHoneypot(e.target.value)}
+            tabIndex={-1}
+            autoComplete="off"
+          />
         </div>
 
         {/* Cloudflare Turnstile */}
@@ -337,7 +360,10 @@ function BtcPaymentPanel({
           onChange={(e) => {
             const file = e.target.files?.[0]
             if (file) {
-              if (honeypot) { onProofUploaded(); return }
+              if (honeypot) {
+                onProofUploaded()
+                return
+              }
               void handleFileUpload(file)
             }
           }}
@@ -356,7 +382,11 @@ function BtcPaymentPanel({
           ) : (
             <>
               <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
+                />
               </svg>
               Click to upload payment screenshot
             </>
@@ -531,7 +561,10 @@ export function CheckoutPageContent() {
           <div className="mx-auto max-w-lg rounded-2xl border border-green-200 bg-green-50 p-8 text-center shadow-sm">
             <p className="text-lg font-bold text-green-800">Payment Proof Submitted!</p>
             <p className="mt-2 text-sm text-green-700">We'll verify and confirm your order shortly.</p>
-            <Link href="/orders" className="mt-5 inline-block rounded-full bg-green-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-green-700">
+            <Link
+              href="/orders"
+              className="mt-5 inline-block rounded-full bg-green-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-green-700"
+            >
               View My Orders
             </Link>
           </div>
@@ -592,7 +625,9 @@ export function CheckoutPageContent() {
                   >
                     <option value="">year</option>
                     {YEARS.map((y) => (
-                      <option key={y} value={String(y)}>{y}</option>
+                      <option key={y} value={String(y)}>
+                        {y}
+                      </option>
                     ))}
                   </select>
                   <span className="pointer-events-none absolute right-2 top-2.5 text-xs text-slate-400">▾</span>
@@ -606,7 +641,9 @@ export function CheckoutPageContent() {
                   >
                     <option value="">month</option>
                     {MONTHS.map((m, i) => (
-                      <option key={m} value={String(i + 1).padStart(2, '0')}>{m}</option>
+                      <option key={m} value={String(i + 1).padStart(2, '0')}>
+                        {m}
+                      </option>
                     ))}
                   </select>
                   <span className="pointer-events-none absolute right-2 top-2.5 text-xs text-slate-400">▾</span>
@@ -620,7 +657,9 @@ export function CheckoutPageContent() {
                   >
                     <option value="">day</option>
                     {DAYS.map((d) => (
-                      <option key={d} value={String(d)}>{d}</option>
+                      <option key={d} value={String(d)}>
+                        {d}
+                      </option>
                     ))}
                   </select>
                   <span className="pointer-events-none absolute right-2 top-2.5 text-xs text-slate-400">▾</span>
@@ -630,26 +669,52 @@ export function CheckoutPageContent() {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field label="First Name:">
-                <input type="text" className={inputClass} value={billing.firstName} onChange={(e) => setBillingField('firstName', e.target.value)} />
+                <input
+                  type="text"
+                  className={inputClass}
+                  value={billing.firstName}
+                  onChange={(e) => setBillingField('firstName', e.target.value)}
+                />
               </Field>
               <Field label="Last Name:">
-                <input type="text" className={inputClass} value={billing.lastName} onChange={(e) => setBillingField('lastName', e.target.value)} />
+                <input
+                  type="text"
+                  className={inputClass}
+                  value={billing.lastName}
+                  onChange={(e) => setBillingField('lastName', e.target.value)}
+                />
               </Field>
             </div>
 
             <Field label="Street Address:">
-              <input type="text" className={inputClass} value={billing.streetAddress} onChange={(e) => setBillingField('streetAddress', e.target.value)} />
+              <input
+                type="text"
+                className={inputClass}
+                value={billing.streetAddress}
+                onChange={(e) => setBillingField('streetAddress', e.target.value)}
+              />
             </Field>
 
             <Field label="City:">
-              <input type="text" className={inputClass} value={billing.city} onChange={(e) => setBillingField('city', e.target.value)} />
+              <input
+                type="text"
+                className={inputClass}
+                value={billing.city}
+                onChange={(e) => setBillingField('city', e.target.value)}
+              />
             </Field>
 
             <Field label="Country:">
               <div className="relative">
-                <select className={selectClass} value={billing.country} onChange={(e) => setBillingField('country', e.target.value)}>
+                <select
+                  className={selectClass}
+                  value={billing.country}
+                  onChange={(e) => setBillingField('country', e.target.value)}
+                >
                   {DELIVERY_COUNTRIES.map((name) => (
-                    <option key={name} value={name}>{name}</option>
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
                   ))}
                 </select>
                 <span className="pointer-events-none absolute right-3 top-2.5 text-slate-400">▾</span>
@@ -657,11 +722,22 @@ export function CheckoutPageContent() {
             </Field>
 
             <Field label="State / Province:">
-              <input type="text" className={inputClass} placeholder="State / Province" value={billing.state} onChange={(e) => setBillingField('state', e.target.value)} />
+              <input
+                type="text"
+                className={inputClass}
+                placeholder="State / Province"
+                value={billing.state}
+                onChange={(e) => setBillingField('state', e.target.value)}
+              />
             </Field>
 
             <Field label="ZIP/Postal Code:">
-              <input type="text" className={inputClass} value={billing.zipCode} onChange={(e) => setBillingField('zipCode', e.target.value)} />
+              <input
+                type="text"
+                className={inputClass}
+                value={billing.zipCode}
+                onChange={(e) => setBillingField('zipCode', e.target.value)}
+              />
             </Field>
           </div>
 
@@ -684,33 +760,70 @@ export function CheckoutPageContent() {
               <div className="space-y-4 mb-4">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <Field label="First Name:">
-                    <input type="text" className={inputClass} value={shipping.firstName} onChange={(e) => setShippingField('firstName', e.target.value)} />
+                    <input
+                      type="text"
+                      className={inputClass}
+                      value={shipping.firstName}
+                      onChange={(e) => setShippingField('firstName', e.target.value)}
+                    />
                   </Field>
                   <Field label="Last Name:">
-                    <input type="text" className={inputClass} value={shipping.lastName} onChange={(e) => setShippingField('lastName', e.target.value)} />
+                    <input
+                      type="text"
+                      className={inputClass}
+                      value={shipping.lastName}
+                      onChange={(e) => setShippingField('lastName', e.target.value)}
+                    />
                   </Field>
                 </div>
                 <Field label="Street Address:">
-                  <input type="text" className={inputClass} value={shipping.streetAddress} onChange={(e) => setShippingField('streetAddress', e.target.value)} />
+                  <input
+                    type="text"
+                    className={inputClass}
+                    value={shipping.streetAddress}
+                    onChange={(e) => setShippingField('streetAddress', e.target.value)}
+                  />
                 </Field>
                 <Field label="City:">
-                  <input type="text" className={inputClass} value={shipping.city} onChange={(e) => setShippingField('city', e.target.value)} />
+                  <input
+                    type="text"
+                    className={inputClass}
+                    value={shipping.city}
+                    onChange={(e) => setShippingField('city', e.target.value)}
+                  />
                 </Field>
                 <Field label="Country:">
                   <div className="relative">
-                    <select className={selectClass} value={shipping.country} onChange={(e) => setShippingField('country', e.target.value)}>
+                    <select
+                      className={selectClass}
+                      value={shipping.country}
+                      onChange={(e) => setShippingField('country', e.target.value)}
+                    >
                       {DELIVERY_COUNTRIES.map((name) => (
-                        <option key={name} value={name}>{name}</option>
+                        <option key={name} value={name}>
+                          {name}
+                        </option>
                       ))}
                     </select>
                     <span className="pointer-events-none absolute right-3 top-2.5 text-slate-400">▾</span>
                   </div>
                 </Field>
                 <Field label="State / Province:">
-                  <input type="text" className={inputClass} placeholder="State / Province" value={shipping.state} onChange={(e) => setShippingField('state', e.target.value)} />
+                  <input
+                    type="text"
+                    className={inputClass}
+                    placeholder="State / Province"
+                    value={shipping.state}
+                    onChange={(e) => setShippingField('state', e.target.value)}
+                  />
                 </Field>
                 <Field label="ZIP/Postal Code:">
-                  <input type="text" className={inputClass} value={shipping.zipCode} onChange={(e) => setShippingField('zipCode', e.target.value)} />
+                  <input
+                    type="text"
+                    className={inputClass}
+                    value={shipping.zipCode}
+                    onChange={(e) => setShippingField('zipCode', e.target.value)}
+                  />
                 </Field>
               </div>
             )}
@@ -721,7 +834,8 @@ export function CheckoutPageContent() {
         <div className="mb-4 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
           <p className="font-semibold">₿ Bitcoin Payment</p>
           <p className="mt-0.5 text-xs text-orange-700">
-            After placing your order, you&apos;ll receive a Bitcoin wallet address and QR code. Send the exact BTC amount and upload your transaction screenshot to confirm payment.
+            After placing your order, you&apos;ll receive a Bitcoin wallet address and QR code. Send the exact BTC
+            amount and upload your transaction screenshot to confirm payment.
           </p>
         </div>
 
@@ -731,13 +845,18 @@ export function CheckoutPageContent() {
           </div>
         )}
 
-        {errorMessage && (
-          <p className="mb-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{errorMessage}</p>
-        )}
+        {errorMessage && <p className="mb-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{errorMessage}</p>}
 
         {/* Honeypot */}
         <div className="absolute -left-[9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
-          <input type="text" name="website" value={checkoutHoneypot} onChange={(e) => setCheckoutHoneypot(e.target.value)} tabIndex={-1} autoComplete="off" />
+          <input
+            type="text"
+            name="website"
+            value={checkoutHoneypot}
+            onChange={(e) => setCheckoutHoneypot(e.target.value)}
+            tabIndex={-1}
+            autoComplete="off"
+          />
         </div>
 
         {/* Cloudflare Turnstile */}
@@ -748,7 +867,10 @@ export function CheckoutPageContent() {
               siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
               onSuccess={(token: string) => setCheckoutTurnstileToken(token)}
               onError={() => setCheckoutTurnstileToken(null)}
-              onExpire={() => { setCheckoutTurnstileToken(null); setErrorMessage('Verification expired. Please complete the CAPTCHA again.') }}
+              onExpire={() => {
+                setCheckoutTurnstileToken(null)
+                setErrorMessage('Verification expired. Please complete the CAPTCHA again.')
+              }}
               options={{ theme: 'light', size: 'normal' }}
             />
           </div>
@@ -768,7 +890,10 @@ export function CheckoutPageContent() {
         <h2 className="text-lg font-bold text-slate-900">Order Summary</h2>
         <ul className="mt-4 space-y-2">
           {cart?.items.map((item) => (
-            <li key={`${item.productId}-${item.dosage ?? ''}-${item.pillCount ?? ''}`} className="flex items-center justify-between text-sm">
+            <li
+              key={`${item.productId}-${item.dosage ?? ''}-${item.pillCount ?? ''}`}
+              className="flex items-center justify-between text-sm"
+            >
               <span className="text-slate-600">
                 {item.name} × {item.quantity}
               </span>

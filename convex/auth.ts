@@ -35,9 +35,10 @@ const passwordPolicyPlugin: BetterAuthPlugin = {
     const basePath = ctx.options.basePath || '/api/auth'
     const pathname = new URL(request.url).pathname.replace(basePath, '').replace(/\/+$/, '')
 
-    const body = (await request.clone().json().catch(() => null)) as
-      | { password?: unknown; newPassword?: unknown }
-      | null
+    const body = (await request
+      .clone()
+      .json()
+      .catch(() => null)) as { password?: unknown; newPassword?: unknown } | null
 
     const passwordField =
       pathname === '/sign-up/email'

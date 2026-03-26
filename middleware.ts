@@ -1,6 +1,21 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
+function getCanonicalOrigin() {
+  const value = process.env.NEXT_PUBLIC_APP_URL ?? process.env.SITE_URL
+  if (!value) return null
+
+  try {
+    const url = new URL(value)
+    if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+      return null
+    }
+    return url.origin
+  } catch {
+    return null
+  }
+}
+
 function buildCsp() {
   const isProd = process.env.NODE_ENV === 'production'
 
@@ -28,7 +43,7 @@ function buildCsp() {
     `connect-src ${connectSrc}`,
     "img-src 'self' data: https:",
     "font-src 'self' data: https:",
-    "frame-src https://challenges.cloudflare.com",
+    'frame-src https://challenges.cloudflare.com',
     "worker-src 'self' blob:",
     "manifest-src 'self'",
     ...(isProd ? ['upgrade-insecure-requests'] : []),
@@ -38,6 +53,18 @@ function buildCsp() {
 }
 
 export function middleware(request: NextRequest) {
+  const canonicalOrigin = getCanonicalOrigin()
+  if (canonicalOrigin) {
+    const requestOrigin = request.nextUrl.origin
+    if (requestOrigin !== canonicalOrigin) {
+      const redirectUrl = new URL(request.url)
+      const canonicalUrl = new URL(canonicalOrigin)
+      redirectUrl.protocol = canonicalUrl.protocol
+      redirectUrl.host = canonicalUrl.host
+      return NextResponse.redirect(redirectUrl, 308)
+    }
+  }
+
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set('x-pathname', request.nextUrl.pathname)
 

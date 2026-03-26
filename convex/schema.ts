@@ -140,11 +140,7 @@ export default defineSchema({
         v.object({
           storageId: v.id('_storage'),
           uploadedAt: v.number(),
-          decision: v.union(
-            v.literal('paid'),
-            v.literal('partial_payment'),
-            v.literal('rejected'),
-          ),
+          decision: v.union(v.literal('paid'), v.literal('partial_payment'), v.literal('rejected')),
           decidedAt: v.number(),
           adminNote: v.optional(v.string()),
         }),

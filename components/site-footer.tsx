@@ -23,9 +23,7 @@ export function SiteFooter() {
               Quality pharmaceutical products delivered to your doorstep. Your health, our mission.
             </p>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rx-badge bg-slate-800 text-slate-300 border border-slate-700">
-                ₿ BTC
-              </span>
+              <span className="rx-badge bg-slate-800 text-slate-300 border border-slate-700">₿ BTC</span>
             </div>
           </div>
 

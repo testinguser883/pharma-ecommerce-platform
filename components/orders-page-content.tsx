@@ -40,7 +40,15 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-700' },
 }
 
-const STATUS_STEPS = ['pending_payment', 'payment_review', 'partial_payment', 'paid', 'processing', 'shipped', 'delivered']
+const STATUS_STEPS = [
+  'pending_payment',
+  'payment_review',
+  'partial_payment',
+  'paid',
+  'processing',
+  'shipped',
+  'delivered',
+]
 
 function OrderStatusTracker({ status }: { status: string }) {
   if (status === 'cancelled') {
@@ -81,16 +89,26 @@ function OrderStatusTracker({ status }: { status: string }) {
                 }`}
               >
                 {done && !active && (
-                  <svg className="h-full w-full p-0.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                  <svg
+                    className="h-full w-full p-0.5 text-white"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                  >
                     <path d="M20 6 9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 )}
               </div>
               {i < STATUS_STEPS.length - 1 && (
-                <div className={`h-0.5 flex-1 transition-colors ${done && currentIdx > i ? 'bg-teal-500' : 'bg-slate-200'}`} />
+                <div
+                  className={`h-0.5 flex-1 transition-colors ${done && currentIdx > i ? 'bg-teal-500' : 'bg-slate-200'}`}
+                />
               )}
             </div>
-            <span className={`mt-1.5 text-center text-[10px] font-semibold ${active ? 'text-teal-700' : done ? 'text-teal-500' : 'text-slate-400'}`}>
+            <span
+              className={`mt-1.5 text-center text-[10px] font-semibold ${active ? 'text-teal-700' : done ? 'text-teal-500' : 'text-slate-400'}`}
+            >
               {labels[step]}
             </span>
           </div>
@@ -128,7 +146,8 @@ function MakePaymentButton({ order }: { order: Doc<'orders'> }) {
           )}
           {order.adminNote && (
             <div className="mt-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-              <span className="font-semibold">Note: </span>{order.adminNote}
+              <span className="font-semibold">Note: </span>
+              {order.adminNote}
             </div>
           )}
         </div>
@@ -138,7 +157,11 @@ function MakePaymentButton({ order }: { order: Doc<'orders'> }) {
         className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 text-xs font-semibold text-white hover:bg-orange-600"
       >
         <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z"
+          />
         </svg>
         {order.status === 'partial_payment' ? 'Pay Remaining Amount →' : 'Make Payment →'}
       </Link>
@@ -155,11 +178,22 @@ function PaymentReviewBanner({ order }: { order: Doc<'orders'> }) {
     <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm">
       {hasPartial && (
         <div className="mb-2 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2">
-          <svg className="h-4 w-4 shrink-0 text-green-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg
+            className="h-4 w-4 shrink-0 text-green-600"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
           <span className="text-xs text-green-800">
-            Partial payment of <span className="font-semibold">{formatPrice(order.partialAmountReceived!)}</span> has been received.
+            Partial payment of <span className="font-semibold">{formatPrice(order.partialAmountReceived!)}</span> has
+            been received.
           </span>
         </div>
       )}
@@ -168,8 +202,8 @@ function PaymentReviewBanner({ order }: { order: Doc<'orders'> }) {
       </p>
       <p className="mt-0.5 text-xs text-blue-700">
         Your screenshot was submitted on{' '}
-        {order.paymentProofUploadedAt ? formatDate(order.paymentProofUploadedAt) : 'recently'}
-        . We&apos;ll confirm your payment shortly.
+        {order.paymentProofUploadedAt ? formatDate(order.paymentProofUploadedAt) : 'recently'}. We&apos;ll confirm your
+        payment shortly.
       </p>
     </div>
   )
@@ -188,7 +222,8 @@ function PaymentRejectedBanner({ order }: { order: Doc<'orders'> }) {
       </p>
       {order.adminNote && (
         <p className="mt-2 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs text-red-700">
-          <span className="font-semibold">Reason: </span>{order.adminNote}
+          <span className="font-semibold">Reason: </span>
+          {order.adminNote}
         </p>
       )}
     </div>
@@ -235,10 +270,7 @@ function CancelOrderButton({ order }: { order: Doc<'orders'> }) {
           </button>
         </div>
       ) : (
-        <button
-          onClick={() => setConfirming(true)}
-          className="text-xs font-semibold text-red-500 hover:underline"
-        >
+        <button onClick={() => setConfirming(true)} className="text-xs font-semibold text-red-500 hover:underline">
           Cancel order
         </button>
       )}

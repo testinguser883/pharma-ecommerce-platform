@@ -10,7 +10,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = getSiteUrl()
   const lastModified = new Date()
 
-  const routes: Array<{ path: string; changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency']; priority: number }> = [
+  const routes: Array<{
+    path: string
+    changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency']
+    priority: number
+  }> = [
     { path: '/', changeFrequency: 'daily', priority: 1 },
     { path: '/products', changeFrequency: 'daily', priority: 0.9 },
     { path: '/about-us', changeFrequency: 'monthly', priority: 0.5 },
@@ -28,4 +32,3 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: route.priority,
   }))
 }
-

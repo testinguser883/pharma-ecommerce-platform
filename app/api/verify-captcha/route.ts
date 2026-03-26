@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: formData.toString(),
     })
-    const result = (await res.json()) as { success?: boolean; 'error-codes'?: string[] }
+    const result = (await res.json()) as { 'success'?: boolean; 'error-codes'?: string[] }
     const success = Boolean(res.ok && result?.success)
     if (!success) {
       console.warn('[verify-captcha] Turnstile verification failed.', { errorCodes: result?.['error-codes'] })
@@ -28,9 +28,7 @@ export async function POST(req: NextRequest) {
     // Generate HMAC proof that CAPTCHA was verified server-side.
     // Convex validates this proof so attackers cannot call Convex directly.
     const timestamp = Date.now()
-    const proof = createHmac('sha256', secretKey)
-      .update(timestamp.toString())
-      .digest('hex')
+    const proof = createHmac('sha256', secretKey).update(timestamp.toString()).digest('hex')
 
     return NextResponse.json({ success: true, captchaProof: proof, captchaTimestamp: timestamp })
   } catch (err) {

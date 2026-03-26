@@ -41,16 +41,33 @@ function normalizeEmail(email: string | null | undefined) {
   return email?.trim().toLowerCase() ?? null
 }
 
+function getRequestOrigin(request: Request) {
+  const forwardedProto = request.headers.get('x-forwarded-proto')
+  const forwardedHost = request.headers.get('x-forwarded-host') ?? request.headers.get('host')
+
+  if (forwardedHost) {
+    return `${forwardedProto ?? 'https'}://${forwardedHost}`
+  }
+
+  return process.env.NEXT_PUBLIC_APP_URL ?? new URL(request.url).origin
+}
+
 function isSameOriginPost(request: Request) {
-  const origin = request.headers.get('origin') ?? request.headers.get('referer')
-  if (!origin || origin === 'null') {
-    return false
+  const originHeader = request.headers.get('origin')
+  const refererHeader = request.headers.get('referer')
+  const requestOrigin = getRequestOrigin(request)
+
+  const candidateOrigin = originHeader && originHeader !== 'null' ? originHeader : refererHeader
+  if (candidateOrigin) {
+    try {
+      return new URL(candidateOrigin).origin === requestOrigin
+    } catch {
+      return false
+    }
   }
-  try {
-    return new URL(origin).origin === new URL(request.url).origin
-  } catch {
-    return false
-  }
+
+  const fetchSite = request.headers.get('sec-fetch-site')
+  return fetchSite === 'same-origin' || fetchSite === 'same-site'
 }
 
 async function getAppUrl() {

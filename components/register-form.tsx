@@ -53,11 +53,7 @@ export function RegisterForm() {
         onError: (ctx) => {
           setIsSubmitting(false)
           const message = ctx.error.message
-          setErrorMessage(
-            /password/i.test(message)
-              ? message
-              : 'Unable to create account right now. Please try again.',
-          )
+          setErrorMessage(/password/i.test(message) ? message : 'Unable to create account right now. Please try again.')
         },
       },
     )
