@@ -10,6 +10,7 @@ The `Full Product Description` field in the admin product form now supports a sa
 
 Supported syntax:
 
+
 - `#` through `######` for headings
 - Plain paragraphs
 - `- item` or `* item` for bullet lists
