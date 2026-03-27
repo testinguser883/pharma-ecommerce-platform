@@ -5,7 +5,6 @@ import { useQuery } from 'convex/react'
 import type { Route } from 'next'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { api } from '@/convex/_generated/api'
-import { CATEGORY_LIST } from '@/lib/category-list'
 import { CategorySidebar } from './category-sidebar'
 import { ProductGrid } from './product-grid'
 
@@ -24,8 +23,7 @@ export function ProductsPageContent({ categoryFromPath }: { categoryFromPath?: s
   })
 
   const categories =
-    fetchedCategories?.map((category) => ({ _id: category._id, name: category.name })) ??
-    CATEGORY_LIST.map((name) => ({ name }))
+    fetchedCategories?.map((category) => ({ _id: category._id, name: category.name })) ?? []
 
   const updateCategory = (nextCategory: string) => {
     if (nextCategory) {
