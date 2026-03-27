@@ -66,6 +66,15 @@ function verifyCaptchaProof(proof: string, timestampStr: string): boolean {
   return proof === expected
 }
 
+function getCaptchaProofFromCookie(request: Request): { proof: string; timestampStr: string } | null {
+  const cookieHeader = request.headers.get('cookie') ?? ''
+  const match = cookieHeader.match(/(?:^|;\s*)captcha_proof=([^;]+)/)
+  if (!match) return null
+  const [proof, timestampStr] = decodeURIComponent(match[1]).split(':')
+  if (!proof || !timestampStr) return null
+  return { proof, timestampStr }
+}
+
 function isSameOriginPost(request: Request) {
   const originHeader = request.headers.get('origin')
   const refererHeader = request.headers.get('referer')
@@ -179,9 +188,8 @@ export const handler: AuthBridge['handler'] = {
     // CAPTCHA enforcement for sign-in and sign-up endpoints.
     const url = new URL(request.url)
     if (url.pathname.includes('/sign-in/email') || url.pathname.includes('/sign-up/email')) {
-      const proof = request.headers.get('x-captcha-proof')
-      const timestamp = request.headers.get('x-captcha-timestamp')
-      if (!proof || !timestamp || !verifyCaptchaProof(proof, timestamp)) {
+      const captchaCookie = getCaptchaProofFromCookie(request)
+      if (!captchaCookie || !verifyCaptchaProof(captchaCookie.proof, captchaCookie.timestampStr)) {
         return new Response('CAPTCHA verification required.', { status: 403 })
       }
     }

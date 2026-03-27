@@ -44,23 +44,19 @@ export function RegisterForm() {
       return
     }
 
-    let captchaProof: string
-    let captchaTimestamp: number
     try {
       const captchaRes = await fetch('/api/verify-captcha', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: turnstileToken }),
       })
-      const captchaData = await captchaRes.json() as { success: boolean; captchaProof?: string; captchaTimestamp?: number }
-      if (!captchaData.success || !captchaData.captchaProof || !captchaData.captchaTimestamp) {
+      const captchaData = await captchaRes.json() as { success: boolean }
+      if (!captchaData.success) {
         setTurnstileToken(null)
         turnstileRef.current?.reset()
         setErrorMessage('CAPTCHA verification failed. Please try again.')
         return
       }
-      captchaProof = captchaData.captchaProof
-      captchaTimestamp = captchaData.captchaTimestamp
     } catch {
       setTurnstileToken(null)
       turnstileRef.current?.reset()
@@ -75,12 +71,6 @@ export function RegisterForm() {
         password,
       },
       {
-        fetchOptions: {
-          headers: {
-            'x-captcha-proof': captchaProof,
-            'x-captcha-timestamp': captchaTimestamp.toString(),
-          },
-        },
         onRequest: () => {
           setIsSubmitting(true)
         },

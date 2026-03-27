@@ -30,7 +30,17 @@ export async function POST(req: NextRequest) {
     const timestamp = Date.now()
     const proof = createHmac('sha256', secretKey).update(timestamp.toString()).digest('hex')
 
-    return NextResponse.json({ success: true, captchaProof: proof, captchaTimestamp: timestamp })
+    const response = NextResponse.json({ success: true, captchaProof: proof, captchaTimestamp: timestamp })
+    // Set a short-lived HttpOnly cookie so the auth endpoints can verify CAPTCHA
+    // server-side without relying on custom request headers.
+    response.cookies.set('captcha_proof', `${proof}:${timestamp}`, {
+      httpOnly: true,
+      sameSite: 'strict',
+      path: '/api/auth',
+      maxAge: 300, // 5 minutes
+      secure: true,
+    })
+    return response
   } catch (err) {
     console.error('[verify-captcha] Turnstile verification error.', err)
     // Fail closed to avoid bot bypasses on network / parsing errors.
