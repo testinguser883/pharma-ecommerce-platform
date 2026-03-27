@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { FormEvent, useState } from 'react'
+import { FormEvent, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
 import { authClient } from '@/lib/auth-client'
 
 function getPasswordPolicyError(password: string) {
@@ -25,6 +26,8 @@ export function RegisterForm() {
   const [password, setPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+  const turnstileRef = useRef<TurnstileInstance>(null)
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -33,6 +36,31 @@ export function RegisterForm() {
     const passwordError = getPasswordPolicyError(password)
     if (passwordError) {
       setErrorMessage(passwordError)
+      return
+    }
+
+    if (!turnstileToken) {
+      setErrorMessage('Please complete the CAPTCHA verification.')
+      return
+    }
+
+    try {
+      const captchaRes = await fetch('/api/verify-captcha', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: turnstileToken }),
+      })
+      const captchaData = await captchaRes.json() as { success: boolean }
+      if (!captchaData.success) {
+        setTurnstileToken(null)
+        turnstileRef.current?.reset()
+        setErrorMessage('CAPTCHA verification failed. Please try again.')
+        return
+      }
+    } catch {
+      setTurnstileToken(null)
+      turnstileRef.current?.reset()
+      setErrorMessage('Unable to verify CAPTCHA. Please try again.')
       return
     }
 
@@ -52,6 +80,8 @@ export function RegisterForm() {
         },
         onError: (ctx) => {
           setIsSubmitting(false)
+          setTurnstileToken(null)
+          turnstileRef.current?.reset()
           const message = ctx.error.message
           setErrorMessage(/password/i.test(message) ? message : 'Unable to create account right now. Please try again.')
         },
@@ -121,6 +151,17 @@ export function RegisterForm() {
                 className="rx-input"
               />
             </div>
+
+            {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+              <Turnstile
+                ref={turnstileRef}
+                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+                onSuccess={(token: string) => setTurnstileToken(token)}
+                onError={() => setTurnstileToken(null)}
+                onExpire={() => setTurnstileToken(null)}
+                options={{ theme: 'light', size: 'normal' }}
+              />
+            )}
 
             {errorMessage && (
               <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">

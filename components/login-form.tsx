@@ -129,6 +129,17 @@ export function LoginForm() {
               />
             </div>
 
+            {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+              <Turnstile
+                ref={turnstileRef}
+                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+                onSuccess={(token: string) => setTurnstileToken(token)}
+                onError={() => setTurnstileToken(null)}
+                onExpire={() => setTurnstileToken(null)}
+                options={{ theme: 'light', size: 'normal' }}
+              />
+            )}
+
             {errorMessage && (
               <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
                 {errorMessage}
