@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { fetchQuery } from 'convex/nextjs'
 import { api } from '@/convex/_generated/api'
+import { isDisallowed } from '@/lib/seo-config'
 
 const DEFAULT_SITE_URL = 'https://www.gardenerpersonal.click'
 
@@ -49,5 +50,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // If Convex is unavailable, fall back to static routes only
   }
 
-  return [...staticRoutes, ...categoryRoutes, ...productRoutes]
+  return [...staticRoutes, ...categoryRoutes, ...productRoutes].filter((entry) => !isDisallowed(entry.url))
 }
