@@ -12,18 +12,14 @@ type CategoryLike = {
 export function CategorySidebar({
   categories,
   selectedCategory,
-  activeCategory,
   onSelectCategory,
-  onHoverCategory,
 }: {
   categories: Array<CategoryLike>
   selectedCategory: string | undefined
-  activeCategory?: string | undefined
   onSelectCategory: (category: string) => void
-  onHoverCategory?: (category: string | undefined) => void
 }) {
   const [mobileOpen, setMobileOpen] = useState(false)
-  const selectedLabel = activeCategory || selectedCategory || 'All categories'
+  const selectedLabel = selectedCategory || 'All categories'
 
   return (
     <aside className="rx-card h-fit overflow-hidden">
@@ -56,10 +52,9 @@ export function CategorySidebar({
       <ul
         id="category-sidebar-list"
         className={cn('py-2', mobileOpen ? 'block' : 'hidden', 'lg:block')}
-        onMouseLeave={() => onHoverCategory?.(undefined)}
       >
         {categories.map((category) => {
-          const isActive = (activeCategory ?? selectedCategory) === category.name
+          const isActive = selectedCategory === category.name
           return (
             <li key={category._id ?? category.name}>
               <button
@@ -68,7 +63,6 @@ export function CategorySidebar({
                   onSelectCategory(category.name)
                   setMobileOpen(false)
                 }}
-                onMouseEnter={() => onHoverCategory?.(category.name)}
                 className={cn(
                   'flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm transition-all duration-150',
                   isActive

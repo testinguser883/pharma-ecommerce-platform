@@ -10,25 +10,22 @@ import { ProductGrid } from './product-grid'
 
 export function HomePageContent() {
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined)
-  const [hoveredCategory, setHoveredCategory] = useState<string | undefined>(undefined)
-
-  const activeCategory = hoveredCategory ?? selectedCategory
 
   const fetchedCategories = useQuery(api.categories.list)
   const recommendedProducts = useQuery(api.products.listRecommended)
   const categoryProducts = useQuery(
     api.products.list,
-    activeCategory ? { category: activeCategory, limit: 40 } : 'skip',
+    selectedCategory ? { category: selectedCategory, limit: 40 } : 'skip',
   )
 
   const categories =
     fetchedCategories?.map((category) => ({ _id: category._id, name: category.name })) ??
     CATEGORY_LIST.map((name) => ({ name }))
 
-  const heading = activeCategory ?? 'Recommended'
-  const displayProducts = activeCategory ? categoryProducts : recommendedProducts
+  const heading = selectedCategory ?? 'Recommended'
+  const displayProducts = selectedCategory ? categoryProducts : recommendedProducts
   const emptyMessage =
-    !activeCategory && recommendedProducts?.length === 0
+    !selectedCategory && recommendedProducts?.length === 0
       ? 'No recommended products yet. Ask your admin to mark some products as recommended.'
       : undefined
 
@@ -42,9 +39,7 @@ export function HomePageContent() {
         <CategorySidebar
           categories={categories}
           selectedCategory={selectedCategory}
-          activeCategory={activeCategory}
           onSelectCategory={handleSelectCategory}
-          onHoverCategory={setHoveredCategory}
         />
       </div>
       <div className="order-1 space-y-4 lg:order-2">
