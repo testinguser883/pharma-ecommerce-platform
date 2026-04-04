@@ -1,33 +1,39 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { useQuery } from 'convex/react'
 import { api } from '@/convex/_generated/api'
 import { CATEGORY_LIST } from '@/lib/category-list'
 import { CategorySidebar } from './category-sidebar'
 import { ImageSlider } from './image-slider'
 import { ProductGrid } from './product-grid'
-import type { Route } from 'next'
 
 export function HomePageContent() {
-  const router = useRouter()
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined)
+  const [hoveredCategory, setHoveredCategory] = useState<string | undefined>(undefined)
+
+  const activeCategory = hoveredCategory ?? selectedCategory
 
   const fetchedCategories = useQuery(api.categories.list)
   const recommendedProducts = useQuery(api.products.listRecommended)
+  const categoryProducts = useQuery(
+    api.products.list,
+    activeCategory ? { category: activeCategory, limit: 40 } : 'skip',
+  )
 
   const categories =
     fetchedCategories?.map((category) => ({ _id: category._id, name: category.name })) ??
     CATEGORY_LIST.map((name) => ({ name }))
 
-  const heading = 'Recommended'
+  const heading = activeCategory ?? 'Recommended'
+  const displayProducts = activeCategory ? categoryProducts : recommendedProducts
   const emptyMessage =
-    recommendedProducts?.length === 0
+    !activeCategory && recommendedProducts?.length === 0
       ? 'No recommended products yet. Ask your admin to mark some products as recommended.'
       : undefined
 
   const handleSelectCategory = (cat: string) => {
-    const categoryPath = cat.replace(/ /g, '+')
-    router.push(`/category/${categoryPath}` as Route)
+    setSelectedCategory((prev) => (prev === cat ? undefined : cat))
   }
 
   return (
@@ -35,8 +41,10 @@ export function HomePageContent() {
       <div className="order-2 lg:order-1">
         <CategorySidebar
           categories={categories}
-          selectedCategory={undefined}
+          selectedCategory={selectedCategory}
+          activeCategory={activeCategory}
           onSelectCategory={handleSelectCategory}
+          onHoverCategory={setHoveredCategory}
         />
       </div>
       <div className="order-1 space-y-4 lg:order-2">
@@ -46,7 +54,7 @@ export function HomePageContent() {
           {emptyMessage ? (
             <p className="py-12 text-center text-slate-400">{emptyMessage}</p>
           ) : (
-            <ProductGrid products={recommendedProducts} />
+            <ProductGrid products={displayProducts} />
           )}
         </section>
       </div>
