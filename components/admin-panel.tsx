@@ -1910,7 +1910,7 @@ function RenameCategoryModal({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {products.map((p) => (
+                {(products ?? []).map((p) => (
                   <tr key={p._id} className="hover:bg-slate-50">
                     <td className="px-5 py-3 font-medium text-slate-800">{p.name}</td>
                     <td className="px-5 py-3 text-right text-slate-600">${p.price.toFixed(2)}</td>
