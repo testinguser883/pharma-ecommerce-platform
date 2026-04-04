@@ -33,6 +33,7 @@ export default async function ProductCategorySlugPage({
   params: Promise<{ category: string; slug: string }>
 }) {
   const { slug } = await params
+  const product = await fetchQuery(api.products.getBySlugOrId, { identifier: slug })
   return (
     <Suspense
       fallback={
@@ -41,7 +42,7 @@ export default async function ProductCategorySlugPage({
         </div>
       }
     >
-      <ProductDetailContent productId={slug} />
+      <ProductDetailContent productId={slug} initialProduct={product ?? undefined} />
     </Suspense>
   )
 }

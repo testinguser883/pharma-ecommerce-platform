@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { createElement, type ReactNode } from 'react'
 
 type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6
 
@@ -12,9 +12,66 @@ function isSafeHref(href: string) {
   return /^(https?:\/\/|mailto:|\/)/i.test(href)
 }
 
+const SAFE_CSS_PROPERTIES = new Set([
+  'color', 'background', 'background-color', 'font-size', 'font-weight', 'font-style',
+  'text-align', 'text-decoration', 'text-transform', 'line-height', 'letter-spacing',
+  'padding', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
+  'margin', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
+  'border', 'border-radius', 'border-color', 'border-width', 'border-style',
+  'display', 'width', 'max-width', 'min-width', 'height', 'max-height', 'min-height',
+  'opacity', 'overflow', 'vertical-align', 'white-space', 'word-break',
+  'flex', 'flex-direction', 'flex-wrap', 'justify-content', 'align-items', 'gap',
+  'grid-template-columns', 'grid-template-rows', 'grid-gap',
+  'list-style', 'list-style-type', 'box-shadow', 'text-shadow',
+])
+
+const SAFE_TAGS = new Set([
+  'span', 'div', 'p', 'strong', 'em', 'u', 's', 'sub', 'sup', 'br', 'hr',
+  'table', 'thead', 'tbody', 'tr', 'th', 'td', 'ul', 'ol', 'li',
+  'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'pre', 'code',
+  'img', 'a', 'small', 'mark', 'abbr', 'details', 'summary',
+])
+
+function parseCssToReactStyle(css: string): Record<string, string> | null {
+  const style: Record<string, string> = {}
+  const declarations = css.split(';').filter(Boolean)
+  for (const decl of declarations) {
+    const colonIdx = decl.indexOf(':')
+    if (colonIdx === -1) continue
+    const prop = decl.slice(0, colonIdx).trim().toLowerCase()
+    const value = decl.slice(colonIdx + 1).trim()
+    if (!SAFE_CSS_PROPERTIES.has(prop)) continue
+    // Block url() and expression() in values to prevent XSS
+    if (/url\s*\(|expression\s*\(/i.test(value)) continue
+    // Convert kebab-case to camelCase for React
+    const camelProp = prop.replace(/-([a-z])/g, (_, c) => c.toUpperCase())
+    style[camelProp] = value
+  }
+  return Object.keys(style).length > 0 ? style : null
+}
+
+function parseAttributes(attrString: string): { style?: Record<string, string>; className?: string; href?: string; src?: string; alt?: string } {
+  const attrs: { style?: Record<string, string>; className?: string; href?: string; src?: string; alt?: string } = {}
+  const styleMatch = /style\s*=\s*"([^"]*)"/i.exec(attrString)
+  if (styleMatch) {
+    const parsed = parseCssToReactStyle(styleMatch[1])
+    if (parsed) attrs.style = parsed
+  }
+  const classMatch = /class\s*=\s*"([^"]*)"/i.exec(attrString)
+  if (classMatch) attrs.className = classMatch[1]
+  const hrefMatch = /href\s*=\s*"([^"]*)"/i.exec(attrString)
+  if (hrefMatch && isSafeHref(hrefMatch[1])) attrs.href = hrefMatch[1]
+  const srcMatch = /src\s*=\s*"([^"]*)"/i.exec(attrString)
+  if (srcMatch && isSafeHref(srcMatch[1])) attrs.src = srcMatch[1]
+  const altMatch = /alt\s*=\s*"([^"]*)"/i.exec(attrString)
+  if (altMatch) attrs.alt = altMatch[1]
+  return attrs
+}
+
 function renderInlineMarkdown(text: string): ReactNode[] {
   const nodes: ReactNode[] = []
-  const pattern = /(\[([^\]]+)\]\(([^)\s]+)\)|\*\*([^*]+)\*\*|\*([^*]+)\*|`([^`]+)`)/g
+  // Match: markdown links, bold, italic, code, self-closing HTML tags, HTML open/close tag pairs
+  const pattern = /(\[([^\]]+)\]\(([^)\s]+)\)|\*\*([^*]+)\*\*|\*([^*]+)\*|`([^`]+)`|<(br|hr)\s*\/?\s*>|<([a-zA-Z][a-zA-Z0-9]*)((?:\s+[a-zA-Z-]+\s*=\s*"[^"]*")*)\s*>([\s\S]*?)<\/\8>)/g
   let lastIndex = 0
   let match: RegExpExecArray | null = pattern.exec(text)
 
@@ -59,6 +116,24 @@ function renderInlineMarkdown(text: string): ReactNode[] {
           {match[6]}
         </code>,
       )
+    } else if (match[7]) {
+      // Self-closing tags: <br> or <hr>
+      const selfTag = match[7].toLowerCase()
+      if (selfTag === 'br') {
+        nodes.push(<br key={`br-${match.index}`} />)
+      } else if (selfTag === 'hr') {
+        nodes.push(<hr key={`hr-${match.index}`} className="my-3 border-slate-200" />)
+      }
+    } else if (match[8]) {
+      // HTML tag pair: <tag attrs>content</tag>
+      const tag = match[8].toLowerCase()
+      if (SAFE_TAGS.has(tag)) {
+        const attrs = parseAttributes(match[9] || '')
+        const children = renderInlineMarkdown(match[10] || '')
+        nodes.push(
+          createElement(tag, { key: `html-${tag}-${match.index}`, ...attrs }, ...children),
+        )
+      }
     }
 
     lastIndex = pattern.lastIndex

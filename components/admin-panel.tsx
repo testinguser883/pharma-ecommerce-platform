@@ -1858,6 +1858,92 @@ function SliderImageRow({
 
 // ── Categories tab ────────────────────────────────────────────────────────────
 
+function RenameCategoryModal({
+  category,
+  newName,
+  saving,
+  onConfirm,
+  onCancel,
+}: {
+  category: Doc<'categories'>
+  newName: string
+  saving: boolean
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  const products = useQuery(api.admin.productsByCategory, { category: category.name })
+  const count = products?.length ?? 0
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+      <div className="flex w-full max-w-lg flex-col rounded-2xl bg-white shadow-2xl" style={{ maxHeight: '80vh' }}>
+        <div className="px-6 pt-6 pb-4">
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
+            <Pencil className="h-5 w-5 text-amber-600" />
+          </div>
+          <h3 className="mb-1 text-lg font-bold text-slate-900">Rename Category?</h3>
+          <p className="text-sm text-slate-500">
+            <span className="font-semibold text-slate-700">{category.name}</span>
+            {' → '}
+            <span className="font-semibold text-teal-700">{newName}</span>
+          </p>
+          {products !== undefined && (
+            <p className="mt-1 text-sm text-slate-500">
+              {count === 0
+                ? 'No products will be affected.'
+                : `${count} product${count === 1 ? '' : 's'} will be moved to the new category name.`}
+            </p>
+          )}
+        </div>
+
+        {products === undefined ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-5 w-5 animate-spin text-teal-500" />
+          </div>
+        ) : count > 0 ? (
+          <div className="flex-1 overflow-y-auto border-t border-slate-100">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <th className="px-5 py-3">Product Name</th>
+                  <th className="px-5 py-3 text-right">Price</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {(products ?? []).map((p) => (
+                  <tr key={p._id} className="hover:bg-slate-50">
+                    <td className="px-5 py-3 font-medium text-slate-800">{p.name}</td>
+                    <td className="px-5 py-3 text-right text-slate-600">${p.price.toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+
+        <div className="flex gap-3 border-t border-slate-100 px-6 py-4">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={saving}
+            className="flex-1 rounded-full border border-slate-300 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={saving || products === undefined}
+            className="flex-1 rounded-full bg-teal-600 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-60"
+          >
+            {saving ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : 'Yes, Rename'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function CategoryProductsModal({ category, onClose }: { category: string; onClose: () => void }) {
   const products = useQuery(api.admin.productsByCategory, { category })
   return (
@@ -1924,6 +2010,7 @@ function CategoriesTab() {
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
   const [productModalCategory, setProductModalCategory] = useState<string | null>(null)
+  const [renameTarget, setRenameTarget] = useState<{ category: Doc<'categories'>; newName: string } | null>(null)
 
   const handleAdd = async () => {
     if (!newName.trim()) return
@@ -1942,11 +2029,23 @@ function CategoriesTab() {
     setEditName(cat.name)
   }
 
-  const handleSaveEdit = async () => {
+  const handleSaveEdit = () => {
     if (!editingId || !editName.trim()) return
+    const cat = (categories ?? []).find((c) => c._id === editingId)
+    if (!cat) return
+    if (editName.trim() === cat.name) {
+      setEditingId(null)
+      return
+    }
+    setRenameTarget({ category: cat, newName: editName.trim() })
+  }
+
+  const handleConfirmRename = async () => {
+    if (!renameTarget) return
     setSaving(true)
     try {
-      await updateCategory({ id: editingId as Doc<'categories'>['_id'], name: editName.trim() })
+      await updateCategory({ id: renameTarget.category._id, name: renameTarget.newName })
+      setRenameTarget(null)
       setEditingId(null)
     } finally {
       setSaving(false)
@@ -2171,6 +2270,16 @@ function CategoriesTab() {
             </div>
           </div>
         </div>
+      )}
+
+      {renameTarget && (
+        <RenameCategoryModal
+          category={renameTarget.category}
+          newName={renameTarget.newName}
+          saving={saving}
+          onConfirm={() => void handleConfirmRename()}
+          onCancel={() => setRenameTarget(null)}
+        />
       )}
 
       {productModalCategory && (

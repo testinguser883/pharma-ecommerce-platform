@@ -12,14 +12,7 @@ function productUrl(product: Doc<'products'>, suffix = '') {
 export function ProductCard({ product }: { product: Doc<'products'> }) {
   return (
     <article className="group rx-card flex flex-col overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
-      {/* Discount badge */}
       <div className="relative">
-        {product.discount > 0 && (
-          <span className="absolute right-3 top-3 z-10 rounded-full bg-red-500 px-2.5 py-0.5 text-xs font-bold text-white shadow-sm">
-            -{product.discount}%
-          </span>
-        )}
-
         <Link href={productUrl(product)} className="block">
           {/* Image area — fixed height so all cards align */}
           <div className="flex h-36 items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
