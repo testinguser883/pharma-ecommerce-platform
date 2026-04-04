@@ -6,6 +6,7 @@ import { useMutation, useQuery } from 'convex/react'
 import { ChevronLeft, ShoppingCart, ChevronDown, ChevronUp, Minus, Plus, Loader2 } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { api } from '@/convex/_generated/api'
+import type { Doc } from '@/convex/_generated/dataModel'
 import { authClient } from '@/lib/auth-client'
 import { renderMarkdownContent } from '@/lib/markdown'
 import { formatPrice } from '@/lib/utils'
@@ -53,7 +54,7 @@ function PackageRow({
       : expiryDate || null
 
   return (
-    <div className="grid gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-4 transition-all hover:border-teal-200 hover:bg-teal-50/30 md:grid-cols-[minmax(0,1.35fr)_minmax(120px,0.9fr)_minmax(160px,1.1fr)_140px] md:items-start">
+    <div className="grid gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-4 transition-all hover:border-teal-200 hover:bg-teal-50/30 md:grid-cols-[minmax(0,1fr)_minmax(70px,0.6fr)_minmax(200px,1.4fr)_140px] md:items-start">
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 md:hidden">Quantity</p>
         <p className="mt-1 text-sm font-semibold text-slate-900 md:mt-0">{unitCountLabel}</p>
@@ -66,18 +67,20 @@ function PackageRow({
         <p className="mt-1 text-sm font-semibold text-slate-900 md:mt-0">{dosage}</p>
       </div>
 
-      <div>
+      <div className="min-w-0">
         <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 md:hidden">Price</p>
-        {originalPrice > price && <p className="text-xs text-slate-400 line-through">{formatPrice(originalPrice)}</p>}
-        <p className="mt-1 text-lg font-extrabold text-slate-900">{formatPrice(price)}</p>
-        <p className="text-xs text-slate-500">
-          {formatPrice(perUnit)} / {unit}
-        </p>
-        {savings > 0 && (
-          <span className="mt-1 inline-flex rounded-full bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-600">
-            Save {formatPrice(savings)}
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+          <span className="inline-flex items-center gap-x-2">
+            {originalPrice > price && <span className="text-xs text-slate-400 line-through">{formatPrice(originalPrice)}</span>}
+            <span className="text-lg font-extrabold text-slate-900">{formatPrice(price)}</span>
           </span>
-        )}
+          <span className="text-xs text-slate-500 whitespace-nowrap">{formatPrice(perUnit)} / {unit}</span>
+          {savings > 0 && (
+            <span className="inline-flex rounded-full bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-600 whitespace-nowrap">
+              Save {formatPrice(savings)}
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col items-stretch gap-2 md:w-[140px] md:justify-self-end">
@@ -148,18 +151,23 @@ function ProductDescriptionAccordion({ content }: { content: string }) {
           {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </span>
       </button>
-      {open && (
-        <div className="border-t border-slate-100 px-5 py-5 prose prose-sm max-w-none">
-          {renderMarkdownContent(content)}
-        </div>
-      )}
+      {/* Content always present in DOM for SEO crawlers; CSS controls visibility */}
+      <div className={`border-t border-slate-100 px-5 py-5 prose prose-sm max-w-none ${open ? '' : 'hidden'}`}>
+        {renderMarkdownContent(content)}
+      </div>
     </section>
   )
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export function ProductDetailContent({ productId }: { productId: string }) {
+export function ProductDetailContent({
+  productId,
+  initialProduct,
+}: {
+  productId: string
+  initialProduct?: Doc<'products'>
+}) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { data: session } = authClient.useSession()
@@ -167,7 +175,9 @@ export function ProductDetailContent({ productId }: { productId: string }) {
   const addItem = useMutation(api.cart.addItem)
   const updateItemQuantity = useMutation(api.cart.updateItemQuantity)
 
-  const product = useQuery(api.products.getBySlugOrId, productId ? { identifier: productId } : 'skip')
+  const queryResult = useQuery(api.products.getBySlugOrId, productId ? { identifier: productId } : 'skip')
+  // During SSR/hydration useQuery returns undefined; fall back to server-fetched initialProduct
+  const product = queryResult !== undefined ? queryResult : initialProduct
 
   const [selectedDosage, setSelectedDosage] = useState<string | null>(null)
   const [updatingKey, setUpdatingKey] = useState<string | null>(null)
@@ -281,11 +291,7 @@ export function ProductDetailContent({ productId }: { productId: string }) {
 
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              {product.discount > 0 && (
-                <span className="rounded-full bg-red-500 px-2.5 py-0.5 text-xs font-bold text-white">
-                  -{product.discount}% OFF
-                </span>
-              )}
+
               <span className="rounded-full border border-teal-200 bg-teal-50 px-2.5 py-0.5 text-xs font-semibold text-teal-700">
                 {product.category}
               </span>
@@ -386,7 +392,7 @@ export function ProductDetailContent({ productId }: { productId: string }) {
           <div className="space-y-2 p-4">
             {hasPricingMatrix && selectedDosageData ? (
               <>
-                <div className="hidden grid-cols-[minmax(0,1.35fr)_minmax(120px,0.9fr)_minmax(160px,1.1fr)_140px] gap-3 rounded-xl bg-slate-900 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-200 md:grid">
+                <div className="hidden grid-cols-[minmax(0,1fr)_minmax(70px,0.6fr)_minmax(200px,1.4fr)_140px] gap-3 rounded-xl bg-slate-900 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-200 md:grid">
                   <span className="text-left">Quantity</span>
                   <span className="text-left">Strength</span>
                   <span className="text-left">Price</span>

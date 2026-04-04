@@ -759,11 +759,6 @@ export function AdminProductForm({ initial, onSubmit, onClose }: Props) {
                   <div className="flex items-start gap-4">
                     <div className="inline-block w-48 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                       <div className="relative p-4">
-                        {form.discount > 0 && (
-                          <span className="absolute right-0 top-0 rounded-bl-2xl rounded-tr-2xl bg-red-500 px-2.5 py-1 text-xs font-bold text-white">
-                            -{form.discount}%
-                          </span>
-                        )}
                         <div className="relative mx-auto flex h-24 w-24 items-center justify-center">
                           {uploading && (
                             <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80">
@@ -787,9 +782,6 @@ export function AdminProductForm({ initial, onSubmit, onClose }: Props) {
                         </div>
                         <p className="mt-3 text-center text-sm font-bold text-slate-900">{form.name || 'Brand Name'}</p>
                         <p className="text-center text-xs text-slate-500">{form.genericName || 'Generic Name'}</p>
-                        <p className="mt-1 text-center text-xs font-bold text-slate-900">
-                          ${((form.price ?? 0) * (1 - (form.discount ?? 0) / 100)).toFixed(2)} / {form.unit || 'unit'}
-                        </p>
                       </div>
                       <div className="flex items-center justify-center gap-1 bg-gradient-to-r from-emerald-500 to-teal-500 py-2 text-xs font-semibold text-white">
                         Buy Now

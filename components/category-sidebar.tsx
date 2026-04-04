@@ -49,7 +49,10 @@ export function CategorySidebar({
         />
       </button>
 
-      <ul id="category-sidebar-list" className={cn('py-2', mobileOpen ? 'block' : 'hidden', 'lg:block')}>
+      <ul
+        id="category-sidebar-list"
+        className={cn('py-2', mobileOpen ? 'block' : 'hidden', 'lg:block')}
+      >
         {categories.map((category) => {
           const isActive = selectedCategory === category.name
           return (

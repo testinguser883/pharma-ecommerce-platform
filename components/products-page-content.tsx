@@ -27,8 +27,7 @@ export function ProductsPageContent({ categoryFromPath }: { categoryFromPath?: s
 
   const updateCategory = (nextCategory: string) => {
     if (nextCategory) {
-      const categoryPath = nextCategory.replace(/ /g, '+')
-      router.push(`/category/${categoryPath}` as Route)
+      router.push(`/products?category=${encodeURIComponent(nextCategory)}` as Route)
     } else {
       router.push('/products' as Route)
     }

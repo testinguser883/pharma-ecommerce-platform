@@ -501,7 +501,18 @@ export const updateCategory = mutation({
   handler: async (ctx, args) => {
     const admin = await getAdminUser(ctx)
     if (!admin) throw new Error('Not authorized')
-    await ctx.db.patch(args.id, { name: args.name.trim() })
+    const category = await ctx.db.get(args.id)
+    if (!category) throw new Error('Category not found')
+    const newName = args.name.trim()
+    await ctx.db.patch(args.id, { name: newName })
+    // Cascade rename to all products in this category
+    const products = await ctx.db
+      .query('products')
+      .withIndex('by_category_and_name', (q) => q.eq('category', category.name))
+      .collect()
+    for (const product of products) {
+      await ctx.db.patch(product._id, { category: newName })
+    }
   },
 })
 
