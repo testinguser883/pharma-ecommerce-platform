@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown, Tag } from 'lucide-react'
+import { ChevronDown, LayoutGrid, Star, Tag } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type CategoryLike = {
@@ -9,17 +9,31 @@ type CategoryLike = {
   name: string
 }
 
+export type SidebarView = 'recommended' | 'all' | string
+
+const SPECIAL_VIEWS: Array<{ id: SidebarView; label: string; icon: typeof Star }> = [
+  { id: 'recommended', label: 'Recommended', icon: Star },
+  { id: 'all', label: 'All Products', icon: LayoutGrid },
+]
+
 export function CategorySidebar({
   categories,
-  selectedCategory,
-  onSelectCategory,
+  selectedView,
+  onSelect,
 }: {
   categories: Array<CategoryLike>
-  selectedCategory: string | undefined
-  onSelectCategory: (category: string) => void
+  selectedView: SidebarView
+  onSelect: (view: SidebarView) => void
 }) {
   const [mobileOpen, setMobileOpen] = useState(false)
-  const selectedLabel = selectedCategory || 'All categories'
+
+  const selectedLabel =
+    SPECIAL_VIEWS.find((v) => v.id === selectedView)?.label ?? selectedView
+
+  const handleSelect = (view: SidebarView) => {
+    onSelect(view)
+    setMobileOpen(false)
+  }
 
   return (
     <aside className="rx-card h-fit overflow-hidden">
@@ -48,20 +62,19 @@ export function CategorySidebar({
         />
       </button>
 
-      <ul
+      <div
         id="category-sidebar-list"
-        className={cn('py-2', mobileOpen ? 'block' : 'hidden', 'lg:block')}
+        className={cn(mobileOpen ? 'block' : 'hidden', 'lg:block')}
       >
-        {categories.map((category) => {
-          const isActive = selectedCategory === category.name
-          return (
-            <li key={category._id ?? category.name}>
+        {/* Special views */}
+        <div className="border-b border-slate-100 py-2">
+          {SPECIAL_VIEWS.map(({ id, label, icon: Icon }) => {
+            const isActive = selectedView === id
+            return (
               <button
+                key={id}
                 type="button"
-                onClick={() => {
-                  onSelectCategory(category.name)
-                  setMobileOpen(false)
-                }}
+                onClick={() => handleSelect(id)}
                 className={cn(
                   'flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm transition-all duration-150',
                   isActive
@@ -69,18 +82,51 @@ export function CategorySidebar({
                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900',
                 )}
               >
-                <span
-                  className={cn(
-                    'h-1.5 w-1.5 shrink-0 rounded-full transition-colors',
-                    isActive ? 'bg-teal-500' : 'bg-slate-300',
-                  )}
+                <Icon
+                  className={cn('h-3.5 w-3.5 shrink-0', isActive ? 'text-teal-500' : 'text-slate-400')}
                 />
-                <span className="truncate">{category.name}</span>
+                <span className="truncate">{label}</span>
               </button>
-            </li>
-          )
-        })}
-      </ul>
+            )
+          })}
+        </div>
+
+        {/* Categories */}
+        {categories.length > 0 && (
+          <div className="py-2">
+            <p className="px-4 pb-1 pt-2 text-xs font-semibold uppercase tracking-widest text-slate-400">
+              Categories
+            </p>
+            <ul>
+              {categories.map((category) => {
+                const isActive = selectedView === category.name
+                return (
+                  <li key={category._id ?? category.name}>
+                    <button
+                      type="button"
+                      onClick={() => handleSelect(category.name)}
+                      className={cn(
+                        'flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm transition-all duration-150',
+                        isActive
+                          ? 'bg-teal-50 font-semibold text-teal-700 border-r-2 border-teal-500'
+                          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900',
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          'h-1.5 w-1.5 shrink-0 rounded-full transition-colors',
+                          isActive ? 'bg-teal-500' : 'bg-slate-300',
+                        )}
+                      />
+                      <span className="truncate">{category.name}</span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        )}
+      </div>
     </aside>
   )
 }
