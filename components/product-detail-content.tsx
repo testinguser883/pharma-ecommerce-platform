@@ -180,6 +180,7 @@ export function ProductDetailContent({
   const product = queryResult !== undefined ? queryResult : initialProduct
 
   const [selectedDosage, setSelectedDosage] = useState<string | null>(null)
+  const [selectedPillCount, setSelectedPillCount] = useState<number | null>(null)
   const [updatingKey, setUpdatingKey] = useState<string | null>(null)
 
   const dosages = product?.pricingMatrix?.map((d) => d.dosage) ?? product?.dosageOptions ?? []
@@ -263,6 +264,9 @@ export function ProductDetailContent({
   }
 
   const selectedDosageData = product.pricingMatrix?.find((d) => d.dosage === selectedDosage)
+  const packages = selectedDosageData?.packages ?? []
+  const effectivePillCount = selectedPillCount ?? packages[0]?.pillCount ?? null
+  const selectedPkg = packages.find((p) => p.pillCount === effectivePillCount) ?? packages[0] ?? null
 
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-4 py-6 lg:px-6">
@@ -375,53 +379,65 @@ export function ProductDetailContent({
         <section className="rx-card overflow-hidden">
           {/* Dosage selector header */}
           <div className="border-b border-slate-100 bg-slate-50/50 px-5 py-4">
-            <label className="mb-2 block text-xs font-semibold uppercase tracking-widest text-slate-400">
-              Select Dosage
-            </label>
-            <select
-              value={selectedDosage ?? ''}
-              onChange={(e) => setSelectedDosage(e.target.value || null)}
-              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-100 sm:w-64"
-            >
-              <option value="">-- Choose a dosage --</option>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-400">Select Dosage</p>
+            <div className="flex flex-wrap gap-2">
               {dosages.map((dosage) => (
-                <option key={dosage} value={dosage}>
+                <button
+                  key={dosage}
+                  type="button"
+                  onClick={() => setSelectedDosage(dosage)}
+                  className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-all ${
+                    selectedDosage === dosage
+                      ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-sm'
+                      : 'border border-slate-200 bg-white text-slate-700 hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700'
+                  }`}
+                >
                   {dosage}
-                </option>
+                </button>
               ))}
-            </select>
+            </div>
           </div>
 
-          <div className="space-y-2 p-4">
-            {hasPricingMatrix && selectedDosageData ? (
+          <div className="space-y-4 p-4">
+            {hasPricingMatrix && selectedDosageData && selectedPkg ? (
               <>
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-slate-400">
+                    Select Quantity
+                  </label>
+                  <select
+                    value={effectivePillCount ?? ''}
+                    onChange={(e: { target: { value: string } }) => setSelectedPillCount(Number(e.target.value))}
+                    className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-100 sm:w-64"
+                  >
+                    {packages.map((pkg: { pillCount: number }) => (
+                      <option key={pkg.pillCount} value={pkg.pillCount}>
+                        {pkg.pillCount} {product.unit}{pkg.pillCount === 1 ? '' : 's'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div className="hidden grid-cols-[minmax(0,1fr)_minmax(70px,0.6fr)_minmax(200px,1.4fr)_140px] gap-3 rounded-xl bg-slate-900 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-200 md:grid">
                   <span className="text-left">Quantity</span>
                   <span className="text-left">Strength</span>
                   <span className="text-left">Price</span>
                   <span className="justify-self-end text-right">Action</span>
                 </div>
-                {selectedDosageData.packages.map((pkg) => {
-                  const key = getSelectionKey(selectedDosage ?? undefined, pkg.pillCount)
-                  return (
-                    <PackageRow
-                      key={key}
-                      dosage={selectedDosage!}
-                      pillCount={pkg.pillCount}
-                      originalPrice={pkg.originalPrice}
-                      price={pkg.price}
-                      benefits={pkg.benefits ?? []}
-                      expiryDate={pkg.expiryDate}
-                      unit={product.unit}
-                      inStock={product.inStock}
-                      onAddToCart={(d, pc) => void handleAddToCart(d, pc)}
-                      onIncreaseQuantity={(d, pc) => void handleIncreaseQuantity(d, pc)}
-                      onDecreaseQuantity={(d, pc, quantity) => void handleDecreaseQuantity(d, pc, quantity)}
-                      quantity={getSelectionQuantity(selectedDosage ?? undefined, pkg.pillCount)}
-                      updating={updatingKey === key}
-                    />
-                  )
-                })}
+                <PackageRow
+                  dosage={selectedDosage!}
+                  pillCount={selectedPkg.pillCount}
+                  originalPrice={selectedPkg.originalPrice}
+                  price={selectedPkg.price}
+                  benefits={selectedPkg.benefits ?? []}
+                  expiryDate={selectedPkg.expiryDate}
+                  unit={product.unit}
+                  inStock={product.inStock}
+                  onAddToCart={(d, pc) => void handleAddToCart(d, pc)}
+                  onIncreaseQuantity={(d, pc) => void handleIncreaseQuantity(d, pc)}
+                  onDecreaseQuantity={(d, pc, quantity) => void handleDecreaseQuantity(d, pc, quantity)}
+                  quantity={getSelectionQuantity(selectedDosage ?? undefined, selectedPkg.pillCount)}
+                  updating={updatingKey === getSelectionKey(selectedDosage ?? undefined, selectedPkg.pillCount)}
+                />
               </>
             ) : (
               <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center">
