@@ -49,25 +49,28 @@ export function HomePageContent() {
       : undefined
 
   return (
-    <div className="mx-auto grid max-w-7xl gap-4 px-4 py-5 lg:grid-cols-[260px_1fr] lg:px-6">
-      <div className="order-2 lg:order-1">
+    <div className="mx-auto grid max-w-7xl gap-4 px-4 py-5 lg:grid-cols-[260px_1fr] lg:grid-rows-[auto_1fr] lg:px-6">
+      {/* 1st on mobile; desktop: right col, row 1 */}
+      <div className="lg:col-start-2 lg:row-start-1">
+        <ImageSlider />
+      </div>
+      {/* 2nd on mobile; desktop: left col, spans both rows */}
+      <div className="lg:col-start-1 lg:row-start-1 lg:row-span-2">
         <CategorySidebar
           categories={categories}
           selectedView={selectedView}
           onSelect={setSelectedView}
         />
       </div>
-      <div className="order-1 space-y-4 lg:order-2">
-        <ImageSlider />
-        <section className="space-y-3">
-          <h2 className="text-3xl font-bold text-slate-900 md:text-2xl">{heading}</h2>
-          {emptyMessage ? (
-            <p className="py-12 text-center text-slate-400">{emptyMessage}</p>
-          ) : (
-            <ProductGrid products={displayProducts} />
-          )}
-        </section>
-      </div>
+      {/* 3rd on mobile; desktop: right col, row 2 */}
+      <section className="space-y-3 lg:col-start-2 lg:row-start-2">
+        <h2 className="text-3xl font-bold text-slate-900 md:text-2xl">{heading}</h2>
+        {emptyMessage ? (
+          <p className="py-12 text-center text-slate-400">{emptyMessage}</p>
+        ) : (
+          <ProductGrid products={displayProducts} />
+        )}
+      </section>
     </div>
   )
 }
