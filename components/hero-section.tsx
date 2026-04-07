@@ -11,7 +11,7 @@ export function HeroSection() {
             Our goal and mission are on the surface: we try our best to provide quality products and service.
           </p>
           <Link
-            href="/products"
+            href="/"
             className="mt-7 inline-flex rounded-full bg-white px-8 py-2.5 text-sm font-semibold text-sky-700 shadow hover:bg-sky-50"
           >
             Read more

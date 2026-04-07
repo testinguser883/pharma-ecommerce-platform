@@ -34,7 +34,6 @@ export function SiteFooter() {
             <ul className="space-y-2.5">
               {[
                 { href: '/', label: 'Home' },
-                { href: '/products', label: 'Products' },
                 { href: '/orders', label: 'Order Status' },
                 { href: '/faq', label: 'FAQ' },
               ].map(({ href, label }) => (

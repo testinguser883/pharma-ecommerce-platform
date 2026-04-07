@@ -255,7 +255,7 @@ export function ProductDetailContent({
         <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center">
           <p className="text-lg font-semibold text-slate-700">Product not found.</p>
           <p className="mt-1 text-sm text-slate-400">This product may have been removed or the link is invalid.</p>
-          <Link href="/products" className="rx-btn-primary mt-5">
+          <Link href="/" className="rx-btn-primary mt-5">
             Back to products
           </Link>
         </div>
@@ -271,7 +271,7 @@ export function ProductDetailContent({
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-4 py-6 lg:px-6">
       <Link
-        href="/products"
+        href="/"
         className="inline-flex items-center gap-1.5 text-sm font-medium text-teal-700 hover:text-teal-600 transition-colors"
       >
         <ChevronLeft className="h-4 w-4" />

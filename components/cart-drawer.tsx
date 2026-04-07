@@ -63,7 +63,7 @@ export function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClose: () =
             <div className="py-10 text-center">
               <ShoppingBag className="mx-auto h-10 w-10 text-slate-200" />
               <p className="mt-3 text-sm font-medium text-slate-500">Your cart is empty</p>
-              <Link href="/products" onClick={onClose} className="rx-btn-primary mt-4">
+              <Link href="/" onClick={onClose} className="rx-btn-primary mt-4">
                 Browse medicines
               </Link>
             </div>

@@ -47,7 +47,7 @@ export function CartPageContent() {
           <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center">
             <ShoppingCart className="mx-auto h-10 w-10 text-slate-300" />
             <p className="mt-3 text-slate-500">Your cart is empty.</p>
-            <Link href="/products" className="rx-btn-primary mt-4">
+            <Link href="/" className="rx-btn-primary mt-4">
               Continue shopping
             </Link>
           </div>

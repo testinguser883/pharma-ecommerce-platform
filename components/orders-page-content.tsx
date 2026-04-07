@@ -311,7 +311,7 @@ export function OrdersPageContent() {
       ) : orders.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center">
           <p className="text-slate-500">No orders yet.</p>
-          <Link href="/products" className="rx-btn-primary mt-4">
+          <Link href="/" className="rx-btn-primary mt-4">
             Browse products
           </Link>
         </div>

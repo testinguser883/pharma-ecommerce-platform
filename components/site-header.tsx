@@ -34,7 +34,7 @@ export function SiteHeader() {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
       const q = searchInput.trim()
-      router.push(q ? `/products?q=${encodeURIComponent(q)}` : '/products')
+      router.push(q ? `/?q=${encodeURIComponent(q)}` : '/')
     }, 300)
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -45,13 +45,12 @@ export function SiteHeader() {
     event.preventDefault()
     if (debounceRef.current) clearTimeout(debounceRef.current)
     const q = searchInput.trim()
-    router.push(q ? `/products?q=${encodeURIComponent(q)}` : '/products')
+    router.push(q ? `/?q=${encodeURIComponent(q)}` : '/')
     setIsMobileMenuOpen(false)
   }
 
   const navLinks = [
     { href: '/', label: 'Home' },
-    { href: '/products', label: 'Products' },
     { href: '/orders', label: 'Orders' },
     { href: '/account', label: 'Account' },
   ]
