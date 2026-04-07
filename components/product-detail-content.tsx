@@ -307,8 +307,8 @@ export function ProductDetailContent({
               )}
             </div>
 
-            <h1 className="mt-2 text-xl font-extrabold text-slate-900 md:text-2xl lg:text-3xl">{product.name}</h1>
-            {product.genericName && <p className="mt-0.5 text-sm text-slate-400">Generic: {product.genericName}</p>}
+            <h1 className="mt-2 text-xl font-extrabold text-slate-900 md:text-2xl lg:text-3xl">{product.genericName}</h1>
+            {product.name && <p className="mt-0.5 text-sm text-slate-400">Brand Name: {product.name}</p>}
 
             {product.description && (
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600">{product.description}</p>
@@ -375,23 +375,21 @@ export function ProductDetailContent({
         <section className="rx-card overflow-hidden">
           {/* Dosage selector header */}
           <div className="border-b border-slate-100 bg-slate-50/50 px-5 py-4">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-400">Select Dosage</p>
-            <div className="flex flex-wrap gap-2">
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-widest text-slate-400">
+              Select Dosage
+            </label>
+            <select
+              value={selectedDosage ?? ''}
+              onChange={(e) => setSelectedDosage(e.target.value || null)}
+              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-100 sm:w-64"
+            >
+              <option value="">-- Choose a dosage --</option>
               {dosages.map((dosage) => (
-                <button
-                  key={dosage}
-                  type="button"
-                  onClick={() => setSelectedDosage(dosage)}
-                  className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-all ${
-                    selectedDosage === dosage
-                      ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-sm'
-                      : 'border border-slate-200 bg-white text-slate-700 hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700'
-                  }`}
-                >
+                <option key={dosage} value={dosage}>
                   {dosage}
-                </button>
+                </option>
               ))}
-            </div>
+            </select>
           </div>
 
           <div className="space-y-2 p-4">
