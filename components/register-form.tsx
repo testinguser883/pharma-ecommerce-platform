@@ -5,6 +5,7 @@ import { FormEvent, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
 import { authClient } from '@/lib/auth-client'
+import { SITE_NAME } from '@/lib/site-inputs'
 
 function getPasswordPolicyError(password: string) {
   if (password.length < 8) return 'Password must be at least 8 characters.'
@@ -112,7 +113,7 @@ export function RegisterForm() {
               </svg>
             </div>
             <h1 className="text-xl font-extrabold text-slate-900">Create account</h1>
-            <p className="mt-0.5 text-sm text-slate-400">Join PharmaCare and order with ease.</p>
+            <p className="mt-0.5 text-sm text-slate-400">Join {SITE_NAME} and order with ease.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Pill, Mail, Shield } from 'lucide-react'
+import { SITE_NAME } from '@/lib/site-inputs'
 
 export function SiteFooter() {
   return (
@@ -16,7 +17,7 @@ export function SiteFooter() {
                 <Pill className="h-4.5 w-4.5" />
               </span>
               <span className="text-base font-bold text-white group-hover:text-teal-300 transition-colors">
-                PharmaCare
+                {SITE_NAME}
               </span>
             </Link>
             <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
@@ -102,7 +103,7 @@ export function SiteFooter() {
         {/* Divider */}
         <div className="mt-10 border-t border-slate-800 pt-6">
           <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:justify-between sm:text-left">
-            <p className="text-xs text-slate-500">© {new Date().getFullYear()} PharmaCare. All rights reserved.</p>
+            <p className="text-xs text-slate-500">© {new Date().getFullYear()} {SITE_NAME}. All rights reserved.</p>
             <div className="flex items-center gap-1.5 text-xs text-slate-600">
               <Shield className="h-3 w-3 text-teal-600" />
               Secure & encrypted transactions

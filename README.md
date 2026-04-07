@@ -4,6 +4,7 @@
 
 `app/(shop)/.../page.tsx` - visit these respective pages to update
 
+
 ## Product Description Markdown
 
 The `Full Product Description` field in the admin product form now supports a safe markdown subset.

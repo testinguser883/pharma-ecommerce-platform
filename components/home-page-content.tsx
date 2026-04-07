@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useQuery } from 'convex/react'
 import { api } from '@/convex/_generated/api'
-import { CATEGORY_LIST } from '@/lib/category-list'
 import { CategorySidebar } from './category-sidebar'
 import { ImageSlider } from './image-slider'
 import { ProductGrid } from './product-grid'
@@ -19,8 +18,7 @@ export function HomePageContent() {
   )
 
   const categories =
-    fetchedCategories?.map((category) => ({ _id: category._id, name: category.name })) ??
-    CATEGORY_LIST.map((name) => ({ name }))
+    fetchedCategories?.map((category) => ({ _id: category._id, name: category.name })) ?? []
 
   const heading = selectedCategory ?? 'Recommended'
   const displayProducts = selectedCategory ? categoryProducts : recommendedProducts

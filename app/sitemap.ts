@@ -2,15 +2,10 @@ import type { MetadataRoute } from 'next'
 import { fetchQuery } from 'convex/nextjs'
 import { api } from '@/convex/_generated/api'
 import { isDisallowed } from '@/lib/seo-config'
-
-const DEFAULT_SITE_URL = 'https://www.gardenerpersonal.click'
-
-function getSiteUrl() {
-  return (process.env.NEXT_PUBLIC_APP_URL ?? process.env.SITE_URL ?? DEFAULT_SITE_URL).replace(/\/+$/, '')
-}
+import { SITE_URL } from '@/lib/site-inputs'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = getSiteUrl()
+  const baseUrl = SITE_URL
   const lastModified = new Date()
 
   const staticRoutes: MetadataRoute.Sitemap = [

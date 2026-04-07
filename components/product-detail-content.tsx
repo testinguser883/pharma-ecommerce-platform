@@ -278,6 +278,15 @@ export function ProductDetailContent({
         Back to products
       </Link>
 
+      {/* Category label above product card */}
+      {product.category && (
+        <div>
+          <span className="rounded-full border border-teal-200 bg-teal-50 px-2.5 py-0.5 text-xs font-semibold text-teal-700">
+            {product.category}
+          </span>
+        </div>
+      )}
+
       {/* Product header */}
       <section className="rx-card overflow-hidden">
         <div className="flex flex-wrap items-start gap-6 p-5 md:p-6">
@@ -295,10 +304,6 @@ export function ProductDetailContent({
 
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-
-              <span className="rounded-full border border-teal-200 bg-teal-50 px-2.5 py-0.5 text-xs font-semibold text-teal-700">
-                {product.category}
-              </span>
               {!product.inStock && (
                 <span className="rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-600">
                   Out of Stock
@@ -306,8 +311,8 @@ export function ProductDetailContent({
               )}
             </div>
 
-            <h1 className="mt-2 text-xl font-extrabold text-slate-900 md:text-2xl lg:text-3xl">{product.name}</h1>
-            {product.genericName && <p className="mt-0.5 text-sm text-slate-400">Generic: {product.genericName}</p>}
+            <h1 className="mt-2 text-xl font-extrabold text-slate-900 md:text-2xl lg:text-3xl">{product.genericName}</h1>
+            {product.name && <p className="mt-0.5 text-sm text-slate-400">Brand Name: {product.name}</p>}
 
             {product.description && (
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600">{product.description}</p>

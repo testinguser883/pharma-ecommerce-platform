@@ -1,14 +1,9 @@
 import type { MetadataRoute } from 'next'
 import { DISALLOWED_PATHS } from '@/lib/seo-config'
-
-const DEFAULT_SITE_URL = 'https://www.gardenerpersonal.click'
-
-function getSiteUrl() {
-  return (process.env.NEXT_PUBLIC_APP_URL ?? process.env.SITE_URL ?? DEFAULT_SITE_URL).replace(/\/+$/, '')
-}
+import { SITE_URL } from '@/lib/site-inputs'
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = getSiteUrl()
+  const baseUrl = SITE_URL
 
   return {
     rules: {

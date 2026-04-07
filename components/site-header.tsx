@@ -6,6 +6,7 @@ import { LogOut, Menu, Pill, Search, ShoppingCart, UserRound, X, ChevronDown } f
 import { useQuery } from 'convex/react'
 import { useRouter } from 'next/navigation'
 import { authClient } from '@/lib/auth-client'
+import { SITE_NAME } from '@/lib/site-inputs'
 import { api } from '@/convex/_generated/api'
 import { CartDrawer } from './cart-drawer'
 import { cn } from '@/lib/utils'
@@ -73,7 +74,7 @@ export function SiteHeader() {
               <Pill className="h-4.5 w-4.5" />
             </span>
             <span className="text-base font-bold tracking-tight text-white group-hover:text-teal-300 transition-colors">
-              PharmaCare
+              {SITE_NAME}
             </span>
           </Link>
 

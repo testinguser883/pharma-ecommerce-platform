@@ -45,7 +45,7 @@ export function ImageSlider() {
           <div>
             <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-teal-500/30 bg-teal-500/10 px-3 py-1 text-xs font-semibold text-teal-400">
               <Zap className="h-3 w-3" />
-              Trusted Pharma Store
+              Bitcoin Only Pharmacy
             </div>
 
             <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-white md:text-5xl">

@@ -1,5 +1,6 @@
-const DEFAULT_SITE_URL = 'https://www.gardenerpersonal.click'
-const SITE_URL = (process.env.NEXT_PUBLIC_APP_URL ?? process.env.SITE_URL ?? DEFAULT_SITE_URL).replace(/\/+$/, '')
+export const SITE_NAME = 'GetUrPill.com'
+const DEFAULT_SITE_URL = 'https://www.GetUrPill.com'
+export const SITE_URL = (process.env.NEXT_PUBLIC_APP_URL ?? process.env.SITE_URL ?? DEFAULT_SITE_URL).replace(/\/+$/, '')
 
 function normalizeGoogleTagId(value: string | undefined) {
   const trimmed = (value ?? '').trim()
@@ -16,7 +17,7 @@ export const siteInputs = {
     schema: {
       enabled: true,
       organization: {
-        name: 'PharmaCare',
+        name: SITE_NAME,
         url: SITE_URL,
         logoPath: '/favicon.ico',
         telephone: process.env.NEXT_PUBLIC_SUPPORT_PHONE?.trim() || '+91-8454039832',

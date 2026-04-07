@@ -1,10 +1,11 @@
 export const DISALLOWED_PATHS = [
-  '/admin',
-  '/cart',
-  '/checkout',
-  '/orders',
-  '/account',
-  '/auth/',
+  '/'
+  // '/admin',
+  // '/cart',
+  // '/checkout',
+  // '/orders',
+  // '/account',
+  // '/auth/',
 ]
 
 export function isDisallowed(url: string): boolean {
