@@ -62,6 +62,21 @@ export default async function RootLayout({
         ))}
       </head>
       <body className="min-h-screen bg-slate-100 text-slate-900 antialiased">
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js');
+  navigator.serviceWorker.addEventListener('message', (e) => {
+    if(e.data?.type === 'IMAGE_UPDATED'){
+      document.querySelectorAll('img[src="' + e.data.url + '"]').forEach((img) => {
+        img.src = e.data.url + '?t=' + Date.now();
+      });
+    }
+  });
+}`,
+          }}
+        />
         <ConvexClientProvider initialToken={token}>{children}</ConvexClientProvider>
       </body>
     </html>
