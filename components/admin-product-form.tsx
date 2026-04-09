@@ -346,10 +346,10 @@ export function AdminProductForm({ initial, onSubmit, onClose }: Props) {
   const activePackage = activeDosageEntry?.packages[activePackageIdx]
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-      <div className="relative flex max-h-[92vh] w-full max-w-2xl flex-col rounded-2xl bg-white shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-stretch justify-center bg-black/40 p-2 backdrop-blur-sm sm:p-4">
+      <div className="relative flex h-full max-h-[96vh] w-full max-w-6xl flex-col rounded-2xl bg-white shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4">
           <h2 className="text-lg font-bold text-slate-900">{initial ? 'Edit Medicine' : 'Add New Medicine'}</h2>
           <button
             type="button"
@@ -361,8 +361,8 @@ export function AdminProductForm({ initial, onSubmit, onClose }: Props) {
         </div>
 
         {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5">
-          <div className="grid gap-4 sm:grid-cols-2">
+        <div className="flex-1 overflow-y-auto px-6 py-5 lg:px-8">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-5">
             {/* Brand name */}
             <div>
               <label className={labelClass}>Brand Name *</label>
@@ -533,7 +533,7 @@ export function AdminProductForm({ initial, onSubmit, onClose }: Props) {
             </div>
 
             {/* Brief Description */}
-            <div className="sm:col-span-2">
+            <div className="sm:col-span-2 xl:col-span-3">
               <label className={labelClass}>Brief Description</label>
               <p className="mb-1.5 text-xs text-slate-400">Shown on the product detail page header (2–3 sentences).</p>
               <textarea
@@ -546,7 +546,7 @@ export function AdminProductForm({ initial, onSubmit, onClose }: Props) {
             </div>
 
             {/* Full Product Description */}
-            <div className="sm:col-span-2">
+            <div className="sm:col-span-2 xl:col-span-3">
               <label className={labelClass}>Full Product Description</label>
               <p className="mb-1.5 text-xs text-slate-400">
                 Shown in the collapsible tab at the bottom of the product page. Supports safe markdown: headings (`#` to
@@ -562,7 +562,7 @@ export function AdminProductForm({ initial, onSubmit, onClose }: Props) {
             </div>
 
             {/* Pricing Matrix */}
-            <div className="sm:col-span-2">
+            <div className="sm:col-span-2 xl:col-span-3">
               <button
                 type="button"
                 onClick={() => setMatrixOpen((v) => !v)}
@@ -758,7 +758,7 @@ export function AdminProductForm({ initial, onSubmit, onClose }: Props) {
             </div>
 
             {/* Image */}
-            <div className="sm:col-span-2">
+            <div className="sm:col-span-2 xl:col-span-3">
               <label className={labelClass}>Product Image</label>
 
               <div className="mb-3 flex gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
@@ -894,7 +894,7 @@ export function AdminProductForm({ initial, onSubmit, onClose }: Props) {
             </div>
 
             {/* In Stock toggle */}
-            <div className="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 sm:col-span-2">
+            <div className="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 sm:col-span-2 xl:col-span-3">
               <button
                 type="button"
                 onClick={() => set('inStock', !form.inStock)}
@@ -913,7 +913,7 @@ export function AdminProductForm({ initial, onSubmit, onClose }: Props) {
             </div>
 
             {/* SEO section */}
-            <div className="sm:col-span-2">
+            <div className="sm:col-span-2 xl:col-span-3">
               <div className="mb-3 border-t border-slate-100 pt-4">
                 <h3 className="text-sm font-bold text-slate-800">URL &amp; SEO</h3>
                 <p className="mt-0.5 text-xs text-slate-500">
@@ -988,7 +988,7 @@ export function AdminProductForm({ initial, onSubmit, onClose }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 border-t border-slate-100 px-6 py-4">
+        <div className="sticky bottom-0 flex items-center justify-end gap-3 border-t border-slate-100 bg-white px-6 py-4">
           <button
             type="button"
             onClick={onClose}
