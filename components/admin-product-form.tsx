@@ -114,6 +114,7 @@ export function AdminProductForm({ initial, onSubmit, onClose }: Props) {
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
   const [previewSrc, setPreviewSrc] = useState(initial?.image ?? '')
+  const [previewLoadError, setPreviewLoadError] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const [matrixOpen, setMatrixOpen] = useState(true)
   const [newDosageForMatrix, setNewDosageForMatrix] = useState('')
@@ -203,6 +204,7 @@ export function AdminProductForm({ initial, onSubmit, onClose }: Props) {
     }
     setUploadError('')
     setUploading(true)
+    setPreviewLoadError(false)
     const blobUrl = URL.createObjectURL(file)
     setPreviewSrc(blobUrl)
     try {
@@ -241,6 +243,7 @@ export function AdminProductForm({ initial, onSubmit, onClose }: Props) {
   }
 
   const handleUrlChange = (url: string) => {
+    setPreviewLoadError(false)
     set('image', url)
     setPreviewSrc(url)
   }
@@ -771,14 +774,13 @@ export function AdminProductForm({ initial, onSubmit, onClose }: Props) {
                           <img
                             src={previewSrc}
                             alt={form.imageAlt || 'Preview'}
-                            className="h-24 w-24 object-contain"
-                            onError={(e) => {
-                              const el = e.currentTarget as HTMLImageElement
-                              el.style.display = 'none'
-                              el.nextElementSibling?.classList.remove('hidden')
-                            }}
+                            className={previewLoadError ? 'hidden' : 'h-24 w-24 object-contain'}
+                            onLoad={() => setPreviewLoadError(false)}
+                            onError={() => setPreviewLoadError(true)}
                           />
-                          <div className="hidden flex-col items-center gap-1 text-slate-300">
+                          <div
+                            className={`flex-col items-center gap-1 text-slate-300 ${previewLoadError ? 'flex' : 'hidden'}`}
+                          >
                             <ImageOff className="h-8 w-8" />
                             <span className="text-xs">Bad URL</span>
                           </div>
