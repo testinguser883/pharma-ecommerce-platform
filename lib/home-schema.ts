@@ -1,5 +1,5 @@
 import type { Doc } from '@/convex/_generated/dataModel'
-import { toAbsolutePublicImageUrl } from '@/lib/image-url'
+import { toAbsoluteProductImageUrl } from '@/lib/image-url'
 import { siteInputs } from '@/lib/site-inputs'
 
 type HomeProduct = Doc<'products'>
@@ -109,7 +109,7 @@ export function buildProductSchemas(products: HomeProduct[]) {
       '@context': 'https://schema.org/',
       '@type': 'Product',
       'name': product.name,
-      'image': toAbsolutePublicImageUrl(product.image),
+      'image': toAbsoluteProductImageUrl(identifier, product.image),
       'description': product.seoDescription || product.description,
       'brand': {
         '@type': 'Brand',

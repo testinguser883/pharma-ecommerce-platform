@@ -8,7 +8,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { api } from '@/convex/_generated/api'
 import type { Doc } from '@/convex/_generated/dataModel'
 import { authClient } from '@/lib/auth-client'
-import { toPublicImagePath } from '@/lib/image-url'
+import { toProductImagePath } from '@/lib/image-url'
 import { renderMarkdownContent } from '@/lib/markdown'
 import { formatPrice } from '@/lib/utils'
 
@@ -233,7 +233,7 @@ export function ProductDetailContent({
   const queryResult = useQuery(api.products.getBySlugOrId, productId ? { identifier: productId } : 'skip')
   // During SSR/hydration useQuery returns undefined; fall back to server-fetched initialProduct
   const product = queryResult !== undefined ? queryResult : initialProduct
-  const imageSrc = product ? toPublicImagePath(product.image) : ''
+  const imageSrc = product ? toProductImagePath(product.slug ?? product._id, product.image) : ''
 
   const [selectedDosage, setSelectedDosage] = useState<string | null>(null)
   const [selectedPillCount, setSelectedPillCount] = useState<number | null>(null)

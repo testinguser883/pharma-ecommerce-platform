@@ -25,3 +25,17 @@ export function toPublicImagePath(value: string) {
 export function toAbsolutePublicImageUrl(value: string) {
   return new URL(toPublicImagePath(value), `${SITE_URL}/`).toString()
 }
+
+export function toProductImagePath(identifier: string, imageUrl: string) {
+  if (!isConvexImageUrl(imageUrl)) return imageUrl
+  return `/media/products/${encodeURIComponent(identifier)}.jpg`
+}
+
+export function toSliderImagePath(id: string, imageUrl: string) {
+  if (!isConvexImageUrl(imageUrl)) return imageUrl
+  return `/media/slides/${encodeURIComponent(id)}.jpg`
+}
+
+export function toAbsoluteProductImageUrl(identifier: string, imageUrl: string) {
+  return new URL(toProductImagePath(identifier, imageUrl), `${SITE_URL}/`).toString()
+}

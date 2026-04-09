@@ -16,6 +16,7 @@ import type * as constants from "../constants.js";
 import type * as crons from "../crons.js";
 import type * as emails from "../emails.js";
 import type * as http from "../http.js";
+import type * as media from "../media.js";
 import type * as orders from "../orders.js";
 import type * as pricing from "../pricing.js";
 import type * as products from "../products.js";
@@ -37,6 +38,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   emails: typeof emails;
   http: typeof http;
+  media: typeof media;
   orders: typeof orders;
   pricing: typeof pricing;
   products: typeof products;

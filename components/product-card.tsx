@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import type { Doc } from '@/convex/_generated/dataModel'
-import { toPublicImagePath } from '@/lib/image-url'
+import { toProductImagePath } from '@/lib/image-url'
 
 function productUrl(product: Doc<'products'>, suffix = '') {
   const id = product.slug ?? product._id
@@ -10,7 +10,7 @@ function productUrl(product: Doc<'products'>, suffix = '') {
 }
 
 export function ProductCard({ product }: { product: Doc<'products'> }) {
-  const imageSrc = toPublicImagePath(product.image)
+  const imageSrc = toProductImagePath(product.slug ?? product._id, product.image)
 
   return (
     <article className="group rx-card flex flex-col overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">

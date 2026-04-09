@@ -6,7 +6,7 @@ import { useQuery } from 'convex/react'
 import { api } from '@/convex/_generated/api'
 import type { Doc } from '@/convex/_generated/dataModel'
 import { ChevronLeft, ChevronRight, Zap, Shield, Truck, Bitcoin } from 'lucide-react'
-import { toPublicImagePath } from '@/lib/image-url'
+import { toSliderImagePath } from '@/lib/image-url'
 
 const FEATURE_BADGES = [
   { icon: Bitcoin, text: 'Bitcoin Only' },
@@ -114,7 +114,7 @@ export function ImageSlider({ initialImages }: { initialImages?: Doc<'sliderImag
         {images.map((img, i) => (
           <img
             key={img._id}
-            src={toPublicImagePath(img.url)}
+            src={toSliderImagePath(img._id, img.url)}
             alt={img.altText ?? `Slide ${i + 1}`}
             title={img.titleText ?? img.altText ?? `Slide ${i + 1}`}
             loading={i === 0 ? 'eager' : 'lazy'}

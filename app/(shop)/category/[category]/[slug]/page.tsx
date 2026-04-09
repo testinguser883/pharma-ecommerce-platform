@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { permanentRedirect } from 'next/navigation'
 import { fetchQuery } from 'convex/nextjs'
 import { api } from '@/convex/_generated/api'
-import { toAbsolutePublicImageUrl } from '@/lib/image-url'
+import { toAbsoluteProductImageUrl } from '@/lib/image-url'
 
 export async function generateMetadata({
   params,
@@ -19,6 +19,7 @@ export async function generateMetadata({
   const title = product.seoTitle || `${product.name} (${product.genericName})`
   const description = product.seoDescription || product.description
   const keywords = product.seoKeywords
+  const imageUrl = toAbsoluteProductImageUrl(product.slug ?? product._id, product.image)
 
   return {
     title,
@@ -26,13 +27,13 @@ export async function generateMetadata({
     openGraph: {
       title,
       description,
-      images: [{ url: toAbsolutePublicImageUrl(product.image), alt: product.imageAlt ?? product.name }],
+      images: [{ url: imageUrl, alt: product.imageAlt ?? product.name }],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      images: [toAbsolutePublicImageUrl(product.image)],
+      images: [imageUrl],
     },
     ...(keywords && { keywords }),
   }
