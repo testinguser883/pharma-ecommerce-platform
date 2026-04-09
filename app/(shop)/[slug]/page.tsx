@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { fetchQuery } from 'convex/nextjs'
 import { api } from '@/convex/_generated/api'
 import { ProductDetailContent } from '@/components/product-detail-content'
+import { toAbsolutePublicImageUrl } from '@/lib/image-url'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
@@ -20,6 +21,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title,
     description,
+    openGraph: {
+      title,
+      description,
+      images: [{ url: toAbsolutePublicImageUrl(product.image), alt: product.imageAlt ?? product.name }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [toAbsolutePublicImageUrl(product.image)],
+    },
     ...(keywords && { keywords }),
   }
 }

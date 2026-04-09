@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { permanentRedirect } from 'next/navigation'
 import { fetchQuery } from 'convex/nextjs'
 import { api } from '@/convex/_generated/api'
+import { toAbsolutePublicImageUrl } from '@/lib/image-url'
 
 export async function generateMetadata({
   params,
@@ -22,6 +23,17 @@ export async function generateMetadata({
   return {
     title,
     description,
+    openGraph: {
+      title,
+      description,
+      images: [{ url: toAbsolutePublicImageUrl(product.image), alt: product.imageAlt ?? product.name }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [toAbsolutePublicImageUrl(product.image)],
+    },
     ...(keywords && { keywords }),
   }
 }

@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { api } from '@/convex/_generated/api'
 import type { Doc } from '@/convex/_generated/dataModel'
 import { authClient } from '@/lib/auth-client'
+import { toPublicImagePath } from '@/lib/image-url'
 import { renderMarkdownContent } from '@/lib/markdown'
 import { formatPrice } from '@/lib/utils'
 
@@ -232,6 +233,7 @@ export function ProductDetailContent({
   const queryResult = useQuery(api.products.getBySlugOrId, productId ? { identifier: productId } : 'skip')
   // During SSR/hydration useQuery returns undefined; fall back to server-fetched initialProduct
   const product = queryResult !== undefined ? queryResult : initialProduct
+  const imageSrc = product ? toPublicImagePath(product.image) : ''
 
   const [selectedDosage, setSelectedDosage] = useState<string | null>(null)
   const [selectedPillCount, setSelectedPillCount] = useState<number | null>(null)
@@ -337,7 +339,7 @@ export function ProductDetailContent({
           {/* Image */}
           <div className="shrink-0 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 p-5">
             <img
-              src={product.image}
+              src={imageSrc}
               alt={product.imageAlt ?? product.name}
               className="h-36 w-36 object-contain"
               onError={(e) => {
