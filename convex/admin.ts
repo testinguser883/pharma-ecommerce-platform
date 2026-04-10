@@ -325,7 +325,7 @@ function normalizePricingMatrix(
           throw new Error(`Package quantity must be greater than 0 for ${dosageName}.`)
         }
         if (seenPillCounts.has(pkg.pillCount)) {
-          throw new Error(`Duplicate package quantity ${pkg.pillCount} in dosage "${dosageName}".`)
+          throw new Error(`Package quantity ${pkg.pillCount} already exists for dosage "${dosageName}".`)
         }
         seenPillCounts.add(pkg.pillCount)
         if (!Number.isFinite(pkg.price) || pkg.price <= 0) {

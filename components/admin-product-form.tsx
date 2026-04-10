@@ -19,6 +19,10 @@ type DosagePricing = {
   packages: PackageOption[]
 }
 
+function duplicatePackageMessage(dosage: string, pillCount: number) {
+  return `Package quantity ${pillCount} already exists for dosage "${dosage}".`
+}
+
 export type ProductFormData = {
   name: string
   genericName: string
@@ -210,6 +214,7 @@ export function AdminProductForm({ initial, onSubmit, onClose, fullPage }: Props
 
   const addPackageToDosage = (dosageIdx: number) => {
     const nextPackageIdx = form.pricingMatrix[dosageIdx]?.packages.length ?? 0
+    setError('')
     const updated = form.pricingMatrix.map((d, i) =>
       i === dosageIdx
         ? {
@@ -233,6 +238,21 @@ export function AdminProductForm({ initial, onSubmit, onClose, fullPage }: Props
   }
 
   const updatePackage = (dosageIdx: number, pkgIdx: number, field: keyof PackageOption, value: string) => {
+    const dosageEntry = form.pricingMatrix[dosageIdx]
+    if (field === 'pillCount' && dosageEntry) {
+      const pillCount = Number(value)
+      if (pillCount > 0) {
+        const duplicateExists = dosageEntry.packages.some(
+          (pkg, index) => index !== pkgIdx && Number(pkg.pillCount) === pillCount,
+        )
+        if (duplicateExists) {
+          setError(duplicatePackageMessage(dosageEntry.dosage, pillCount))
+          return
+        }
+      }
+    }
+
+    setError('')
     const updated = form.pricingMatrix.map((d, i) =>
       i === dosageIdx
         ? {
@@ -313,7 +333,7 @@ export function AdminProductForm({ initial, onSubmit, onClose, fullPage }: Props
         if (Number(pkg.price) <= 0) return setError('Package price must be greater than 0.')
         const pillCount = Number(pkg.pillCount)
         if (pillCount > 0 && seenPillCounts.has(pillCount)) {
-          return setError(`Duplicate package quantity ${pillCount} in dosage "${dosageName}".`)
+          return setError(duplicatePackageMessage(dosageName, pillCount))
         }
         seenPillCounts.add(pillCount)
       }
