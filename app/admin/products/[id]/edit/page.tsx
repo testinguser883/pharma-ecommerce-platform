@@ -72,12 +72,5 @@ export default function AdminEditProductPage({ params }: { params: Promise<{ id:
     router.push('/admin')
   }
 
-  return (
-    <AdminProductForm
-      initial={product}
-      onSubmit={handleUpdate}
-      onClose={() => router.push('/admin')}
-      fullPage
-    />
-  )
+  return <AdminProductForm initial={product} onSubmit={handleUpdate} onClose={() => router.push('/admin')} fullPage />
 }

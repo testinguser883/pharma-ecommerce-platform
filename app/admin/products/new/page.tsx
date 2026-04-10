@@ -44,11 +44,5 @@ export default function AdminNewProductPage() {
     router.push('/admin')
   }
 
-  return (
-    <AdminProductForm
-      onSubmit={handleCreate}
-      onClose={() => router.push('/admin')}
-      fullPage
-    />
-  )
+  return <AdminProductForm onSubmit={handleCreate} onClose={() => router.push('/admin')} fullPage />
 }

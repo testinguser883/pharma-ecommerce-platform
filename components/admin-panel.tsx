@@ -32,7 +32,6 @@ import {
 } from 'lucide-react'
 import { api } from '@/convex/_generated/api'
 import type { Doc, Id } from '@/convex/_generated/dataModel'
-import { toProductImagePath } from '@/lib/image-url'
 import { formatPrice } from '@/lib/utils'
 
 type Tab = 'products' | 'orders' | 'slider' | 'categories' | 'users'
@@ -348,7 +347,7 @@ function ProductRow({ product, editHref, onDelete, onToggleStock, onToggleVisibi
         <div className="flex items-center gap-3">
           {product.image ? (
             <img
-              src={toProductImagePath(product.slug ?? product._id, product.image)}
+              src={product.image}
               alt={product.imageAlt ?? product.name}
               className="h-10 w-10 shrink-0 rounded-lg border border-slate-100 object-cover"
             />

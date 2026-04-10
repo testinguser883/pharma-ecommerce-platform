@@ -132,7 +132,6 @@ export function AdminProductForm({ initial, onSubmit, onClose, fullPage }: Props
 
   const nameRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const objectPreviewUrlRef = useRef<string | null>(null)
 
   const generateUploadUrl = useMutation(api.admin.generateUploadUrl)
   const getUploadedImageUrl = useMutation(api.admin.getUploadedImageUrl)
@@ -151,14 +150,6 @@ export function AdminProductForm({ initial, onSubmit, onClose, fullPage }: Props
 
   useEffect(() => {
     nameRef.current?.focus()
-  }, [])
-
-  useEffect(() => {
-    return () => {
-      if (objectPreviewUrlRef.current) {
-        URL.revokeObjectURL(objectPreviewUrlRef.current)
-      }
-    }
   }, [])
 
   useEffect(() => {
@@ -187,12 +178,13 @@ export function AdminProductForm({ initial, onSubmit, onClose, fullPage }: Props
   const set = <K extends keyof ProductFormData>(key: K, value: ProductFormData[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }))
 
-  const replaceObjectPreviewUrl = (nextUrl: string | null) => {
-    if (objectPreviewUrlRef.current) {
-      URL.revokeObjectURL(objectPreviewUrlRef.current)
-    }
-    objectPreviewUrlRef.current = nextUrl
-  }
+  const readFileAsDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '')
+      reader.onerror = () => reject(new Error('Could not read image for preview'))
+      reader.readAsDataURL(file)
+    })
 
   // Pricing matrix helpers
   const addDosagePricing = (dosage: string) => {
@@ -252,13 +244,13 @@ export function AdminProductForm({ initial, onSubmit, onClose, fullPage }: Props
       setUploadError('Please select an image file (JPG, PNG, WebP, etc.)')
       return
     }
-    const blobUrl = URL.createObjectURL(file)
-    replaceObjectPreviewUrl(blobUrl)
     setUploadError('')
     setPreviewLoadError(false)
-    setPreviewSrc(blobUrl)
-    setUploading(true)
     try {
+      const dataUrl = await readFileAsDataUrl(file)
+      setPreviewSrc(dataUrl)
+      setUploading(true)
+
       const uploadUrl = await generateUploadUrl()
       const response = await fetch(uploadUrl, {
         method: 'POST',
@@ -270,6 +262,7 @@ export function AdminProductForm({ initial, onSubmit, onClose, fullPage }: Props
       const cdnUrl = await getUploadedImageUrl({ storageId })
       if (!cdnUrl) throw new Error('Could not resolve image URL')
       set('image', cdnUrl)
+      setPreviewSrc(cdnUrl)
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Upload failed. Try again.')
       set('image', '')
@@ -291,7 +284,6 @@ export function AdminProductForm({ initial, onSubmit, onClose, fullPage }: Props
   }
 
   const handleUrlChange = (url: string) => {
-    replaceObjectPreviewUrl(null)
     setPreviewLoadError(false)
     set('image', url)
     setPreviewSrc(url)
