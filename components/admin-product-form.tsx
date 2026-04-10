@@ -40,6 +40,8 @@ type Props = {
   initial?: Doc<'products'>
   onSubmit: (data: ProductFormData) => Promise<void>
   onClose: () => void
+  /** Render as full page instead of a modal overlay */
+  fullPage?: boolean
 }
 
 const EMPTY_FORM: ProductFormData = {
@@ -87,7 +89,7 @@ function matrixFromDoc(doc: Doc<'products'>): DosagePricing[] {
   return []
 }
 
-export function AdminProductForm({ initial, onSubmit, onClose }: Props) {
+export function AdminProductForm({ initial, onSubmit, onClose, fullPage }: Props) {
   const [form, setForm] = useState<ProductFormData>(
     initial
       ? {
@@ -251,8 +253,6 @@ export function AdminProductForm({ initial, onSubmit, onClose }: Props) {
       const cdnUrl = await getUploadedImageUrl({ storageId })
       if (!cdnUrl) throw new Error('Could not resolve image URL')
       set('image', cdnUrl)
-      setPreviewSrc(cdnUrl)
-      URL.revokeObjectURL(blobUrl)
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Upload failed. Try again.')
       setPreviewSrc('')
@@ -345,11 +345,19 @@ export function AdminProductForm({ initial, onSubmit, onClose }: Props) {
       : 0
   const activePackage = activeDosageEntry?.packages[activePackageIdx]
 
+  const wrapperClass = fullPage
+    ? 'min-h-screen bg-slate-50'
+    : 'fixed inset-0 z-50 flex items-stretch justify-center bg-black/40 p-2 backdrop-blur-sm sm:p-4'
+
+  const containerClass = fullPage
+    ? 'mx-auto flex min-h-screen w-full flex-col bg-white'
+    : 'relative flex h-full max-h-[96vh] w-full max-w-6xl flex-col rounded-2xl bg-white shadow-2xl'
+
   return (
-    <div className="fixed inset-0 z-50 flex items-stretch justify-center bg-black/40 p-2 backdrop-blur-sm sm:p-4">
-      <div className="relative flex h-full max-h-[96vh] w-full max-w-6xl flex-col rounded-2xl bg-white shadow-2xl">
+    <div className={wrapperClass}>
+      <div className={containerClass}>
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4">
+        <div className={`sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4 ${fullPage ? 'shadow-sm' : ''}`}>
           <h2 className="text-lg font-bold text-slate-900">{initial ? 'Edit Medicine' : 'Add New Medicine'}</h2>
           <button
             type="button"
@@ -361,7 +369,7 @@ export function AdminProductForm({ initial, onSubmit, onClose }: Props) {
         </div>
 
         {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 lg:px-8">
+        <div className={`flex-1 overflow-y-auto px-6 py-5 ${fullPage ? 'mx-auto w-full max-w-7xl lg:px-12' : 'lg:px-8'}`}>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-5">
             {/* Brand name */}
             <div>

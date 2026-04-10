@@ -79,6 +79,15 @@ export const isSuperAdmin = query({
   },
 })
 
+export const getProductById = query({
+  args: { id: v.id('products') },
+  handler: async (ctx, args) => {
+    const admin = await getAdminUser(ctx)
+    if (!admin) return null
+    return ctx.db.get(args.id)
+  },
+})
+
 export const listAllProducts = query({
   args: { search: v.optional(v.string()) },
   handler: async (ctx, args) => {
