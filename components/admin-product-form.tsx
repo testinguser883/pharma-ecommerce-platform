@@ -189,7 +189,12 @@ export function AdminProductForm({ initial, onSubmit, onClose, fullPage }: Props
   // Pricing matrix helpers
   const addDosagePricing = (dosage: string) => {
     const d = dosage.trim()
-    if (!d || form.pricingMatrix.some((m) => m.dosage === d)) return
+    if (!d) return
+    if (form.pricingMatrix.some((m) => m.dosage === d)) {
+      setError(`Dosage "${d}" already exists.`)
+      return
+    }
+    setError('')
     set('pricingMatrix', [...form.pricingMatrix, { dosage: d, packages: [] }])
     setSelectedDosage(d)
     setSelectedPackage('')
@@ -294,13 +299,23 @@ export function AdminProductForm({ initial, onSubmit, onClose, fullPage }: Props
     if (!form.name.trim()) return setError('Brand name is required.')
     if (!form.genericName.trim()) return setError('Generic name is required.')
     if (!form.category) return setError('Category is required.')
+    const seenDosages = new Set<string>()
     for (const dosagePricing of form.pricingMatrix) {
-      if (!dosagePricing.dosage.trim()) return setError('Each pricing section needs a dosage.')
+      const dosageName = dosagePricing.dosage.trim()
+      if (!dosageName) return setError('Each pricing section needs a dosage.')
+      if (seenDosages.has(dosageName)) return setError(`Dosage "${dosageName}" already exists.`)
+      seenDosages.add(dosageName)
       if (dosagePricing.packages.length === 0) {
-        return setError(`Add at least one package price for ${dosagePricing.dosage.trim() || 'each dosage'}.`)
+        return setError(`Add at least one package price for ${dosageName || 'each dosage'}.`)
       }
+      const seenPillCounts = new Set<number>()
       for (const pkg of dosagePricing.packages) {
         if (Number(pkg.price) <= 0) return setError('Package price must be greater than 0.')
+        const pillCount = Number(pkg.pillCount)
+        if (pillCount > 0 && seenPillCounts.has(pillCount)) {
+          return setError(`Duplicate package quantity ${pillCount} in dosage "${dosageName}".`)
+        }
+        seenPillCounts.add(pillCount)
       }
     }
     setSaving(true)

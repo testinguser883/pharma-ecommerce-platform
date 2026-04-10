@@ -303,21 +303,31 @@ function normalizePricingMatrix(
     }
   }
 
+  const seenDosages = new Set<string>()
   const normalized = pricingMatrix.map((dosage) => {
     const dosageName = dosage.dosage.trim()
     if (!dosageName) {
       throw new Error('Each pricing entry must include a dosage.')
     }
+    if (seenDosages.has(dosageName)) {
+      throw new Error(`Duplicate dosage "${dosageName}".`)
+    }
+    seenDosages.add(dosageName)
     if (dosage.packages.length === 0) {
       throw new Error(`At least one package price is required for ${dosageName}.`)
     }
 
+    const seenPillCounts = new Set<number>()
     return {
       dosage: dosageName,
       packages: dosage.packages.map((pkg) => {
         if (!Number.isFinite(pkg.pillCount) || pkg.pillCount <= 0) {
           throw new Error(`Package quantity must be greater than 0 for ${dosageName}.`)
         }
+        if (seenPillCounts.has(pkg.pillCount)) {
+          throw new Error(`Duplicate package quantity ${pkg.pillCount} in dosage "${dosageName}".`)
+        }
+        seenPillCounts.add(pkg.pillCount)
         if (!Number.isFinite(pkg.price) || pkg.price <= 0) {
           throw new Error(`Package price must be greater than 0 for ${dosageName}.`)
         }
