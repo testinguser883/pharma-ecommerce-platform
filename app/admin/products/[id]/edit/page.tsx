@@ -1,6 +1,6 @@
 'use client'
 
-import { use } from 'react'
+import { use, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useMutation, useQuery } from 'convex/react'
 import { Loader2 } from 'lucide-react'
@@ -43,6 +43,10 @@ export default function AdminEditProductPage({ params }: { params: Promise<{ id:
   const router = useRouter()
   const product = useQuery(api.admin.getProductById, { id: id as Id<'products'> })
   const updateProduct = useMutation(api.admin.updateProduct)
+
+  useEffect(() => {
+    router.prefetch('/admin')
+  }, [router])
 
   if (product === undefined) {
     return (

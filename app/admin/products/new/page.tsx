@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useMutation } from 'convex/react'
 import { api } from '@/convex/_generated/api'
@@ -38,6 +39,10 @@ function normalizeFormData(data: ProductFormData) {
 export default function AdminNewProductPage() {
   const router = useRouter()
   const createProduct = useMutation(api.admin.createProduct)
+
+  useEffect(() => {
+    router.prefetch('/admin')
+  }, [router])
 
   const handleCreate = async (data: ProductFormData) => {
     await createProduct(normalizeFormData(data))
