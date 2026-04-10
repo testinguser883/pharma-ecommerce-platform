@@ -40,6 +40,54 @@ function getProductOfferPrice(product: HomeProduct) {
   return Number(((product.price ?? 0) * (1 - (product.discount ?? 0) / 100)).toFixed(2))
 }
 
+function buildProductOfferEntries(product: HomeProduct, siteUrl: string) {
+  const identifier = product.slug ?? product._id
+  const baseUrl = toAbsoluteUrl(`/${identifier}`, siteUrl)
+
+  if (product.pricingMatrix && product.pricingMatrix.length > 0) {
+    const offers = product.pricingMatrix.flatMap((dosage) =>
+      dosage.packages.map((pkg) => ({
+        '@type': 'Offer',
+        'priceCurrency': siteInputs.home.schema.products.currency,
+        'price': pkg.price.toFixed(2),
+        'availability': product.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        'priceValidUntil': siteInputs.home.schema.products.priceValidUntil,
+        'url': dosage.dosage ? `${baseUrl}?dosage=${encodeURIComponent(dosage.dosage)}` : baseUrl,
+        'itemCondition': 'https://schema.org/NewCondition',
+        'sku': `${identifier}-${dosage.dosage}-${pkg.pillCount}`,
+        'name': `${product.genericName} ${dosage.dosage} - ${pkg.pillCount} ${product.unit}${pkg.pillCount === 1 ? '' : 's'}`,
+        'description': [
+          dosage.dosage ? `Dosage: ${dosage.dosage}` : null,
+          `Quantity: ${pkg.pillCount} ${product.unit}${pkg.pillCount === 1 ? '' : 's'}`,
+          pkg.benefits?.length ? `Benefits: ${pkg.benefits.join(', ')}` : null,
+          pkg.expiryDate ? `Expiry: ${pkg.expiryDate}` : null,
+        ]
+          .filter(Boolean)
+          .join(' | '),
+      })),
+    )
+
+    return offers
+  }
+
+  if (typeof product.price === 'number' && product.price > 0) {
+    return [
+      {
+        '@type': 'Offer',
+        'priceCurrency': siteInputs.home.schema.products.currency,
+        'price': getProductOfferPrice(product).toFixed(2),
+        'availability': product.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        'priceValidUntil': siteInputs.home.schema.products.priceValidUntil,
+        'url': baseUrl,
+        'itemCondition': 'https://schema.org/NewCondition',
+        'sku': identifier,
+      },
+    ]
+  }
+
+  return []
+}
+
 export function buildSiteSchemas() {
   const schema = siteInputs.home.schema
   if (!schema.enabled) return []
@@ -127,6 +175,110 @@ export function buildProductSchemas(products: HomeProduct[]) {
   })
 
   return productSchemas.length > 0 ? [productSchemas] : []
+}
+
+export function buildProductDetailSchema(product: HomeProduct) {
+  const schema = siteInputs.home.schema
+  if (!schema.enabled || !schema.products.enabled) return null
+
+  const siteUrl = schema.organization.url
+  const identifier = product.slug ?? product._id
+  const imageUrl = toAbsoluteProductImageUrl(identifier, product.image)
+  const offers = buildProductOfferEntries(product, siteUrl)
+  const lowPrice =
+    offers.length > 0
+      ? Math.min(...offers.map((offer) => Number(offer.price)).filter((price) => !Number.isNaN(price)))
+      : null
+  const highPrice =
+    offers.length > 0
+      ? Math.max(...offers.map((offer) => Number(offer.price)).filter((price) => !Number.isNaN(price)))
+      : null
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    'name': product.genericName || product.name,
+    ...(product.name ? { alternateName: product.name } : {}),
+    'sku': identifier,
+    'url': toAbsoluteUrl(`/${identifier}`, siteUrl),
+    'image': [imageUrl],
+    'description': product.fullDescription || product.seoDescription || product.description,
+    'category': product.category,
+    'keywords': product.seoKeywords,
+    'brand': product.name
+      ? {
+          '@type': 'Brand',
+          'name': product.name,
+        }
+      : {
+          '@type': 'Brand',
+          'name': schema.organization.name,
+        },
+    ...(offers.length > 1
+      ? {
+          offers: {
+            '@type': 'AggregateOffer',
+            'priceCurrency': schema.products.currency,
+            'lowPrice': lowPrice?.toFixed(2),
+            'highPrice': highPrice?.toFixed(2),
+            'offerCount': offers.length,
+            'availability': product.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+            'offers': offers,
+          },
+        }
+      : offers.length === 1
+        ? { offers: offers[0] }
+        : {}),
+    'additionalProperty': [
+      {
+        '@type': 'PropertyValue',
+        'name': 'Brand Name',
+        'value': product.name,
+      },
+      {
+        '@type': 'PropertyValue',
+        'name': 'Generic Name',
+        'value': product.genericName,
+      },
+      {
+        '@type': 'PropertyValue',
+        'name': 'Unit',
+        'value': product.unit,
+      },
+      {
+        '@type': 'PropertyValue',
+        'name': 'Dosage Options',
+        'value': product.dosageOptions.join(', '),
+      },
+      ...(typeof product.discount === 'number'
+        ? [
+            {
+              '@type': 'PropertyValue',
+              'name': 'Discount',
+              'value': `${product.discount}%`,
+            },
+          ]
+        : []),
+      ...(product.imageAlt
+        ? [
+            {
+              '@type': 'PropertyValue',
+              'name': 'Image Alt',
+              'value': product.imageAlt,
+            },
+          ]
+        : []),
+      ...(product.fullDescription
+        ? [
+            {
+              '@type': 'PropertyValue',
+              'name': 'Full Description',
+              'value': product.fullDescription,
+            },
+          ]
+        : []),
+    ].filter((entry) => entry.value),
+  }
 }
 
 export function buildHomeSchemas(products: HomeProduct[]) {
