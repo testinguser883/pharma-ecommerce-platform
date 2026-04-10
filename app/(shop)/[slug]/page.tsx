@@ -1,4 +1,4 @@
-import { Suspense } from 'react'
+import { cache, Suspense } from 'react'
 import type { Metadata } from 'next'
 import { fetchQuery } from 'convex/nextjs'
 import { api } from '@/convex/_generated/api'
@@ -6,9 +6,13 @@ import { ProductDetailContent } from '@/components/product-detail-content'
 import { buildProductDetailSchema } from '@/lib/home-schema'
 import { toAbsoluteProductImageUrl } from '@/lib/image-url'
 
+const getProduct = cache((identifier: string) =>
+  fetchQuery(api.products.getBySlugOrId, { identifier })
+)
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
-  const product = await fetchQuery(api.products.getBySlugOrId, { identifier: slug })
+  const product = await getProduct(slug)
 
   if (!product) {
     return { title: 'Product Not Found' }
@@ -43,7 +47,7 @@ function serializeJsonLd(schema: unknown) {
 
 export default async function ProductSlugPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const product = await fetchQuery(api.products.getBySlugOrId, { identifier: slug })
+  const product = await getProduct(slug)
 
   if (!product) {
     return null

@@ -1,8 +1,13 @@
+import { cache } from 'react'
 import type { Metadata } from 'next'
 import { permanentRedirect } from 'next/navigation'
 import { fetchQuery } from 'convex/nextjs'
 import { api } from '@/convex/_generated/api'
 import { toAbsoluteProductImageUrl } from '@/lib/image-url'
+
+const getProduct = cache((identifier: string) =>
+  fetchQuery(api.products.getBySlugOrId, { identifier })
+)
 
 export async function generateMetadata({
   params,
@@ -10,7 +15,7 @@ export async function generateMetadata({
   params: Promise<{ category: string; slug: string }>
 }): Promise<Metadata> {
   const { slug } = await params
-  const product = await fetchQuery(api.products.getBySlugOrId, { identifier: slug })
+  const product = await getProduct(slug)
 
   if (!product) {
     return { title: 'Product Not Found' }
@@ -48,7 +53,7 @@ export default async function ProductCategorySlugPage({
 }) {
   const { slug } = await params
   const resolvedSearchParams = await searchParams
-  const product = await fetchQuery(api.products.getBySlugOrId, { identifier: slug })
+  const product = await getProduct(slug)
 
   const query = new URLSearchParams()
   for (const [key, value] of Object.entries(resolvedSearchParams)) {

@@ -204,7 +204,6 @@ export function buildProductDetailSchema(product: HomeProduct) {
     'image': [imageUrl],
     'description': product.fullDescription || product.seoDescription || product.description,
     'category': product.category,
-    'keywords': product.seoKeywords,
     'brand': product.name
       ? {
           '@type': 'Brand',
@@ -265,15 +264,6 @@ export function buildProductDetailSchema(product: HomeProduct) {
               '@type': 'PropertyValue',
               'name': 'Image Alt',
               'value': product.imageAlt,
-            },
-          ]
-        : []),
-      ...(product.fullDescription
-        ? [
-            {
-              '@type': 'PropertyValue',
-              'name': 'Full Description',
-              'value': product.fullDescription,
             },
           ]
         : []),
