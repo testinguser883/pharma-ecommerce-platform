@@ -388,6 +388,14 @@ export function AdminProductForm({ initial, onSubmit, onClose, fullPage }: Props
       ? selectedPackageIdx
       : 0
   const activePackage = activeDosageEntry?.packages[activePackageIdx]
+  const pricingError =
+    error.includes('Dosage "') ||
+    error.includes('pricing section') ||
+    error.includes('package price') ||
+    error.includes('Package quantity') ||
+    error.includes('Add at least one package price')
+      ? error
+      : ''
 
   const wrapperClass = fullPage
     ? 'min-h-screen bg-slate-50'
@@ -666,6 +674,10 @@ export function AdminProductForm({ initial, onSubmit, onClose, fullPage }: Props
                       Add Dosage
                     </button>
                   </div>
+
+                  {pricingError && (
+                    <p className="rounded-lg bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700">{pricingError}</p>
+                  )}
 
                   {form.pricingMatrix.length > 0 && activeDosageEntry && (
                     <div className="space-y-4 rounded-lg border border-slate-200 bg-white p-4">
@@ -1044,7 +1056,9 @@ export function AdminProductForm({ initial, onSubmit, onClose, fullPage }: Props
             </div>
           </div>
 
-          {error && <p className="mt-4 rounded-lg bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700">{error}</p>}
+          {error && !pricingError && (
+            <p className="mt-4 rounded-lg bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700">{error}</p>
+          )}
         </div>
 
         {/* Footer */}
