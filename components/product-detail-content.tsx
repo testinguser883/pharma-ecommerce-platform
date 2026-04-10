@@ -6,7 +6,6 @@ import { useMutation, useQuery } from 'convex/react'
 import { ChevronLeft, ShoppingCart, ChevronDown, ChevronUp, Minus, Plus, Loader2 } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { api } from '@/convex/_generated/api'
-import type { Doc } from '@/convex/_generated/dataModel'
 import { authClient } from '@/lib/auth-client'
 import { toProductImagePath } from '@/lib/image-url'
 import { renderMarkdownContent } from '@/lib/markdown'
@@ -206,23 +205,18 @@ function ProductDescriptionAccordion({ content }: { content: string }) {
           {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </span>
       </button>
-      {/* Content always present in DOM for SEO crawlers; CSS controls visibility */}
-      <div className={`border-t border-slate-100 px-5 py-5 prose prose-sm max-w-none ${open ? '' : 'hidden'}`}>
-        {renderMarkdownContent(content)}
-      </div>
+      {open ? (
+        <div className="border-t border-slate-100 px-5 py-5 prose prose-sm max-w-none">
+          {renderMarkdownContent(content)}
+        </div>
+      ) : null}
     </section>
   )
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export function ProductDetailContent({
-  productId,
-  initialProduct,
-}: {
-  productId: string
-  initialProduct?: Doc<'products'>
-}) {
+export function ProductDetailContent({ productId }: { productId: string }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { data: session } = authClient.useSession()
@@ -230,9 +224,7 @@ export function ProductDetailContent({
   const addItem = useMutation(api.cart.addItem)
   const updateItemQuantity = useMutation(api.cart.updateItemQuantity)
 
-  const queryResult = useQuery(api.products.getBySlugOrId, productId ? { identifier: productId } : 'skip')
-  // During SSR/hydration useQuery returns undefined; fall back to server-fetched initialProduct
-  const product = queryResult !== undefined ? queryResult : initialProduct
+  const product = useQuery(api.products.getBySlugOrId, productId ? { identifier: productId } : 'skip')
   const imageSrc = product ? toProductImagePath(product.slug ?? product._id, product.image) : ''
 
   const [selectedDosage, setSelectedDosage] = useState<string | null>(null)

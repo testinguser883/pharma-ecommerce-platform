@@ -1,8 +1,8 @@
+import { Suspense } from 'react'
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
 import { fetchQuery } from 'convex/nextjs'
 import { api } from '@/convex/_generated/api'
-import { ProductDetailPage } from '@/components/product-detail-page'
+import { ProductDetailContent } from '@/components/product-detail-content'
 import { toAbsoluteProductImageUrl } from '@/lib/image-url'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -36,22 +36,23 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 }
 
-export default async function ProductSlugPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ slug: string }>
-  searchParams: Promise<Record<string, string | string[] | undefined>>
-}) {
+export default async function ProductSlugPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const resolvedSearchParams = await searchParams
   const product = await fetchQuery(api.products.getBySlugOrId, { identifier: slug })
 
   if (!product) {
-    notFound()
+    return null
   }
 
-  const initialDosage = typeof resolvedSearchParams.dosage === 'string' ? resolvedSearchParams.dosage : undefined
-
-  return <ProductDetailPage product={product} initialDosage={initialDosage} />
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-7xl px-4 py-6 lg:px-6">
+          <p className="text-sm text-slate-500">Loading...</p>
+        </div>
+      }
+    >
+      <ProductDetailContent productId={slug} />
+    </Suspense>
+  )
 }
